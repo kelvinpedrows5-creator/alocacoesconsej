@@ -7,6 +7,7 @@ import { MemberHistoryModal } from '@/components/MemberHistoryModal';
 import { SuggestionsPanel } from '@/components/SuggestionsPanel';
 import { CoordinationGrid } from '@/components/CoordinationGrid';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
+import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { useAllocationStore } from '@/hooks/useAllocationStore';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -52,6 +53,7 @@ const Index = () => {
                   ))}
                 </SelectContent>
               </Select>
+              <ReallocationDialog />
               <AddMemberDialog />
             </div>
           </div>
