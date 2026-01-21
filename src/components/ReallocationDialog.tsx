@@ -50,14 +50,14 @@ export const ReallocationDialog = () => {
     setPendingAllocations((prev) => {
       const existing = prev.findIndex((p) => p.memberId === memberId);
       if (existing >= 0) {
-        if (coordinationId === '') {
+        if (coordinationId === '__keep__') {
           return prev.filter((p) => p.memberId !== memberId);
         }
         const updated = [...prev];
         updated[existing] = { memberId, coordinationId };
         return updated;
       }
-      if (coordinationId === '') return prev;
+      if (coordinationId === '__keep__') return prev;
       return [...prev, { memberId, coordinationId }];
     });
   };
@@ -270,14 +270,14 @@ export const ReallocationDialog = () => {
                             </div>
                           )}
                           <Select
-                            value={pendingCoordId || ''}
+                            value={pendingCoordId || '__keep__'}
                             onValueChange={(value) => handleManualAllocation(member.id, value)}
                           >
                             <SelectTrigger className="w-48">
                               <SelectValue placeholder="Nova coordenadoria" />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="">Manter atual</SelectItem>
+                              <SelectItem value="__keep__">Manter atual</SelectItem>
                               {coordinations
                                 .filter((c) => c.id !== member.currentCoordinationId)
                                 .map((coord) => (
