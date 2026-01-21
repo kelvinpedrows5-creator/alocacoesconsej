@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -116,15 +117,18 @@ export const ReallocationDialog = () => {
           Realocar Membros
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col">
+      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Shuffle className="w-5 h-5 text-primary" />
             Realocação de Membros
           </DialogTitle>
+          <DialogDescription>
+            Gerencie a realocação trimestral dos membros entre coordenadorias.
+          </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="auto" className="flex-1 flex flex-col overflow-hidden">
+        <Tabs defaultValue="auto" className="flex-1 flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="auto" className="gap-2">
               <Sparkles className="w-4 h-4" />
@@ -136,18 +140,19 @@ export const ReallocationDialog = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="auto" className="flex-1 overflow-hidden flex flex-col mt-4">
-            <div className="flex items-center justify-between mb-4">
+          <TabsContent value="auto" className="flex-1 flex flex-col mt-4 min-h-0 data-[state=inactive]:hidden">
+            <div className="flex items-center justify-between mb-4 flex-shrink-0">
               <p className="text-sm text-muted-foreground">
                 O sistema analisa o histórico e sugere realocações para maximizar a experiência 360°.
               </p>
-              <Button variant="outline" size="sm" onClick={generateSuggestions} className="gap-2">
+              <Button variant="outline" size="sm" onClick={generateSuggestions} className="gap-2 flex-shrink-0 ml-4">
                 <Sparkles className="w-4 h-4" />
                 Gerar Sugestões
               </Button>
             </div>
 
-            <ScrollArea className="flex-1 pr-4">
+            <ScrollArea className="h-[350px]">
+              <div className="pr-4">
               {suggestions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
                   <Sparkles className="w-12 h-12 text-muted-foreground/50 mb-4" />
@@ -210,6 +215,7 @@ export const ReallocationDialog = () => {
                   })}
                 </div>
               )}
+              </div>
             </ScrollArea>
 
             {suggestions.length > 0 && (
@@ -225,13 +231,13 @@ export const ReallocationDialog = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="manual" className="flex-1 overflow-hidden flex flex-col mt-4">
-            <p className="text-sm text-muted-foreground mb-4">
+          <TabsContent value="manual" className="flex-1 flex flex-col mt-4 min-h-0 data-[state=inactive]:hidden">
+            <p className="text-sm text-muted-foreground mb-4 flex-shrink-0">
               Selecione manualmente a nova coordenadoria para cada membro.
             </p>
 
-            <ScrollArea className="flex-1 pr-4">
-              <div className="space-y-3">
+            <ScrollArea className="h-[350px]">
+              <div className="space-y-3 pr-4">
                 {members.map((member, index) => {
                   const currentCoord = member.currentCoordinationId
                     ? getCoordination(member.currentCoordinationId)
