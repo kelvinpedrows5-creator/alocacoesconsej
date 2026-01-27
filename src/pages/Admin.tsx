@@ -11,6 +11,7 @@ import {
   Shield,
   Search,
   Eye,
+  UserCog,
 } from 'lucide-react';
 import { useAllocationStore } from '@/hooks/useAllocationStore';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -20,6 +21,7 @@ import { MemberCard } from '@/components/MemberCard';
 import { MemberHistoryModal } from '@/components/MemberHistoryModal';
 import { SuggestionsPanel } from '@/components/SuggestionsPanel';
 import { CoordinationGridFiltered } from '@/components/CoordinationGridFiltered';
+import { AdminMembersManagement } from '@/components/AdminMembersManagement';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { Button } from '@/components/ui/button';
@@ -42,7 +44,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { quarters, profileQuestions, directorates } from '@/data/mockData';
+import { cycles, profileQuestions, directorates } from '@/data/mockData';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ProfileData {
@@ -56,6 +58,16 @@ interface ProfileData {
   profile_activities: string | null;
   profile_competencies: string | null;
   profile_preferred_directorate: string | null;
+  profile_communication_style: string | null;
+  profile_problem_solving: string | null;
+  profile_time_management: string | null;
+  profile_team_role: string | null;
+  profile_learning_style: string | null;
+  profile_stress_handling: string | null;
+  profile_leadership_style: string | null;
+  profile_feedback_preference: string | null;
+  profile_project_type: string | null;
+  profile_collaboration_tools: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -127,6 +139,26 @@ const Admin = () => {
     (p) => p.profile_skills || p.profile_work_style || p.profile_activities
   );
 
+  const getProfileAnswers = (profileData: ProfileData) => {
+    return [
+      { id: 'q1', label: 'Habilidades de Interesse', value: profileData.profile_skills },
+      { id: 'q2', label: 'Estilo de Trabalho', value: profileData.profile_work_style },
+      { id: 'q3', label: 'Atividade que Motiva', value: profileData.profile_activities },
+      { id: 'q4', label: 'Competência a Desenvolver', value: profileData.profile_competencies },
+      { id: 'q5', label: 'Diretoria de Preferência', value: profileData.profile_preferred_directorate, isDirectorate: true },
+      { id: 'q6', label: 'Estilo de Comunicação', value: profileData.profile_communication_style },
+      { id: 'q7', label: 'Resolução de Problemas', value: profileData.profile_problem_solving },
+      { id: 'q8', label: 'Gestão de Tempo', value: profileData.profile_time_management },
+      { id: 'q9', label: 'Papel em Equipes', value: profileData.profile_team_role },
+      { id: 'q10', label: 'Estilo de Aprendizagem', value: profileData.profile_learning_style },
+      { id: 'q11', label: 'Lidando com Pressão', value: profileData.profile_stress_handling },
+      { id: 'q12', label: 'Estilo de Liderança', value: profileData.profile_leadership_style },
+      { id: 'q13', label: 'Preferência de Feedback', value: profileData.profile_feedback_preference },
+      { id: 'q14', label: 'Tipo de Projeto', value: profileData.profile_project_type },
+      { id: 'q15', label: 'Ferramentas de Colaboração', value: profileData.profile_collaboration_tools },
+    ];
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -148,13 +180,13 @@ const Admin = () => {
 
             <div className="flex items-center gap-3">
               <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-44">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {quarters.map((q) => (
-                    <SelectItem key={q.value} value={q.value}>
-                      {q.label}
+                  {cycles.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -203,6 +235,10 @@ const Admin = () => {
                 <FileText className="w-4 h-4" />
                 Pesquisas ({profilesWithResponses.length})
               </TabsTrigger>
+              <TabsTrigger value="management" className="gap-2">
+                <UserCog className="w-4 h-4" />
+                Gerenciar
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="suggestions" className="space-y-6">
@@ -234,7 +270,7 @@ const Admin = () => {
                     Respostas das Pesquisas de Perfil
                   </CardTitle>
                   <CardDescription>
-                    Visualize as respostas do questionário de alocação de cada membro
+                    Visualize as respostas do questionário de alocação de cada membro (15 perguntas)
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -309,6 +345,10 @@ const Admin = () => {
                 </CardContent>
               </Card>
             </TabsContent>
+
+            <TabsContent value="management">
+              <AdminMembersManagement />
+            </TabsContent>
           </Tabs>
         </motion.div>
       </main>
@@ -325,7 +365,7 @@ const Admin = () => {
 
       {/* Profile Details Modal */}
       <Dialog open={!!selectedProfile} onOpenChange={() => setSelectedProfile(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[80vh]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
@@ -339,33 +379,24 @@ const Admin = () => {
                 <p className="text-sm font-normal text-muted-foreground">{selectedProfile?.email}</p>
               </div>
             </DialogTitle>
-            <DialogDescription>Respostas do questionário de alocação</DialogDescription>
+            <DialogDescription>Respostas do questionário de alocação (15 perguntas)</DialogDescription>
           </DialogHeader>
           {selectedProfile && (
-            <div className="space-y-4 mt-4">
-              <div className="space-y-3">
-                <div className="p-3 rounded-lg bg-secondary/50">
-                  <p className="text-xs text-muted-foreground mb-1">Habilidades de Interesse</p>
-                  <p className="font-medium">{getAnswerLabel('q1', selectedProfile.profile_skills)}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-secondary/50">
-                  <p className="text-xs text-muted-foreground mb-1">Estilo de Trabalho</p>
-                  <p className="font-medium">{getAnswerLabel('q2', selectedProfile.profile_work_style)}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-secondary/50">
-                  <p className="text-xs text-muted-foreground mb-1">Atividade que Motiva</p>
-                  <p className="font-medium">{getAnswerLabel('q3', selectedProfile.profile_activities)}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-secondary/50">
-                  <p className="text-xs text-muted-foreground mb-1">Competência a Desenvolver</p>
-                  <p className="font-medium">{getAnswerLabel('q4', selectedProfile.profile_competencies)}</p>
-                </div>
-                <div className="p-3 rounded-lg bg-secondary/50">
-                  <p className="text-xs text-muted-foreground mb-1">Diretoria de Preferência</p>
-                  <p className="font-medium">{getDirectorateName(selectedProfile.profile_preferred_directorate)}</p>
-                </div>
+            <ScrollArea className="max-h-[50vh]">
+              <div className="space-y-3 pr-4">
+                {getProfileAnswers(selectedProfile).map((answer) => (
+                  <div key={answer.id} className="p-3 rounded-lg bg-secondary/50">
+                    <p className="text-xs text-muted-foreground mb-1">{answer.label}</p>
+                    <p className="font-medium">
+                      {answer.isDirectorate 
+                        ? getDirectorateName(answer.value)
+                        : getAnswerLabel(answer.id, answer.value)
+                      }
+                    </p>
+                  </div>
+                ))}
               </div>
-            </div>
+            </ScrollArea>
           )}
         </DialogContent>
       </Dialog>
