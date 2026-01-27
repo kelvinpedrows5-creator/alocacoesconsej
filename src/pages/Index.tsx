@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Users, Building2, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, User } from 'lucide-react';
 import { StatsOverview } from '@/components/StatsOverview';
 import { MemberCard } from '@/components/MemberCard';
 import { MemberHistoryModal } from '@/components/MemberHistoryModal';
@@ -8,10 +9,11 @@ import { SuggestionsPanel } from '@/components/SuggestionsPanel';
 import { CoordinationGrid } from '@/components/CoordinationGrid';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
-import { ProfileFormDialog } from '@/components/ProfileFormDialog';
 import { useAllocationStore } from '@/hooks/useAllocationStore';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Select,
   SelectContent,
@@ -22,8 +24,22 @@ import {
 import { quarters } from '@/data/mockData';
 
 const Index = () => {
+  const navigate = useNavigate();
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const { members, selectedQuarter, setSelectedQuarter } = useAllocationStore();
+  const { profile } = useAuthContext();
+
+  const getInitials = () => {
+    if (profile?.display_name) {
+      return profile.display_name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return profile?.email?.charAt(0).toUpperCase() || 'U';
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -41,7 +57,7 @@ const Index = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
                 <SelectTrigger className="w-32">
                   <SelectValue />
@@ -54,9 +70,21 @@ const Index = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <ProfileFormDialog />
               <ReallocationDialog />
               <AddMemberDialog />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="rounded-full"
+                onClick={() => navigate('/profile')}
+              >
+                <Avatar className="h-9 w-9">
+                  <AvatarImage src={profile?.avatar_url || undefined} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
+              </Button>
             </div>
           </div>
         </div>
