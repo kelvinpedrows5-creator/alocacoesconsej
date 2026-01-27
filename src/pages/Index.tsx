@@ -8,6 +8,7 @@ import { SuggestionsPanel } from '@/components/SuggestionsPanel';
 import { CoordinationGrid } from '@/components/CoordinationGrid';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
+import { ProfileFormDialog } from '@/components/ProfileFormDialog';
 import { useAllocationStore } from '@/hooks/useAllocationStore';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -53,6 +54,7 @@ const Index = () => {
                   ))}
                 </SelectContent>
               </Select>
+              <ProfileFormDialog />
               <ReallocationDialog />
               <AddMemberDialog />
             </div>
