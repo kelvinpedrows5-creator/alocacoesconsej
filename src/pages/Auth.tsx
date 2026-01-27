@@ -92,7 +92,7 @@ const Auth = () => {
             <LayoutDashboard className="w-8 h-8 text-primary-foreground" />
           </div>
           <div className="text-center">
-            <h1 className="font-bold text-2xl text-foreground">Alocação 360°</h1>
+            <h1 className="font-bold text-2xl text-foreground">Alocações CONSEJ</h1>
             <p className="text-sm text-muted-foreground">Sistema de Gestão de Membros</p>
           </div>
         </div>
