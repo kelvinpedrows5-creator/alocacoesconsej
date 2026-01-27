@@ -13,6 +13,16 @@ export interface UserProfile {
   profile_activities: string | null;
   profile_competencies: string | null;
   profile_preferred_directorate: string | null;
+  profile_communication_style: string | null;
+  profile_problem_solving: string | null;
+  profile_time_management: string | null;
+  profile_team_role: string | null;
+  profile_learning_style: string | null;
+  profile_stress_handling: string | null;
+  profile_leadership_style: string | null;
+  profile_feedback_preference: string | null;
+  profile_project_type: string | null;
+  profile_collaboration_tools: string | null;
   created_at: string;
   updated_at: string;
 }

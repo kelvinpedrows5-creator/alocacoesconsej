@@ -22,9 +22,19 @@ export type Database = {
           email: string
           id: string
           profile_activities: string | null
+          profile_collaboration_tools: string | null
+          profile_communication_style: string | null
           profile_competencies: string | null
+          profile_feedback_preference: string | null
+          profile_leadership_style: string | null
+          profile_learning_style: string | null
           profile_preferred_directorate: string | null
+          profile_problem_solving: string | null
+          profile_project_type: string | null
           profile_skills: string | null
+          profile_stress_handling: string | null
+          profile_team_role: string | null
+          profile_time_management: string | null
           profile_work_style: string | null
           updated_at: string
           user_id: string
@@ -36,9 +46,19 @@ export type Database = {
           email: string
           id?: string
           profile_activities?: string | null
+          profile_collaboration_tools?: string | null
+          profile_communication_style?: string | null
           profile_competencies?: string | null
+          profile_feedback_preference?: string | null
+          profile_leadership_style?: string | null
+          profile_learning_style?: string | null
           profile_preferred_directorate?: string | null
+          profile_problem_solving?: string | null
+          profile_project_type?: string | null
           profile_skills?: string | null
+          profile_stress_handling?: string | null
+          profile_team_role?: string | null
+          profile_time_management?: string | null
           profile_work_style?: string | null
           updated_at?: string
           user_id: string
@@ -50,9 +70,19 @@ export type Database = {
           email?: string
           id?: string
           profile_activities?: string | null
+          profile_collaboration_tools?: string | null
+          profile_communication_style?: string | null
           profile_competencies?: string | null
+          profile_feedback_preference?: string | null
+          profile_leadership_style?: string | null
+          profile_learning_style?: string | null
           profile_preferred_directorate?: string | null
+          profile_problem_solving?: string | null
+          profile_project_type?: string | null
           profile_skills?: string | null
+          profile_stress_handling?: string | null
+          profile_team_role?: string | null
+          profile_time_management?: string | null
           profile_work_style?: string | null
           updated_at?: string
           user_id?: string

@@ -8,6 +8,7 @@ import { MemberHistoryModal } from '@/components/MemberHistoryModal';
 import { SuggestionsPanel } from '@/components/SuggestionsPanel';
 import { CoordinationGridFiltered } from '@/components/CoordinationGridFiltered';
 import { MemberProfileResults } from '@/components/MemberProfileResults';
+import { MembersSection } from '@/components/MembersSection';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { useAllocationStore } from '@/hooks/useAllocationStore';
@@ -22,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { quarters } from '@/data/mockData';
+import { cycles } from '@/data/mockData';
 
 const Index = () => {
   const navigate = useNavigate();
@@ -68,13 +69,13 @@ const Index = () => {
 
             <div className="flex items-center gap-3">
               <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-44">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {quarters.map((q) => (
-                    <SelectItem key={q.value} value={q.value}>
-                      {q.label}
+                  {cycles.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -149,7 +150,11 @@ const Index = () => {
                   </TabsTrigger>
                   <TabsTrigger value="my-profile" className="gap-2">
                     <User className="w-4 h-4" />
-                    Meu Perfil de Alocação
+                    Perfil de Alocação
+                  </TabsTrigger>
+                  <TabsTrigger value="consej" className="gap-2">
+                    <Users className="w-4 h-4" />
+                    CONSEJ
                   </TabsTrigger>
                 </>
               )}
@@ -186,6 +191,10 @@ const Index = () => {
 
                 <TabsContent value="my-profile" className="space-y-6">
                   <MemberProfileResults />
+                </TabsContent>
+
+                <TabsContent value="consej" className="space-y-6">
+                  <MembersSection />
                 </TabsContent>
               </>
             )}

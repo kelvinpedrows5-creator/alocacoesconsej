@@ -41,10 +41,10 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-1',
     joinedAt: '2023-01-15',
     history: [
-      { coordinationId: 'coord-10', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-3', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-13', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-1', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-10', quarter: '2025-C1', startDate: '2025-01-01', endDate: '2025-03-31' },
+      { coordinationId: 'coord-3', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-13', quarter: '2025-C3', startDate: '2025-07-01', endDate: '2025-09-30' },
+      { coordinationId: 'coord-1', quarter: '2025-C4', startDate: '2025-10-01' },
     ],
   },
   {
@@ -54,9 +54,9 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-3',
     joinedAt: '2023-02-01',
     history: [
-      { coordinationId: 'coord-1', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-11', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-3', quarter: '2023-Q3', startDate: '2023-07-01' },
+      { coordinationId: 'coord-1', quarter: '2025-C1', startDate: '2025-01-01', endDate: '2025-03-31' },
+      { coordinationId: 'coord-11', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-3', quarter: '2025-C3', startDate: '2025-07-01' },
     ],
   },
   {
@@ -66,8 +66,8 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-10',
     joinedAt: '2023-01-20',
     history: [
-      { coordinationId: 'coord-13', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-10', quarter: '2023-Q2', startDate: '2023-04-01' },
+      { coordinationId: 'coord-13', quarter: '2025-C1', startDate: '2025-01-01', endDate: '2025-03-31' },
+      { coordinationId: 'coord-10', quarter: '2025-C2', startDate: '2025-04-01' },
     ],
   },
   {
@@ -77,7 +77,7 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-9',
     joinedAt: '2023-03-01',
     history: [
-      { coordinationId: 'coord-9', quarter: '2023-Q1', startDate: '2023-03-01' },
+      { coordinationId: 'coord-9', quarter: '2025-C1', startDate: '2025-03-01' },
     ],
   },
   {
@@ -87,10 +87,10 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-4',
     joinedAt: '2023-01-10',
     history: [
-      { coordinationId: 'coord-2', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-5', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-13', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-4', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-2', quarter: '2025-C1', startDate: '2025-01-01', endDate: '2025-03-31' },
+      { coordinationId: 'coord-5', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-13', quarter: '2025-C3', startDate: '2025-07-01', endDate: '2025-09-30' },
+      { coordinationId: 'coord-4', quarter: '2025-C4', startDate: '2025-10-01' },
     ],
   },
   {
@@ -100,8 +100,8 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-13',
     joinedAt: '2023-02-15',
     history: [
-      { coordinationId: 'coord-10', quarter: '2023-Q1', startDate: '2023-02-15', endDate: '2023-03-31' },
-      { coordinationId: 'coord-13', quarter: '2023-Q2', startDate: '2023-04-01' },
+      { coordinationId: 'coord-10', quarter: '2025-C1', startDate: '2025-02-15', endDate: '2025-03-31' },
+      { coordinationId: 'coord-13', quarter: '2025-C2', startDate: '2025-04-01' },
     ],
   },
   {
@@ -111,10 +111,10 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-5',
     joinedAt: '2023-01-05',
     history: [
-      { coordinationId: 'coord-11', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-2', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-9', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-5', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-11', quarter: '2025-C1', startDate: '2025-01-01', endDate: '2025-03-31' },
+      { coordinationId: 'coord-2', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-9', quarter: '2025-C3', startDate: '2025-07-01', endDate: '2025-09-30' },
+      { coordinationId: 'coord-5', quarter: '2025-C4', startDate: '2025-10-01' },
     ],
   },
   {
@@ -124,7 +124,7 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-14',
     joinedAt: '2023-04-01',
     history: [
-      { coordinationId: 'coord-14', quarter: '2023-Q2', startDate: '2023-04-01' },
+      { coordinationId: 'coord-14', quarter: '2025-C2', startDate: '2025-04-01' },
     ],
   },
   {
@@ -134,10 +134,10 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-2',
     joinedAt: '2023-01-08',
     history: [
-      { coordinationId: 'coord-4', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-14', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-10', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-2', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-4', quarter: '2025-C1', startDate: '2025-01-01', endDate: '2025-03-31' },
+      { coordinationId: 'coord-14', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-10', quarter: '2025-C3', startDate: '2025-07-01', endDate: '2025-09-30' },
+      { coordinationId: 'coord-2', quarter: '2025-C4', startDate: '2025-10-01' },
     ],
   },
   {
@@ -147,9 +147,9 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-11',
     joinedAt: '2023-02-20',
     history: [
-      { coordinationId: 'coord-3', quarter: '2023-Q1', startDate: '2023-02-20', endDate: '2023-03-31' },
-      { coordinationId: 'coord-9', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-11', quarter: '2023-Q3', startDate: '2023-07-01' },
+      { coordinationId: 'coord-3', quarter: '2025-C1', startDate: '2025-02-20', endDate: '2025-03-31' },
+      { coordinationId: 'coord-9', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-11', quarter: '2025-C3', startDate: '2025-07-01' },
     ],
   },
   {
@@ -159,10 +159,10 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-1',
     joinedAt: '2023-01-12',
     history: [
-      { coordinationId: 'coord-5', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-13', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-4', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-1', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-5', quarter: '2025-C1', startDate: '2025-01-01', endDate: '2025-03-31' },
+      { coordinationId: 'coord-13', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-4', quarter: '2025-C3', startDate: '2025-07-01', endDate: '2025-09-30' },
+      { coordinationId: 'coord-1', quarter: '2025-C4', startDate: '2025-10-01' },
     ],
   },
   {
@@ -172,8 +172,8 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-3',
     joinedAt: '2023-03-15',
     history: [
-      { coordinationId: 'coord-2', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-3', quarter: '2023-Q3', startDate: '2023-07-01' },
+      { coordinationId: 'coord-2', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-3', quarter: '2025-C3', startDate: '2025-07-01' },
     ],
   },
   {
@@ -183,10 +183,10 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-14',
     joinedAt: '2023-01-25',
     history: [
-      { coordinationId: 'coord-1', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-10', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-5', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-14', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-1', quarter: '2025-C1', startDate: '2025-01-01', endDate: '2025-03-31' },
+      { coordinationId: 'coord-10', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-5', quarter: '2025-C3', startDate: '2025-07-01', endDate: '2025-09-30' },
+      { coordinationId: 'coord-14', quarter: '2025-C4', startDate: '2025-10-01' },
     ],
   },
   {
@@ -196,9 +196,9 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-4',
     joinedAt: '2023-02-05',
     history: [
-      { coordinationId: 'coord-11', quarter: '2023-Q1', startDate: '2023-02-05', endDate: '2023-03-31' },
-      { coordinationId: 'coord-1', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-4', quarter: '2023-Q3', startDate: '2023-07-01' },
+      { coordinationId: 'coord-11', quarter: '2025-C1', startDate: '2025-02-05', endDate: '2025-03-31' },
+      { coordinationId: 'coord-1', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-4', quarter: '2025-C3', startDate: '2025-07-01' },
     ],
   },
   {
@@ -208,10 +208,10 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-9',
     joinedAt: '2023-01-18',
     history: [
-      { coordinationId: 'coord-14', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-3', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-2', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-9', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-14', quarter: '2025-C1', startDate: '2025-01-01', endDate: '2025-03-31' },
+      { coordinationId: 'coord-3', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-2', quarter: '2025-C3', startDate: '2025-07-01', endDate: '2025-09-30' },
+      { coordinationId: 'coord-9', quarter: '2025-C4', startDate: '2025-10-01' },
     ],
   },
   {
@@ -221,9 +221,9 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-10',
     joinedAt: '2023-02-28',
     history: [
-      { coordinationId: 'coord-9', quarter: '2023-Q1', startDate: '2023-02-28', endDate: '2023-03-31' },
-      { coordinationId: 'coord-4', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-10', quarter: '2023-Q3', startDate: '2023-07-01' },
+      { coordinationId: 'coord-9', quarter: '2025-C1', startDate: '2025-02-28', endDate: '2025-03-31' },
+      { coordinationId: 'coord-4', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-10', quarter: '2025-C3', startDate: '2025-07-01' },
     ],
   },
   {
@@ -233,10 +233,10 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-2',
     joinedAt: '2023-01-03',
     history: [
-      { coordinationId: 'coord-13', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-5', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-11', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-2', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-13', quarter: '2025-C1', startDate: '2025-01-01', endDate: '2025-03-31' },
+      { coordinationId: 'coord-5', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-11', quarter: '2025-C3', startDate: '2025-07-01', endDate: '2025-09-30' },
+      { coordinationId: 'coord-2', quarter: '2025-C4', startDate: '2025-10-01' },
     ],
   },
   {
@@ -246,8 +246,8 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-5',
     joinedAt: '2023-03-10',
     history: [
-      { coordinationId: 'coord-10', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-5', quarter: '2023-Q3', startDate: '2023-07-01' },
+      { coordinationId: 'coord-10', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-5', quarter: '2025-C3', startDate: '2025-07-01' },
     ],
   },
   {
@@ -257,22 +257,28 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-13',
     joinedAt: '2023-01-22',
     history: [
-      { coordinationId: 'coord-3', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-1', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-14', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-13', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-3', quarter: '2025-C1', startDate: '2025-01-01', endDate: '2025-03-31' },
+      { coordinationId: 'coord-1', quarter: '2025-C2', startDate: '2025-04-01', endDate: '2025-06-30' },
+      { coordinationId: 'coord-14', quarter: '2025-C3', startDate: '2025-07-01', endDate: '2025-09-30' },
+      { coordinationId: 'coord-13', quarter: '2025-C4', startDate: '2025-10-01' },
     ],
   },
 ];
 
-export const quarters = [
-  { label: 'Q1 2024', value: '2024-Q1' },
-  { label: 'Q2 2024', value: '2024-Q2' },
-  { label: 'Q3 2024', value: '2024-Q3' },
-  { label: 'Q4 2024', value: '2024-Q4' },
+// Cycles instead of quarters
+export const cycles = [
+  { label: '1º Ciclo de 2025', value: '2025-C1' },
+  { label: '2º Ciclo de 2025', value: '2025-C2' },
+  { label: '3º Ciclo de 2025', value: '2025-C3' },
+  { label: '4º Ciclo de 2025', value: '2025-C4' },
+  { label: '1º Ciclo de 2026', value: '2026-C1' },
+  { label: '2º Ciclo de 2026', value: '2026-C2' },
 ];
 
-// Profile questions for matching members to coordinations
+// Legacy export for backwards compatibility
+export const quarters = cycles;
+
+// Profile questions for matching members to coordinations (15 questions)
 export const profileQuestions = [
   {
     id: 'q1',
@@ -327,6 +333,107 @@ export const profileQuestions = [
       { value: 'dir-4', label: 'Vice-Presidência - Inovação, Finanças e Estratégia' },
       { value: 'dir-5', label: 'Marketing - Branding, Social Media e Inbound' },
       { value: 'dir-6', label: 'Pesquisas e Pessoas - Pesquisas, Desempenho e Experiência' },
+    ],
+  },
+  {
+    id: 'q6',
+    question: 'Qual é o seu estilo de comunicação preferido?',
+    options: [
+      { value: 'direct', label: 'Direto e objetivo' },
+      { value: 'detailed', label: 'Detalhado e explicativo' },
+      { value: 'visual', label: 'Visual e com exemplos' },
+      { value: 'informal', label: 'Informal e descontraído' },
+    ],
+  },
+  {
+    id: 'q7',
+    question: 'Como você costuma resolver problemas?',
+    options: [
+      { value: 'analytical_approach', label: 'Analisando dados e informações' },
+      { value: 'intuitive', label: 'Confiando na intuição e experiência' },
+      { value: 'collaborative_approach', label: 'Buscando opiniões de outras pessoas' },
+      { value: 'experimental', label: 'Testando diferentes soluções rapidamente' },
+    ],
+  },
+  {
+    id: 'q8',
+    question: 'Como você gerencia seu tempo e prioridades?',
+    options: [
+      { value: 'structured', label: 'Com listas e cronogramas detalhados' },
+      { value: 'flexible', label: 'De forma flexível, adaptando conforme necessário' },
+      { value: 'deadline_driven', label: 'Focado em prazos e entregas' },
+      { value: 'priority_based', label: 'Priorizando o mais importante primeiro' },
+    ],
+  },
+  {
+    id: 'q9',
+    question: 'Qual papel você costuma assumir em equipes?',
+    options: [
+      { value: 'leader_role', label: 'Líder - organizando e direcionando' },
+      { value: 'executor', label: 'Executor - fazendo acontecer' },
+      { value: 'ideator', label: 'Idealizador - gerando novas ideias' },
+      { value: 'mediator', label: 'Mediador - conectando pessoas e ideias' },
+      { value: 'specialist', label: 'Especialista - trazendo conhecimento técnico' },
+    ],
+  },
+  {
+    id: 'q10',
+    question: 'Como você prefere aprender coisas novas?',
+    options: [
+      { value: 'hands_on', label: 'Colocando a mão na massa' },
+      { value: 'reading', label: 'Lendo e estudando materiais' },
+      { value: 'mentoring', label: 'Com ajuda de um mentor ou colega' },
+      { value: 'courses', label: 'Através de cursos e treinamentos formais' },
+    ],
+  },
+  {
+    id: 'q11',
+    question: 'Como você lida com situações de pressão?',
+    options: [
+      { value: 'calm', label: 'Mantenho a calma e foco no essencial' },
+      { value: 'energized', label: 'Fico mais energizado e produtivo' },
+      { value: 'delegate', label: 'Delego e busco apoio' },
+      { value: 'plan', label: 'Reorganizo prioridades e faço um plano' },
+    ],
+  },
+  {
+    id: 'q12',
+    question: 'Qual estilo de liderança você mais admira?',
+    options: [
+      { value: 'servant', label: 'Liderança servidora - apoiando a equipe' },
+      { value: 'visionary', label: 'Liderança visionária - inspirando com propósito' },
+      { value: 'democratic', label: 'Liderança democrática - decisões em conjunto' },
+      { value: 'coaching', label: 'Liderança coach - desenvolvendo pessoas' },
+    ],
+  },
+  {
+    id: 'q13',
+    question: 'Como você prefere receber feedback?',
+    options: [
+      { value: 'direct_feedback', label: 'Direto e frequente' },
+      { value: 'formal', label: 'Em momentos formais e estruturados' },
+      { value: 'written', label: 'Por escrito, para refletir depois' },
+      { value: 'one_on_one', label: 'Em conversas individuais' },
+    ],
+  },
+  {
+    id: 'q14',
+    question: 'Que tipo de projeto te atrai mais?',
+    options: [
+      { value: 'new_initiative', label: 'Criar algo do zero' },
+      { value: 'improvement', label: 'Melhorar processos existentes' },
+      { value: 'scaling', label: 'Escalar e expandir iniciativas' },
+      { value: 'problem_solving', label: 'Resolver problemas complexos' },
+    ],
+  },
+  {
+    id: 'q15',
+    question: 'Qual ferramenta de trabalho colaborativo você prefere?',
+    options: [
+      { value: 'async', label: 'Ferramentas assíncronas (email, documentos)' },
+      { value: 'realtime', label: 'Comunicação em tempo real (chat, calls)' },
+      { value: 'visual_tools', label: 'Ferramentas visuais (quadros, fluxos)' },
+      { value: 'mixed', label: 'Combinação de diferentes ferramentas' },
     ],
   },
 ];
@@ -414,8 +521,8 @@ export const coordinationMatchingProfile: Record<string, { skills: string[], wor
   'coord-14': { // Desempenho
     skills: ['people', 'analytical'],
     workStyle: ['collaborative', 'leadership'],
-    activities: ['analysis', 'internal'],
-    competencies: ['hr'],
+    activities: ['internal', 'analysis'],
+    competencies: ['hr', 'project'],
   },
   'coord-15': { // Experiência de Time
     skills: ['people', 'creative'],
@@ -424,3 +531,19 @@ export const coordinationMatchingProfile: Record<string, { skills: string[], wor
     competencies: ['hr'],
   },
 };
+
+// Allocation suggestions based on 360° algorithm
+export const allocationSuggestions = [
+  {
+    memberId: 'mem-4',
+    suggestedCoordinationId: 'coord-2',
+    reason: 'Daniel possui baixa cobertura e nunca passou por Clientes',
+    priority: 'high' as const,
+  },
+  {
+    memberId: 'mem-8',
+    suggestedCoordinationId: 'coord-7',
+    reason: 'Henrique nunca atuou em Inovação e tem perfil compatível',
+    priority: 'medium' as const,
+  },
+];

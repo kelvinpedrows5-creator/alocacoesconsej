@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ChevronLeft,
   Check,
+  Users,
 } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -24,6 +25,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ImageCropper } from '@/components/ImageCropper';
+import { MembersSection } from '@/components/MembersSection';
 import { useToast } from '@/hooks/use-toast';
 import { profileQuestions, coordinationMatchingProfile, coordinations } from '@/data/mockData';
 
@@ -56,15 +58,26 @@ const Profile = () => {
     if (profile) {
       setDisplayName(profile.display_name || '');
       
-      // Load saved allocation profile
-      if (profile.profile_skills) {
-        setAnswers({
-          q1: profile.profile_skills || '',
-          q2: profile.profile_work_style || '',
-          q3: profile.profile_activities || '',
-          q4: profile.profile_competencies || '',
-          q5: profile.profile_preferred_directorate || '',
-        });
+      // Load saved allocation profile (all 15 answers)
+      const savedAnswers: Record<string, string> = {};
+      if (profile.profile_skills) savedAnswers.q1 = profile.profile_skills;
+      if (profile.profile_work_style) savedAnswers.q2 = profile.profile_work_style;
+      if (profile.profile_activities) savedAnswers.q3 = profile.profile_activities;
+      if (profile.profile_competencies) savedAnswers.q4 = profile.profile_competencies;
+      if (profile.profile_preferred_directorate) savedAnswers.q5 = profile.profile_preferred_directorate;
+      if ((profile as any).profile_communication_style) savedAnswers.q6 = (profile as any).profile_communication_style;
+      if ((profile as any).profile_problem_solving) savedAnswers.q7 = (profile as any).profile_problem_solving;
+      if ((profile as any).profile_time_management) savedAnswers.q8 = (profile as any).profile_time_management;
+      if ((profile as any).profile_team_role) savedAnswers.q9 = (profile as any).profile_team_role;
+      if ((profile as any).profile_learning_style) savedAnswers.q10 = (profile as any).profile_learning_style;
+      if ((profile as any).profile_stress_handling) savedAnswers.q11 = (profile as any).profile_stress_handling;
+      if ((profile as any).profile_leadership_style) savedAnswers.q12 = (profile as any).profile_leadership_style;
+      if ((profile as any).profile_feedback_preference) savedAnswers.q13 = (profile as any).profile_feedback_preference;
+      if ((profile as any).profile_project_type) savedAnswers.q14 = (profile as any).profile_project_type;
+      if ((profile as any).profile_collaboration_tools) savedAnswers.q15 = (profile as any).profile_collaboration_tools;
+      
+      if (Object.keys(savedAnswers).length > 0) {
+        setAnswers(savedAnswers);
         setHasFilledProfile(true);
       }
     }
@@ -179,16 +192,16 @@ const Profile = () => {
 
     Object.entries(coordinationMatchingProfile).forEach(([coordId, profileData]) => {
       if (answers['q1'] && profileData.skills.includes(answers['q1'])) {
-        scores[coordId] += 25;
+        scores[coordId] += 15;
       }
       if (answers['q2'] && profileData.workStyle.includes(answers['q2'])) {
-        scores[coordId] += 20;
+        scores[coordId] += 15;
       }
       if (answers['q3'] && profileData.activities.includes(answers['q3'])) {
-        scores[coordId] += 25;
+        scores[coordId] += 15;
       }
       if (answers['q4'] && profileData.competencies.includes(answers['q4'])) {
-        scores[coordId] += 20;
+        scores[coordId] += 15;
       }
       if (answers['q5']) {
         const coordination = coordinations.find((c) => c.id === coordId);
@@ -196,6 +209,15 @@ const Profile = () => {
           scores[coordId] += 10;
         }
       }
+      // Additional questions add smaller bonuses (distributed across 15 questions)
+      // Questions 6-15 add extra context for better matching
+      const bonusQuestions = ['q6', 'q7', 'q8', 'q9', 'q10', 'q11', 'q12', 'q13', 'q14', 'q15'];
+      bonusQuestions.forEach((qId, idx) => {
+        if (answers[qId]) {
+          // Add small bonus based on answering additional questions
+          scores[coordId] += 3;
+        }
+      });
     });
 
     const sortedMatches = Object.entries(scores)
@@ -203,7 +225,7 @@ const Profile = () => {
         const coord = coordinations.find((c) => c.id === coordId);
         return {
           coordinationId: coordId,
-          score,
+          score: Math.min(score, 100), // Cap at 100%
           coordinationName: coord?.name || '',
           color: coord?.color || '#888',
         };
@@ -247,6 +269,21 @@ const Profile = () => {
         profile_activities: answers['q3'] || null,
         profile_competencies: answers['q4'] || null,
         profile_preferred_directorate: answers['q5'] || null,
+        profile_communication_style: answers['q6'] || null,
+        profile_problem_solving: answers['q7'] || null,
+        profile_time_management: answers['q8'] || null,
+        profile_team_role: answers['q9'] || null,
+        profile_learning_style: answers['q10'] || null,
+        profile_stress_handling: answers['q11'] || null,
+        profile_leadership_style: answers['q12'] || null,
+        profile_feedback_preference: answers['q13'] || null,
+        profile_project_type: answers['q14'] || null,
+        profile_collaboration_tools: answers['q15'] || null,
+      } as any);
+      
+      toast({
+        title: 'Perfil salvo!',
+        description: 'Suas respostas foram salvas com sucesso.',
       });
     } catch (error) {
       console.error('Error saving allocation profile:', error);
@@ -309,6 +346,10 @@ const Profile = () => {
               <TabsTrigger value="allocation" className="gap-2">
                 <Sparkles className="w-4 h-4" />
                 Perfil de Alocação
+              </TabsTrigger>
+              <TabsTrigger value="consej" className="gap-2">
+                <Users className="w-4 h-4" />
+                CONSEJ
               </TabsTrigger>
             </TabsList>
 
@@ -396,7 +437,7 @@ const Profile = () => {
                     Perfil de Alocação
                   </CardTitle>
                   <CardDescription>
-                    Responda as perguntas para descobrir quais coordenadorias mais combinam com seu perfil.
+                    Responda as 15 perguntas para descobrir quais coordenadorias mais combinam com seu perfil.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -522,6 +563,10 @@ const Profile = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="consej">
+              <MembersSection />
             </TabsContent>
           </Tabs>
         </motion.div>
