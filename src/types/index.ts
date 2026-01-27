@@ -1,3 +1,11 @@
+export interface MemberProfile {
+  skills: string;
+  workStyle: string;
+  activities: string;
+  competencies: string;
+  preferredDirectorate: string;
+}
+
 export interface Member {
   id: string;
   name: string;
@@ -6,6 +14,7 @@ export interface Member {
   currentCoordinationId: string | null;
   joinedAt: string;
   history: AllocationHistory[];
+  profile?: MemberProfile;
 }
 
 export interface Coordination {

@@ -5,27 +5,32 @@ export const directorates: Directorate[] = [
   { id: 'dir-2', name: 'Negócios', description: 'Desenvolvimento de negócios e parcerias estratégicas' },
   { id: 'dir-3', name: 'Presidência', description: 'Direção executiva e tomada de decisões estratégicas' },
   { id: 'dir-4', name: 'Vice-Presidência', description: 'Apoio à presidência e coordenação geral' },
-  { id: 'dir-5', name: 'Pesquisas e Pessoas', description: 'Gestão de pessoas e pesquisas organizacionais' },
-  { id: 'dir-6', name: 'Marketing', description: 'Estratégias de marketing e comunicação' },
+  { id: 'dir-5', name: 'Marketing', description: 'Estratégias de marketing e comunicação' },
+  { id: 'dir-6', name: 'Pesquisas e Pessoas', description: 'Gestão de pessoas e pesquisas organizacionais' },
 ];
 
 export const coordinations: Coordination[] = [
   // Demandas
-  { id: 'coord-1', name: 'Projetos', description: 'Gestão de projetos estratégicos', color: '#3B82F6', directorateId: 'dir-1', maxMembers: 5 },
-  { id: 'coord-2', name: 'Qualidade', description: 'Controle de qualidade das entregas', color: '#06B6D4', directorateId: 'dir-1', maxMembers: 4 },
+  { id: 'coord-1', name: 'Procedimentos Internos', description: 'Gestão de processos e procedimentos internos', color: '#3B82F6', directorateId: 'dir-1', maxMembers: 5 },
+  { id: 'coord-2', name: 'Clientes', description: 'Atendimento e gestão de clientes', color: '#06B6D4', directorateId: 'dir-1', maxMembers: 5 },
   // Negócios
-  { id: 'coord-3', name: 'Comercial', description: 'Vendas e relacionamento com clientes', color: '#10B981', directorateId: 'dir-2', maxMembers: 5 },
-  { id: 'coord-4', name: 'Parcerias', description: 'Desenvolvimento de parcerias estratégicas', color: '#14B8A6', directorateId: 'dir-2', maxMembers: 4 },
+  { id: 'coord-3', name: 'Closing', description: 'Fechamento de negócios e contratos', color: '#10B981', directorateId: 'dir-2', maxMembers: 5 },
+  { id: 'coord-4', name: 'Growth', description: 'Crescimento e expansão de mercado', color: '#14B8A6', directorateId: 'dir-2', maxMembers: 5 },
   // Presidência
-  { id: 'coord-5', name: 'Estratégia', description: 'Planejamento estratégico organizacional', color: '#8B5CF6', directorateId: 'dir-3', maxMembers: 3 },
+  { id: 'coord-5', name: 'Operações', description: 'Coordenação operacional geral', color: '#8B5CF6', directorateId: 'dir-3', maxMembers: 4 },
+  { id: 'coord-6', name: 'Parcerias', description: 'Desenvolvimento de parcerias estratégicas', color: '#A855F7', directorateId: 'dir-3', maxMembers: 4 },
   // Vice-Presidência
-  { id: 'coord-6', name: 'Operações', description: 'Coordenação operacional geral', color: '#A855F7', directorateId: 'dir-4', maxMembers: 4 },
-  // Pesquisas e Pessoas
-  { id: 'coord-7', name: 'Capacitação', description: 'Treinamentos e desenvolvimento de membros', color: '#F59E0B', directorateId: 'dir-5', maxMembers: 4 },
-  { id: 'coord-8', name: 'Pesquisa', description: 'Pesquisas e análises de mercado', color: '#EAB308', directorateId: 'dir-5', maxMembers: 4 },
+  { id: 'coord-7', name: 'Inovação', description: 'Projetos de inovação e tecnologia', color: '#F59E0B', directorateId: 'dir-4', maxMembers: 4 },
+  { id: 'coord-8', name: 'Finanças', description: 'Gestão financeira e contábil', color: '#EAB308', directorateId: 'dir-4', maxMembers: 4 },
+  { id: 'coord-9', name: 'Estratégia', description: 'Planejamento estratégico organizacional', color: '#F97316', directorateId: 'dir-4', maxMembers: 4 },
   // Marketing
-  { id: 'coord-9', name: 'Comunicação', description: 'Comunicação interna e externa', color: '#EC4899', directorateId: 'dir-6', maxMembers: 4 },
-  { id: 'coord-10', name: 'Mídias Sociais', description: 'Gestão de redes sociais', color: '#F43F5E', directorateId: 'dir-6', maxMembers: 3 },
+  { id: 'coord-10', name: 'Branding', description: 'Gestão de marca e identidade visual', color: '#EC4899', directorateId: 'dir-5', maxMembers: 4 },
+  { id: 'coord-11', name: 'Social Media', description: 'Gestão de redes sociais', color: '#F43F5E', directorateId: 'dir-5', maxMembers: 4 },
+  { id: 'coord-12', name: 'Inbound Marketing', description: 'Marketing de atração e conteúdo', color: '#E11D48', directorateId: 'dir-5', maxMembers: 4 },
+  // Pesquisas e Pessoas
+  { id: 'coord-13', name: 'Pesquisas', description: 'Pesquisas e análises de mercado', color: '#84CC16', directorateId: 'dir-6', maxMembers: 4 },
+  { id: 'coord-14', name: 'Desempenho', description: 'Avaliação e gestão de desempenho', color: '#22C55E', directorateId: 'dir-6', maxMembers: 4 },
+  { id: 'coord-15', name: 'Experiência de Time', description: 'Cultura organizacional e experiência dos membros', color: '#16A34A', directorateId: 'dir-6', maxMembers: 4 },
 ];
 
 export const members: Member[] = [
@@ -36,9 +41,9 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-1',
     joinedAt: '2023-01-15',
     history: [
-      { coordinationId: 'coord-9', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
+      { coordinationId: 'coord-10', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
       { coordinationId: 'coord-3', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-7', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
+      { coordinationId: 'coord-13', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
       { coordinationId: 'coord-1', quarter: '2023-Q4', startDate: '2023-10-01' },
     ],
   },
@@ -50,7 +55,7 @@ export const members: Member[] = [
     joinedAt: '2023-02-01',
     history: [
       { coordinationId: 'coord-1', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-10', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
+      { coordinationId: 'coord-11', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
       { coordinationId: 'coord-3', quarter: '2023-Q3', startDate: '2023-07-01' },
     ],
   },
@@ -58,21 +63,21 @@ export const members: Member[] = [
     id: 'mem-3',
     name: 'Carla Mendes',
     email: 'carla.mendes@empresa.com',
-    currentCoordinationId: 'coord-9',
+    currentCoordinationId: 'coord-10',
     joinedAt: '2023-01-20',
     history: [
-      { coordinationId: 'coord-8', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-9', quarter: '2023-Q2', startDate: '2023-04-01' },
+      { coordinationId: 'coord-13', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
+      { coordinationId: 'coord-10', quarter: '2023-Q2', startDate: '2023-04-01' },
     ],
   },
   {
     id: 'mem-4',
     name: 'Daniel Oliveira',
     email: 'daniel.oliveira@empresa.com',
-    currentCoordinationId: 'coord-5',
+    currentCoordinationId: 'coord-9',
     joinedAt: '2023-03-01',
     history: [
-      { coordinationId: 'coord-5', quarter: '2023-Q1', startDate: '2023-03-01' },
+      { coordinationId: 'coord-9', quarter: '2023-Q1', startDate: '2023-03-01' },
     ],
   },
   {
@@ -83,8 +88,8 @@ export const members: Member[] = [
     joinedAt: '2023-01-10',
     history: [
       { coordinationId: 'coord-2', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-6', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-8', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
+      { coordinationId: 'coord-5', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
+      { coordinationId: 'coord-13', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
       { coordinationId: 'coord-4', quarter: '2023-Q4', startDate: '2023-10-01' },
     ],
   },
@@ -92,34 +97,34 @@ export const members: Member[] = [
     id: 'mem-6',
     name: 'Felipe Santos',
     email: 'felipe.santos@empresa.com',
-    currentCoordinationId: 'coord-8',
+    currentCoordinationId: 'coord-13',
     joinedAt: '2023-02-15',
     history: [
-      { coordinationId: 'coord-9', quarter: '2023-Q1', startDate: '2023-02-15', endDate: '2023-03-31' },
-      { coordinationId: 'coord-8', quarter: '2023-Q2', startDate: '2023-04-01' },
+      { coordinationId: 'coord-10', quarter: '2023-Q1', startDate: '2023-02-15', endDate: '2023-03-31' },
+      { coordinationId: 'coord-13', quarter: '2023-Q2', startDate: '2023-04-01' },
     ],
   },
   {
     id: 'mem-7',
     name: 'Gabriela Lima',
     email: 'gabriela.lima@empresa.com',
-    currentCoordinationId: 'coord-6',
+    currentCoordinationId: 'coord-5',
     joinedAt: '2023-01-05',
     history: [
-      { coordinationId: 'coord-10', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
+      { coordinationId: 'coord-11', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
       { coordinationId: 'coord-2', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-5', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-6', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-9', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
+      { coordinationId: 'coord-5', quarter: '2023-Q4', startDate: '2023-10-01' },
     ],
   },
   {
     id: 'mem-8',
     name: 'Henrique Ferreira',
     email: 'henrique.ferreira@empresa.com',
-    currentCoordinationId: 'coord-7',
+    currentCoordinationId: 'coord-14',
     joinedAt: '2023-04-01',
     history: [
-      { coordinationId: 'coord-7', quarter: '2023-Q2', startDate: '2023-04-01' },
+      { coordinationId: 'coord-14', quarter: '2023-Q2', startDate: '2023-04-01' },
     ],
   },
   {
@@ -130,8 +135,8 @@ export const members: Member[] = [
     joinedAt: '2023-01-08',
     history: [
       { coordinationId: 'coord-4', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-7', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-9', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
+      { coordinationId: 'coord-14', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
+      { coordinationId: 'coord-10', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
       { coordinationId: 'coord-2', quarter: '2023-Q4', startDate: '2023-10-01' },
     ],
   },
@@ -139,12 +144,12 @@ export const members: Member[] = [
     id: 'mem-10',
     name: 'João Pedro Alves',
     email: 'joao.alves@empresa.com',
-    currentCoordinationId: 'coord-10',
+    currentCoordinationId: 'coord-11',
     joinedAt: '2023-02-20',
     history: [
       { coordinationId: 'coord-3', quarter: '2023-Q1', startDate: '2023-02-20', endDate: '2023-03-31' },
-      { coordinationId: 'coord-5', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-10', quarter: '2023-Q3', startDate: '2023-07-01' },
+      { coordinationId: 'coord-9', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
+      { coordinationId: 'coord-11', quarter: '2023-Q3', startDate: '2023-07-01' },
     ],
   },
   {
@@ -154,8 +159,8 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-1',
     joinedAt: '2023-01-12',
     history: [
-      { coordinationId: 'coord-6', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-8', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
+      { coordinationId: 'coord-5', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
+      { coordinationId: 'coord-13', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
       { coordinationId: 'coord-4', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
       { coordinationId: 'coord-1', quarter: '2023-Q4', startDate: '2023-10-01' },
     ],
@@ -175,13 +180,13 @@ export const members: Member[] = [
     id: 'mem-13',
     name: 'Natália Campos',
     email: 'natalia.campos@empresa.com',
-    currentCoordinationId: 'coord-7',
+    currentCoordinationId: 'coord-14',
     joinedAt: '2023-01-25',
     history: [
       { coordinationId: 'coord-1', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-9', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-6', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-7', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-10', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
+      { coordinationId: 'coord-5', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
+      { coordinationId: 'coord-14', quarter: '2023-Q4', startDate: '2023-10-01' },
     ],
   },
   {
@@ -191,7 +196,7 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-4',
     joinedAt: '2023-02-05',
     history: [
-      { coordinationId: 'coord-10', quarter: '2023-Q1', startDate: '2023-02-05', endDate: '2023-03-31' },
+      { coordinationId: 'coord-11', quarter: '2023-Q1', startDate: '2023-02-05', endDate: '2023-03-31' },
       { coordinationId: 'coord-1', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
       { coordinationId: 'coord-4', quarter: '2023-Q3', startDate: '2023-07-01' },
     ],
@@ -200,25 +205,25 @@ export const members: Member[] = [
     id: 'mem-15',
     name: 'Patrícia Gomes',
     email: 'patricia.gomes@empresa.com',
-    currentCoordinationId: 'coord-5',
+    currentCoordinationId: 'coord-9',
     joinedAt: '2023-01-18',
     history: [
-      { coordinationId: 'coord-7', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
+      { coordinationId: 'coord-14', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
       { coordinationId: 'coord-3', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
       { coordinationId: 'coord-2', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-5', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-9', quarter: '2023-Q4', startDate: '2023-10-01' },
     ],
   },
   {
     id: 'mem-16',
     name: 'Rafael Teixeira',
     email: 'rafael.teixeira@empresa.com',
-    currentCoordinationId: 'coord-9',
+    currentCoordinationId: 'coord-10',
     joinedAt: '2023-02-28',
     history: [
-      { coordinationId: 'coord-5', quarter: '2023-Q1', startDate: '2023-02-28', endDate: '2023-03-31' },
+      { coordinationId: 'coord-9', quarter: '2023-Q1', startDate: '2023-02-28', endDate: '2023-03-31' },
       { coordinationId: 'coord-4', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-9', quarter: '2023-Q3', startDate: '2023-07-01' },
+      { coordinationId: 'coord-10', quarter: '2023-Q3', startDate: '2023-07-01' },
     ],
   },
   {
@@ -228,9 +233,9 @@ export const members: Member[] = [
     currentCoordinationId: 'coord-2',
     joinedAt: '2023-01-03',
     history: [
-      { coordinationId: 'coord-8', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
-      { coordinationId: 'coord-6', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-10', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
+      { coordinationId: 'coord-13', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
+      { coordinationId: 'coord-5', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
+      { coordinationId: 'coord-11', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
       { coordinationId: 'coord-2', quarter: '2023-Q4', startDate: '2023-10-01' },
     ],
   },
@@ -238,24 +243,24 @@ export const members: Member[] = [
     id: 'mem-18',
     name: 'Thiago Barros',
     email: 'thiago.barros@empresa.com',
-    currentCoordinationId: 'coord-6',
+    currentCoordinationId: 'coord-5',
     joinedAt: '2023-03-10',
     history: [
-      { coordinationId: 'coord-9', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-6', quarter: '2023-Q3', startDate: '2023-07-01' },
+      { coordinationId: 'coord-10', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
+      { coordinationId: 'coord-5', quarter: '2023-Q3', startDate: '2023-07-01' },
     ],
   },
   {
     id: 'mem-19',
     name: 'Vanessa Carvalho',
     email: 'vanessa.carvalho@empresa.com',
-    currentCoordinationId: 'coord-8',
+    currentCoordinationId: 'coord-13',
     joinedAt: '2023-01-22',
     history: [
       { coordinationId: 'coord-3', quarter: '2023-Q1', startDate: '2023-01-01', endDate: '2023-03-31' },
       { coordinationId: 'coord-1', quarter: '2023-Q2', startDate: '2023-04-01', endDate: '2023-06-30' },
-      { coordinationId: 'coord-7', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
-      { coordinationId: 'coord-8', quarter: '2023-Q4', startDate: '2023-10-01' },
+      { coordinationId: 'coord-14', quarter: '2023-Q3', startDate: '2023-07-01', endDate: '2023-09-30' },
+      { coordinationId: 'coord-13', quarter: '2023-Q4', startDate: '2023-10-01' },
     ],
   },
 ];
@@ -266,3 +271,156 @@ export const quarters = [
   { label: 'Q3 2024', value: '2024-Q3' },
   { label: 'Q4 2024', value: '2024-Q4' },
 ];
+
+// Profile questions for matching members to coordinations
+export const profileQuestions = [
+  {
+    id: 'q1',
+    question: 'Qual área você tem mais interesse em desenvolver habilidades?',
+    options: [
+      { value: 'analytical', label: 'Análise de dados e pesquisas' },
+      { value: 'creative', label: 'Criatividade e comunicação visual' },
+      { value: 'people', label: 'Gestão de pessoas e relacionamentos' },
+      { value: 'strategy', label: 'Planejamento e estratégia' },
+      { value: 'operations', label: 'Processos e operações' },
+    ],
+  },
+  {
+    id: 'q2',
+    question: 'Como você prefere trabalhar?',
+    options: [
+      { value: 'autonomous', label: 'De forma autônoma e independente' },
+      { value: 'collaborative', label: 'Em equipe e colaborativamente' },
+      { value: 'leadership', label: 'Liderando e coordenando outros' },
+      { value: 'support', label: 'Dando suporte a iniciativas existentes' },
+    ],
+  },
+  {
+    id: 'q3',
+    question: 'Qual tipo de atividade mais te motiva?',
+    options: [
+      { value: 'client', label: 'Contato direto com clientes' },
+      { value: 'internal', label: 'Melhoria de processos internos' },
+      { value: 'innovation', label: 'Criar coisas novas e inovar' },
+      { value: 'analysis', label: 'Analisar dados e tomar decisões baseadas em métricas' },
+      { value: 'content', label: 'Produção de conteúdo e comunicação' },
+    ],
+  },
+  {
+    id: 'q4',
+    question: 'Qual competência você mais deseja desenvolver?',
+    options: [
+      { value: 'negotiation', label: 'Negociação e fechamento de negócios' },
+      { value: 'marketing', label: 'Marketing digital e branding' },
+      { value: 'finance', label: 'Finanças e gestão orçamentária' },
+      { value: 'hr', label: 'Gestão de pessoas e cultura' },
+      { value: 'project', label: 'Gestão de projetos e processos' },
+    ],
+  },
+  {
+    id: 'q5',
+    question: 'Em qual diretoria você tem mais interesse em atuar?',
+    options: [
+      { value: 'dir-1', label: 'Demandas - Procedimentos e Clientes' },
+      { value: 'dir-2', label: 'Negócios - Closing e Growth' },
+      { value: 'dir-3', label: 'Presidência - Operações e Parcerias' },
+      { value: 'dir-4', label: 'Vice-Presidência - Inovação, Finanças e Estratégia' },
+      { value: 'dir-5', label: 'Marketing - Branding, Social Media e Inbound' },
+      { value: 'dir-6', label: 'Pesquisas e Pessoas - Pesquisas, Desempenho e Experiência' },
+    ],
+  },
+];
+
+// Coordination matching weights
+export const coordinationMatchingProfile: Record<string, { skills: string[], workStyle: string[], activities: string[], competencies: string[] }> = {
+  'coord-1': { // Procedimentos Internos
+    skills: ['operations', 'analytical'],
+    workStyle: ['autonomous', 'support'],
+    activities: ['internal', 'analysis'],
+    competencies: ['project'],
+  },
+  'coord-2': { // Clientes
+    skills: ['people', 'operations'],
+    workStyle: ['collaborative', 'support'],
+    activities: ['client'],
+    competencies: ['negotiation', 'project'],
+  },
+  'coord-3': { // Closing
+    skills: ['strategy', 'people'],
+    workStyle: ['autonomous', 'leadership'],
+    activities: ['client'],
+    competencies: ['negotiation'],
+  },
+  'coord-4': { // Growth
+    skills: ['strategy', 'analytical'],
+    workStyle: ['autonomous', 'leadership'],
+    activities: ['innovation', 'analysis'],
+    competencies: ['marketing', 'negotiation'],
+  },
+  'coord-5': { // Operações
+    skills: ['operations', 'strategy'],
+    workStyle: ['leadership', 'collaborative'],
+    activities: ['internal'],
+    competencies: ['project'],
+  },
+  'coord-6': { // Parcerias
+    skills: ['people', 'strategy'],
+    workStyle: ['autonomous', 'leadership'],
+    activities: ['client', 'innovation'],
+    competencies: ['negotiation'],
+  },
+  'coord-7': { // Inovação
+    skills: ['creative', 'analytical'],
+    workStyle: ['autonomous', 'collaborative'],
+    activities: ['innovation'],
+    competencies: ['project', 'marketing'],
+  },
+  'coord-8': { // Finanças
+    skills: ['analytical', 'operations'],
+    workStyle: ['autonomous', 'support'],
+    activities: ['analysis', 'internal'],
+    competencies: ['finance'],
+  },
+  'coord-9': { // Estratégia
+    skills: ['strategy', 'analytical'],
+    workStyle: ['leadership', 'autonomous'],
+    activities: ['analysis', 'innovation'],
+    competencies: ['project', 'finance'],
+  },
+  'coord-10': { // Branding
+    skills: ['creative', 'people'],
+    workStyle: ['collaborative', 'autonomous'],
+    activities: ['content', 'innovation'],
+    competencies: ['marketing'],
+  },
+  'coord-11': { // Social Media
+    skills: ['creative', 'people'],
+    workStyle: ['collaborative', 'autonomous'],
+    activities: ['content'],
+    competencies: ['marketing'],
+  },
+  'coord-12': { // Inbound Marketing
+    skills: ['creative', 'analytical'],
+    workStyle: ['collaborative', 'autonomous'],
+    activities: ['content', 'analysis'],
+    competencies: ['marketing'],
+  },
+  'coord-13': { // Pesquisas
+    skills: ['analytical', 'strategy'],
+    workStyle: ['autonomous', 'collaborative'],
+    activities: ['analysis'],
+    competencies: ['project'],
+  },
+  'coord-14': { // Desempenho
+    skills: ['people', 'analytical'],
+    workStyle: ['collaborative', 'leadership'],
+    activities: ['analysis', 'internal'],
+    competencies: ['hr'],
+  },
+  'coord-15': { // Experiência de Time
+    skills: ['people', 'creative'],
+    workStyle: ['collaborative', 'leadership'],
+    activities: ['internal', 'innovation'],
+    competencies: ['hr'],
+  },
+};
