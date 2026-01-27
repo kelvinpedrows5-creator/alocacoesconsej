@@ -11,6 +11,7 @@ import { MemberProfileResults } from '@/components/MemberProfileResults';
 import { MembersSection } from '@/components/MembersSection';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
+import { WelcomeOnboarding } from '@/components/WelcomeOnboarding';
 import { useAllocationStore } from '@/hooks/useAllocationStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -28,8 +29,12 @@ import { cycles } from '@/data/mockData';
 const Index = () => {
   const navigate = useNavigate();
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const { members, selectedQuarter, setSelectedQuarter } = useAllocationStore();
-  const { profile, isAdmin, roleLoading } = useAuthContext();
+  const { profile, isAdmin, roleLoading, refreshProfile } = useAuthContext();
+
+  // Check if new user needs onboarding (no display_name set)
+  const needsOnboarding = profile && !profile.display_name;
 
   const getInitials = () => {
     if (profile?.display_name) {
@@ -43,12 +48,25 @@ const Index = () => {
     return profile?.email?.charAt(0).toUpperCase() || 'U';
   };
 
+  // Find the current cycle label for display
+  const currentCycleLabel = cycles.find((c) => c.value === selectedQuarter)?.label || selectedQuarter;
+
+  const handleOnboardingComplete = async () => {
+    await refreshProfile();
+    setShowOnboarding(false);
+  };
+
   if (roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
+  }
+
+  // Show onboarding for new users
+  if (needsOnboarding || showOnboarding) {
+    return <WelcomeOnboarding onComplete={handleOnboardingComplete} />;
   }
 
   return (
@@ -69,8 +87,10 @@ const Index = () => {
 
             <div className="flex items-center gap-3">
               <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
-                <SelectTrigger className="w-44">
-                  <SelectValue />
+                <SelectTrigger className="w-52">
+                  <SelectValue>
+                    {currentCycleLabel}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {cycles.map((c) => (
