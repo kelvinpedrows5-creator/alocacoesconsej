@@ -23,7 +23,7 @@ export const useAllocationStore = create<AllocationStore>((set, get) => ({
   coordinations: initialCoordinations,
   directorates: initialDirectorates,
   suggestions: [],
-  selectedQuarter: '2025-C4',
+  selectedQuarter: '2026-C1',
 
   setSelectedQuarter: (quarter) => set({ selectedQuarter: quarter }),
 

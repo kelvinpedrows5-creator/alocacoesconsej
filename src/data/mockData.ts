@@ -265,14 +265,10 @@ export const members: Member[] = [
   },
 ];
 
-// Cycles instead of quarters
+// Cycles instead of quarters - now managed from database
+// This is a fallback for when cycles haven't been loaded yet
 export const cycles = [
-  { label: '1º Ciclo de 2025', value: '2025-C1' },
-  { label: '2º Ciclo de 2025', value: '2025-C2' },
-  { label: '3º Ciclo de 2025', value: '2025-C3' },
-  { label: '4º Ciclo de 2025', value: '2025-C4' },
   { label: '1º Ciclo de 2026', value: '2026-C1' },
-  { label: '2º Ciclo de 2026', value: '2026-C2' },
 ];
 
 // Legacy export for backwards compatibility
