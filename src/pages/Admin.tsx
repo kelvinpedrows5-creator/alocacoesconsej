@@ -5,16 +5,18 @@ import {
   LayoutDashboard,
   Users,
   Building2,
-  Settings,
   ArrowLeft,
   FileText,
   Shield,
   Search,
   Eye,
   UserCog,
+  Calendar,
+  Crown,
 } from 'lucide-react';
 import { useAllocationStore } from '@/hooks/useAllocationStore';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { useCycles } from '@/hooks/useCycles';
 import { supabase } from '@/integrations/supabase/client';
 import { StatsOverview } from '@/components/StatsOverview';
 import { MemberCard } from '@/components/MemberCard';
@@ -22,6 +24,9 @@ import { MemberHistoryModal } from '@/components/MemberHistoryModal';
 import { SuggestionsPanel } from '@/components/SuggestionsPanel';
 import { CoordinationGridFiltered } from '@/components/CoordinationGridFiltered';
 import { AdminMembersManagement } from '@/components/AdminMembersManagement';
+import { CyclesManagement } from '@/components/admin/CyclesManagement';
+import { LeadershipManagement } from '@/components/admin/LeadershipManagement';
+import { AllocationManagement } from '@/components/admin/AllocationManagement';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { Button } from '@/components/ui/button';
@@ -44,7 +49,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
-import { cycles, profileQuestions, directorates } from '@/data/mockData';
+import { profileQuestions, directorates } from '@/data/mockData';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface ProfileData {
@@ -77,6 +82,7 @@ const Admin = () => {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const { members, selectedQuarter, setSelectedQuarter } = useAllocationStore();
   const { profile } = useAuthContext();
+  const { cycles, loading: loadingCycles } = useCycles();
 
   const [allProfiles, setAllProfiles] = useState<ProfileData[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
@@ -86,6 +92,16 @@ const Admin = () => {
   useEffect(() => {
     fetchAllProfiles();
   }, []);
+
+  // Set selected quarter when cycles load
+  useEffect(() => {
+    if (cycles.length > 0 && !selectedQuarter) {
+      const currentCycle = cycles.find((c) => c.is_current);
+      if (currentCycle) {
+        setSelectedQuarter(currentCycle.value);
+      }
+    }
+  }, [cycles, selectedQuarter, setSelectedQuarter]);
 
   const fetchAllProfiles = async () => {
     try {
@@ -179,18 +195,27 @@ const Admin = () => {
             </div>
 
             <div className="flex items-center gap-3">
-              <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
-                <SelectTrigger className="w-44">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {cycles.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {cycles.length > 0 && (
+                <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
+                  <SelectTrigger className="w-52">
+                    <SelectValue>
+                      {cycles.find((c) => c.value === selectedQuarter)?.label || selectedQuarter}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cycles.map((c) => (
+                      <SelectItem key={c.value} value={c.value}>
+                        <span className="flex items-center gap-2">
+                          {c.label}
+                          {c.is_current && (
+                            <Badge variant="secondary" className="text-xs">Atual</Badge>
+                          )}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <ReallocationDialog />
               <AddMemberDialog />
               <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate('/profile')}>
@@ -217,15 +242,23 @@ const Admin = () => {
           <StatsOverview />
 
           {/* Tabs for different views */}
-          <Tabs defaultValue="suggestions" className="space-y-6">
-            <TabsList className="bg-secondary/50">
+          <Tabs defaultValue="allocations" className="space-y-6">
+            <TabsList className="bg-secondary/50 flex-wrap h-auto gap-1">
+              <TabsTrigger value="allocations" className="gap-2">
+                <Users className="w-4 h-4" />
+                Alocações
+              </TabsTrigger>
+              <TabsTrigger value="cycles" className="gap-2">
+                <Calendar className="w-4 h-4" />
+                Ciclos
+              </TabsTrigger>
+              <TabsTrigger value="leadership" className="gap-2">
+                <Crown className="w-4 h-4" />
+                Lideranças
+              </TabsTrigger>
               <TabsTrigger value="suggestions" className="gap-2">
                 <LayoutDashboard className="w-4 h-4" />
                 Sugestões
-              </TabsTrigger>
-              <TabsTrigger value="members" className="gap-2">
-                <Users className="w-4 h-4" />
-                Membros
               </TabsTrigger>
               <TabsTrigger value="coordinations" className="gap-2">
                 <Building2 className="w-4 h-4" />
@@ -241,21 +274,21 @@ const Admin = () => {
               </TabsTrigger>
             </TabsList>
 
+            <TabsContent value="allocations" className="space-y-6">
+              <AllocationManagement />
+            </TabsContent>
+
+            <TabsContent value="cycles" className="space-y-6">
+              <CyclesManagement />
+            </TabsContent>
+
+            <TabsContent value="leadership" className="space-y-6">
+              <LeadershipManagement />
+            </TabsContent>
+
             <TabsContent value="suggestions" className="space-y-6">
               <SuggestionsPanel />
               <CoordinationGridFiltered />
-            </TabsContent>
-
-            <TabsContent value="members">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {members.map((member) => (
-                  <MemberCard
-                    key={member.id}
-                    memberId={member.id}
-                    onViewHistory={setSelectedMemberId}
-                  />
-                ))}
-              </div>
             </TabsContent>
 
             <TabsContent value="coordinations">

@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      allocation_cycles: {
+        Row: {
+          created_at: string
+          id: string
+          is_current: boolean
+          is_visible: boolean
+          label: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_current?: boolean
+          is_visible?: boolean
+          label: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_current?: boolean
+          is_visible?: boolean
+          label?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: []
+      }
+      leadership_positions: {
+        Row: {
+          created_at: string
+          directorate_id: string
+          id: string
+          position_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          directorate_id: string
+          id?: string
+          position_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          directorate_id?: string
+          id?: string
+          position_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      member_allocations: {
+        Row: {
+          coordination_id: string
+          created_at: string
+          cycle_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          coordination_id: string
+          created_at?: string
+          cycle_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          coordination_id?: string
+          created_at?: string
+          cycle_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "member_allocations_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "allocation_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
