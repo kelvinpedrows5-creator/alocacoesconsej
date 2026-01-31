@@ -149,8 +149,11 @@ export const useCycles = () => {
     }
   };
 
+  const currentCycle = cycles.find(c => c.is_current) || cycles[0];
+
   return {
     cycles,
+    currentCycle,
     loading,
     fetchCycles,
     addCycle,

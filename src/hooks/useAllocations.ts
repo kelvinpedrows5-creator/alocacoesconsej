@@ -7,6 +7,8 @@ export interface MemberAllocation {
   user_id: string;
   cycle_id: string;
   coordination_id: string;
+  gt_client_id: string | null;
+  gt_role: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -82,7 +84,13 @@ export const useAllocations = (cycleId?: string) => {
     fetchAllocations();
   }, [fetchAllocations]);
 
-  const setAllocation = async (userId: string, cycleId: string, coordinationId: string) => {
+  const setAllocation = async (
+    userId: string, 
+    cycleId: string, 
+    coordinationId: string,
+    gtClientId?: string,
+    gtRole?: string
+  ) => {
     try {
       // Check if allocation already exists
       const { data: existing } = await supabase
@@ -90,13 +98,17 @@ export const useAllocations = (cycleId?: string) => {
         .select('id')
         .eq('user_id', userId)
         .eq('cycle_id', cycleId)
-        .single();
+        .maybeSingle();
+
+      const updateData: Record<string, any> = { coordination_id: coordinationId };
+      if (gtClientId !== undefined) updateData.gt_client_id = gtClientId || null;
+      if (gtRole !== undefined) updateData.gt_role = gtRole || null;
 
       if (existing) {
         // Update existing allocation
         const { error } = await supabase
           .from('member_allocations')
-          .update({ coordination_id: coordinationId })
+          .update(updateData)
           .eq('id', existing.id);
 
         if (error) throw error;
@@ -104,7 +116,13 @@ export const useAllocations = (cycleId?: string) => {
         // Create new allocation
         const { error } = await supabase
           .from('member_allocations')
-          .insert({ user_id: userId, cycle_id: cycleId, coordination_id: coordinationId });
+          .insert({ 
+            user_id: userId, 
+            cycle_id: cycleId, 
+            coordination_id: coordinationId,
+            gt_client_id: gtClientId || null,
+            gt_role: gtRole || null,
+          });
 
         if (error) throw error;
       }

@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Search, Building2, ArrowRight } from 'lucide-react';
-import { useAllocations, AllocationWithProfile } from '@/hooks/useAllocations';
-import { useCycles, AllocationCycle } from '@/hooks/useCycles';
+import { Users, Search, Building2, ArrowRight, Briefcase, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { useAllocations } from '@/hooks/useAllocations';
+import { useCycles } from '@/hooks/useCycles';
+import { useClients } from '@/hooks/useClients';
 import { supabase } from '@/integrations/supabase/client';
 import { coordinations, directorates } from '@/data/mockData';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -11,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
   Select,
   SelectContent,
@@ -27,14 +29,21 @@ interface ProfileWithAllocation {
   current_coordination_id: string | null;
 }
 
+interface PendingChange {
+  coordination_id?: string;
+  gt_client_id?: string;
+  gt_role?: string;
+}
+
 export const AllocationManagement = () => {
   const { cycles, loading: loadingCycles } = useCycles();
+  const { clients, isLoading: loadingClients } = useClients();
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const { allocations, loading: loadingAllocations, setAllocation, fetchAllocations } = useAllocations(selectedCycleId);
   const [profiles, setProfiles] = useState<ProfileWithAllocation[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [pendingChanges, setPendingChanges] = useState<Map<string, string>>(new Map());
+  const [pendingChanges, setPendingChanges] = useState<Map<string, PendingChange>>(new Map());
 
   // Set initial cycle when cycles load
   useEffect(() => {
@@ -96,42 +105,84 @@ export const AllocationManagement = () => {
     return coordinations.find((c) => c.id === coordId)?.name || coordId;
   };
 
-  const getDirectorateName = (coordId: string | null) => {
-    if (!coordId) return '';
-    const coord = coordinations.find((c) => c.id === coordId);
-    if (!coord) return '';
-    return directorates.find((d) => d.id === coord.directorateId)?.name || '';
+  const getClientName = (clientId: string | null) => {
+    if (!clientId) return 'Sem GT';
+    return clients.find((c) => c.id === clientId)?.name || clientId;
+  };
+
+  const getRoleLabel = (role: string | null) => {
+    if (!role) return '';
+    switch (role) {
+      case 'director': return 'Diretor';
+      case 'manager': return 'Gerente';
+      case 'consultant': return 'Consultor';
+      default: return role;
+    }
   };
 
   const getAllocationForUser = (userId: string) => {
-    // Check pending changes first
-    if (pendingChanges.has(userId)) {
-      return pendingChanges.get(userId);
-    }
-    // Then check saved allocations
     const allocation = allocations.find((a) => a.user_id === userId);
-    return allocation?.coordination_id || null;
+    const pending = pendingChanges.get(userId);
+    
+    return {
+      coordination_id: pending?.coordination_id !== undefined 
+        ? pending.coordination_id 
+        : (allocation?.coordination_id || null),
+      gt_client_id: pending?.gt_client_id !== undefined 
+        ? pending.gt_client_id 
+        : ((allocation as any)?.gt_client_id || null),
+      gt_role: pending?.gt_role !== undefined 
+        ? pending.gt_role 
+        : ((allocation as any)?.gt_role || null),
+    };
+  };
+
+  const getCompletionStatus = (userId: string) => {
+    const alloc = getAllocationForUser(userId);
+    const hasCoordination = !!alloc.coordination_id;
+    const hasGT = !!alloc.gt_client_id && !!alloc.gt_role;
+    
+    if (hasCoordination && hasGT) return 'complete';
+    if (hasCoordination || hasGT) return 'partial';
+    return 'none';
   };
 
   const handleCoordinationChange = (userId: string, coordinationId: string) => {
+    const current = pendingChanges.get(userId) || {};
     const newChanges = new Map(pendingChanges);
-    const currentAllocation = allocations.find((a) => a.user_id === userId);
-    
-    // If setting back to original value, remove from pending
-    if (currentAllocation?.coordination_id === coordinationId) {
-      newChanges.delete(userId);
-    } else {
-      newChanges.set(userId, coordinationId);
-    }
-    
+    newChanges.set(userId, { ...current, coordination_id: coordinationId === '__none__' ? '' : coordinationId });
+    setPendingChanges(newChanges);
+  };
+
+  const handleGTChange = (userId: string, clientId: string) => {
+    const current = pendingChanges.get(userId) || {};
+    const newChanges = new Map(pendingChanges);
+    newChanges.set(userId, { 
+      ...current, 
+      gt_client_id: clientId === '__none__' ? '' : clientId,
+      gt_role: clientId === '__none__' ? '' : (current.gt_role || 'consultant'),
+    });
+    setPendingChanges(newChanges);
+  };
+
+  const handleGTRoleChange = (userId: string, role: string) => {
+    const current = pendingChanges.get(userId) || {};
+    const newChanges = new Map(pendingChanges);
+    newChanges.set(userId, { ...current, gt_role: role });
     setPendingChanges(newChanges);
   };
 
   const handleSaveAllocation = async (userId: string) => {
-    const newCoordId = pendingChanges.get(userId);
-    if (!newCoordId || !selectedCycleId) return;
+    const changes = pendingChanges.get(userId);
+    if (!changes || !selectedCycleId) return;
     
-    await setAllocation(userId, selectedCycleId, newCoordId);
+    await setAllocation(
+      userId, 
+      selectedCycleId, 
+      changes.coordination_id || '', 
+      changes.gt_client_id || undefined, 
+      changes.gt_role || undefined
+    );
     
     // Remove from pending changes after save
     const newChanges = new Map(pendingChanges);
@@ -145,8 +196,7 @@ export const AllocationManagement = () => {
       (p.display_name && p.display_name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
-  const selectedCycle = cycles.find((c) => c.id === selectedCycleId);
-  const loading = loadingCycles || loadingAllocations || loadingProfiles;
+  const loading = loadingCycles || loadingAllocations || loadingProfiles || loadingClients;
 
   // Group coordinations by directorate
   const coordinationsByDirectorate = directorates.map((dir) => ({
@@ -164,7 +214,7 @@ export const AllocationManagement = () => {
               Gestão de Alocações
             </CardTitle>
             <CardDescription>
-              Defina a coordenadoria de cada membro por ciclo
+              Defina a coordenadoria e o grupo de trabalho de cada membro
             </CardDescription>
           </div>
           {cycles.length > 0 && (
@@ -191,8 +241,8 @@ export const AllocationManagement = () => {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="mb-4">
-          <div className="relative">
+        <div className="mb-4 flex items-center gap-4">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por nome ou email..."
@@ -201,6 +251,28 @@ export const AllocationManagement = () => {
               className="pl-9"
             />
           </div>
+          <TooltipProvider>
+            <div className="flex items-center gap-2 text-sm">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 text-green-600">
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>Completo</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>Coordenadoria e GT definidos</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="flex items-center gap-1 text-amber-600">
+                    <AlertCircle className="w-4 h-4" />
+                    <span>Parcial</span>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>Apenas coordenadoria ou GT definido</TooltipContent>
+              </Tooltip>
+            </div>
+          </TooltipProvider>
         </div>
 
         {loading ? (
@@ -215,84 +287,163 @@ export const AllocationManagement = () => {
           <ScrollArea className="h-[500px]">
             <div className="space-y-3">
               {filteredProfiles.map((profile) => {
-                const currentCoordId = getAllocationForUser(profile.user_id);
+                const alloc = getAllocationForUser(profile.user_id);
                 const hasChange = pendingChanges.has(profile.user_id);
+                const status = getCompletionStatus(profile.user_id);
 
                 return (
                   <motion.div
                     key={profile.user_id}
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className={`flex items-center justify-between p-4 rounded-lg border transition-colors ${
+                    className={`p-4 rounded-lg border transition-colors ${
                       hasChange ? 'border-primary bg-primary/5' : 'bg-card'
                     }`}
                   >
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarImage src={profile.avatar_url || undefined} />
-                        <AvatarFallback className="bg-primary/10 text-primary">
-                          {getInitials(profile.display_name, profile.email)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {profile.display_name || profile.email}
-                        </p>
-                        <p className="text-sm text-muted-foreground">{profile.email}</p>
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                          <AvatarImage src={profile.avatar_url || undefined} />
+                          <AvatarFallback className="bg-primary/10 text-primary">
+                            {getInitials(profile.display_name, profile.email)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {profile.display_name || profile.email}
+                          </p>
+                          <p className="text-sm text-muted-foreground">{profile.email}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {status === 'complete' && (
+                          <Badge variant="default" className="bg-green-100 text-green-800">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Completo
+                          </Badge>
+                        )}
+                        {status === 'partial' && (
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Parcial
+                          </Badge>
+                        )}
+                        {hasChange && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleSaveAllocation(profile.user_id)}
+                            className="gap-1"
+                          >
+                            <ArrowRight className="w-4 h-4" />
+                            Salvar
+                          </Button>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3">
-                      <Select
-                        value={currentCoordId || '__none__'}
-                        onValueChange={(v) => handleCoordinationChange(profile.user_id, v)}
-                      >
-                        <SelectTrigger className="w-56">
-                          <SelectValue>
-                            {currentCoordId ? (
-                              <span className="flex items-center gap-2">
-                                <Building2 className="w-4 h-4" />
-                                {getCoordinationName(currentCoordId)}
-                              </span>
-                            ) : (
-                              'Selecionar coordenadoria'
-                            )}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <ScrollArea className="h-[300px]">
-                            {coordinationsByDirectorate.map((dir) => (
-                              <div key={dir.id}>
-                                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-secondary/50">
-                                  {dir.name}
-                                </div>
-                                {dir.coordinations.map((coord) => (
-                                  <SelectItem key={coord.id} value={coord.id}>
-                                    <span className="flex items-center gap-2">
-                                      <div
-                                        className="w-2 h-2 rounded-full"
-                                        style={{ backgroundColor: coord.color }}
-                                      />
-                                      {coord.name}
-                                    </span>
-                                  </SelectItem>
-                                ))}
-                              </div>
-                            ))}
-                          </ScrollArea>
-                        </SelectContent>
-                      </Select>
-
-                      {hasChange && (
-                        <Button
-                          size="sm"
-                          onClick={() => handleSaveAllocation(profile.user_id)}
-                          className="gap-1"
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      {/* Coordination Selection */}
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                          <Building2 className="w-3 h-3" />
+                          Coordenadoria
+                        </label>
+                        <Select
+                          value={alloc.coordination_id || '__none__'}
+                          onValueChange={(v) => handleCoordinationChange(profile.user_id, v)}
                         >
-                          <ArrowRight className="w-4 h-4" />
-                          Salvar
-                        </Button>
-                      )}
+                          <SelectTrigger className="w-full">
+                            <SelectValue>
+                              {alloc.coordination_id 
+                                ? getCoordinationName(alloc.coordination_id)
+                                : 'Selecionar...'
+                              }
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">
+                              <span className="text-muted-foreground">Não alocado</span>
+                            </SelectItem>
+                            <ScrollArea className="h-[300px]">
+                              {coordinationsByDirectorate.map((dir) => (
+                                <div key={dir.id}>
+                                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-secondary/50">
+                                    {dir.name}
+                                  </div>
+                                  {dir.coordinations.map((coord) => (
+                                    <SelectItem key={coord.id} value={coord.id}>
+                                      <span className="flex items-center gap-2">
+                                        <div
+                                          className="w-2 h-2 rounded-full"
+                                          style={{ backgroundColor: coord.color }}
+                                        />
+                                        {coord.name}
+                                      </span>
+                                    </SelectItem>
+                                  ))}
+                                </div>
+                              ))}
+                            </ScrollArea>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* GT Selection */}
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
+                          <Briefcase className="w-3 h-3" />
+                          Grupo de Trabalho
+                        </label>
+                        <Select
+                          value={alloc.gt_client_id || '__none__'}
+                          onValueChange={(v) => handleGTChange(profile.user_id, v)}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue>
+                              {alloc.gt_client_id 
+                                ? getClientName(alloc.gt_client_id)
+                                : 'Selecionar...'
+                              }
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__none__">
+                              <span className="text-muted-foreground">Sem GT</span>
+                            </SelectItem>
+                            {clients.map((client) => (
+                              <SelectItem key={client.id} value={client.id}>
+                                {client.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* GT Role Selection */}
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">
+                          Função no GT
+                        </label>
+                        <Select
+                          value={alloc.gt_role || 'consultant'}
+                          onValueChange={(v) => handleGTRoleChange(profile.user_id, v)}
+                          disabled={!alloc.gt_client_id}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue>
+                              {alloc.gt_role 
+                                ? getRoleLabel(alloc.gt_role) 
+                                : 'Selecionar...'
+                              }
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="director">Diretor de Demandas</SelectItem>
+                            <SelectItem value="manager">Gerente de Demandas</SelectItem>
+                            <SelectItem value="consultant">Consultor</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                     </div>
                   </motion.div>
                 );

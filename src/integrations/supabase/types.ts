@@ -44,6 +44,134 @@ export type Database = {
         }
         Relationships: []
       }
+      client_profiles: {
+        Row: {
+          client_id: string
+          created_at: string
+          id: string
+          question_1: string | null
+          question_10: string | null
+          question_2: string | null
+          question_3: string | null
+          question_4: string | null
+          question_5: string | null
+          question_6: string | null
+          question_7: string | null
+          question_8: string | null
+          question_9: string | null
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          id?: string
+          question_1?: string | null
+          question_10?: string | null
+          question_2?: string | null
+          question_3?: string | null
+          question_4?: string | null
+          question_5?: string | null
+          question_6?: string | null
+          question_7?: string | null
+          question_8?: string | null
+          question_9?: string | null
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          id?: string
+          question_1?: string | null
+          question_10?: string | null
+          question_2?: string | null
+          question_3?: string | null
+          question_4?: string | null
+          question_5?: string | null
+          question_6?: string | null
+          question_7?: string | null
+          question_8?: string | null
+          question_9?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_profiles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: true
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      clients: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gt_members: {
+        Row: {
+          client_id: string
+          created_at: string
+          cycle_id: string
+          id: string
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          cycle_id: string
+          id?: string
+          role: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          cycle_id?: string
+          id?: string
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gt_members_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gt_members_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "allocation_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       leadership_positions: {
         Row: {
           created_at: string
@@ -76,6 +204,8 @@ export type Database = {
           coordination_id: string
           created_at: string
           cycle_id: string
+          gt_client_id: string | null
+          gt_role: string | null
           id: string
           updated_at: string
           user_id: string
@@ -84,6 +214,8 @@ export type Database = {
           coordination_id: string
           created_at?: string
           cycle_id: string
+          gt_client_id?: string | null
+          gt_role?: string | null
           id?: string
           updated_at?: string
           user_id: string
@@ -92,6 +224,8 @@ export type Database = {
           coordination_id?: string
           created_at?: string
           cycle_id?: string
+          gt_client_id?: string | null
+          gt_role?: string | null
           id?: string
           updated_at?: string
           user_id?: string
@@ -102,6 +236,13 @@ export type Database = {
             columns: ["cycle_id"]
             isOneToOne: false
             referencedRelation: "allocation_cycles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "member_allocations_gt_client_id_fkey"
+            columns: ["gt_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
             referencedColumns: ["id"]
           },
         ]

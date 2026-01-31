@@ -13,6 +13,7 @@ import {
   UserCog,
   Calendar,
   Crown,
+  Briefcase,
 } from 'lucide-react';
 import { useAllocationStore } from '@/hooks/useAllocationStore';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -27,6 +28,7 @@ import { AdminMembersManagement } from '@/components/AdminMembersManagement';
 import { CyclesManagement } from '@/components/admin/CyclesManagement';
 import { LeadershipManagement } from '@/components/admin/LeadershipManagement';
 import { AllocationManagement } from '@/components/admin/AllocationManagement';
+import { GTManagement } from '@/components/admin/GTManagement';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { Button } from '@/components/ui/button';
@@ -264,6 +266,10 @@ const Admin = () => {
                 <Building2 className="w-4 h-4" />
                 Coordenadorias
               </TabsTrigger>
+              <TabsTrigger value="gts" className="gap-2">
+                <Briefcase className="w-4 h-4" />
+                Grupos de Trabalho
+              </TabsTrigger>
               <TabsTrigger value="profiles" className="gap-2">
                 <FileText className="w-4 h-4" />
                 Pesquisas ({profilesWithResponses.length})
@@ -293,6 +299,10 @@ const Admin = () => {
 
             <TabsContent value="coordinations">
               <CoordinationGridFiltered />
+            </TabsContent>
+
+            <TabsContent value="gts">
+              <GTManagement />
             </TabsContent>
 
             <TabsContent value="profiles">
