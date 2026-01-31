@@ -51,8 +51,41 @@ const Auth = () => {
       return;
     }
 
-    if (signupPassword.length < 6) {
-      setError('A senha deve ter pelo menos 6 caracteres');
+    // Strong password validation
+    if (signupPassword.length < 8) {
+      setError('A senha deve ter pelo menos 8 caracteres');
+      return;
+    }
+
+    const hasUppercase = /[A-Z]/.test(signupPassword);
+    const hasLowercase = /[a-z]/.test(signupPassword);
+    const hasNumber = /[0-9]/.test(signupPassword);
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signupPassword);
+
+    if (!hasUppercase) {
+      setError('A senha deve conter pelo menos uma letra maiúscula');
+      return;
+    }
+
+    if (!hasLowercase) {
+      setError('A senha deve conter pelo menos uma letra minúscula');
+      return;
+    }
+
+    if (!hasNumber) {
+      setError('A senha deve conter pelo menos um número');
+      return;
+    }
+
+    if (!hasSpecialChar) {
+      setError('A senha deve conter pelo menos um caractere especial (!@#$%^&*...)');
+      return;
+    }
+
+    // Check for common weak passwords
+    const commonPasswords = ['password', 'senha123', '12345678', 'qwerty12', 'abc12345'];
+    if (commonPasswords.some(weak => signupPassword.toLowerCase().includes(weak))) {
+      setError('Esta senha é muito comum. Por favor, escolha uma senha mais segura');
       return;
     }
 
