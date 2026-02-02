@@ -125,7 +125,7 @@ export const MembersSection = () => {
               <SelectItem value="all">Todas as Diretorias</SelectItem>
               {directorates.map((dir) => (
                 <SelectItem key={dir.id} value={dir.id}>
-                  {dir.name}
+                  <span className="truncate">{dir.name}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -167,7 +167,7 @@ export const MembersSection = () => {
                             key={profile.id}
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/30 transition-colors bg-card"
+                            className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/30 transition-colors bg-card min-w-0"
                           >
                             <Avatar className="h-10 w-10 shrink-0">
                               <AvatarImage src={profile.avatar_url || undefined} />
@@ -184,10 +184,10 @@ export const MembersSection = () => {
                               </p>
                               <Badge
                                 variant="outline"
-                                className="text-xs mt-1"
+                                className="text-xs mt-1 max-w-full"
                                 style={{ borderColor: `${coord.color}50`, color: coord.color }}
                               >
-                                {coord.name}
+                                <span className="truncate">{coord.name}</span>
                               </Badge>
                             </div>
                           </motion.div>
