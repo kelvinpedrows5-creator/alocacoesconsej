@@ -38,16 +38,56 @@ export interface GTMember {
 }
 
 export const GT_PROFILE_QUESTIONS = [
-  { key: 'question_1', label: 'Qual é o segmento de atuação do cliente?' },
-  { key: 'question_2', label: 'Qual o porte da empresa cliente?' },
-  { key: 'question_3', label: 'Qual a complexidade dos projetos demandados?' },
-  { key: 'question_4', label: 'Qual a frequência de reuniões esperada?' },
-  { key: 'question_5', label: 'Qual o nível de conhecimento técnico do cliente?' },
-  { key: 'question_6', label: 'Como é o processo de tomada de decisão do cliente?' },
-  { key: 'question_7', label: 'Qual o tempo médio de projeto esperado?' },
-  { key: 'question_8', label: 'Qual o perfil de comunicação preferido pelo cliente?' },
-  { key: 'question_9', label: 'Qual o grau de autonomia dado à equipe?' },
-  { key: 'question_10', label: 'Qual o histórico de satisfação com a CONSEJ?' },
+  { 
+    key: 'question_1', 
+    label: 'Como o cliente enxerga valor nas entregas realizadas?',
+    options: ['Resultados tangíveis e mensuráveis', 'Qualidade do processo e metodologia', 'Inovação e criatividade', 'Custo-benefício', 'Relacionamento e confiança']
+  },
+  { 
+    key: 'question_2', 
+    label: 'Qual a frequência e intensidade de contato do cliente?',
+    options: ['Alta - contato diário', 'Média - contato semanal', 'Baixa - contato quinzenal/mensal', 'Pontual - apenas em marcos importantes']
+  },
+  { 
+    key: 'question_3', 
+    label: 'Como o cliente costuma fazer pedidos de demandas?',
+    options: ['Demandas estruturadas e documentadas', 'Demandas verbais em reuniões', 'Demandas informais por mensagem', 'Demandas emergenciais e urgentes']
+  },
+  { 
+    key: 'question_4', 
+    label: 'Qual a flexibilidade do cliente em relação a prazos?',
+    options: ['Muito rígido - não negocia prazos', 'Moderadamente flexível', 'Flexível - adapta conforme justificativa', 'Sem urgência - prioriza qualidade']
+  },
+  { 
+    key: 'question_5', 
+    label: 'Qual o nível de complexidade típico das demandas?',
+    options: ['Alta complexidade - exige especialistas', 'Média complexidade - exige experiência', 'Baixa complexidade - demandas operacionais', 'Variável - depende do projeto']
+  },
+  { 
+    key: 'question_6', 
+    label: 'Como é o processo de aprovação do cliente?',
+    options: ['Centralizado - uma pessoa decide', 'Comitê - várias pessoas validam', 'Hierárquico - passa por níveis', 'Ágil - decisões rápidas e delegadas']
+  },
+  { 
+    key: 'question_7', 
+    label: 'Qual o nível de conhecimento técnico do cliente sobre os projetos?',
+    options: ['Alto - entende detalhes técnicos', 'Médio - conhecimento geral', 'Baixo - precisa de muita explicação', 'Variável por interlocutor']
+  },
+  { 
+    key: 'question_8', 
+    label: 'Como o cliente prefere receber atualizações e relatórios?',
+    options: ['Relatórios formais periódicos', 'Dashboards e métricas online', 'Reuniões de alinhamento', 'Comunicação assíncrona (e-mail/mensagem)']
+  },
+  { 
+    key: 'question_9', 
+    label: 'Qual o histórico de relacionamento com a CONSEJ?',
+    options: ['Cliente novo - primeiro projeto', 'Relacionamento recente - menos de 1 ano', 'Relacionamento consolidado - 1 a 3 anos', 'Parceria de longa data - mais de 3 anos']
+  },
+  { 
+    key: 'question_10', 
+    label: 'Qual o perfil de feedback do cliente?',
+    options: ['Proativo - dá feedback constante', 'Reativo - só comenta quando solicitado', 'Crítico - aponta problemas frequentemente', 'Elogioso - reconhece boas entregas']
+  },
 ] as const;
 
 export function useClients() {

@@ -421,16 +421,37 @@ export function GTManagement() {
           <div className="space-y-4 pt-4">
             {GT_PROFILE_QUESTIONS.map((question) => (
               <div key={question.key} className="space-y-2">
-                <Label>{question.label}</Label>
-                <Textarea
-                  value={profileAnswers[question.key] || ''}
-                  onChange={(e) => setProfileAnswers(prev => ({
-                    ...prev,
-                    [question.key]: e.target.value,
-                  }))}
-                  placeholder="Sua resposta..."
-                  rows={2}
-                />
+                <Label className="text-sm font-medium">{question.label}</Label>
+                {'options' in question && question.options ? (
+                  <Select
+                    value={profileAnswers[question.key] || ''}
+                    onValueChange={(value) => setProfileAnswers(prev => ({
+                      ...prev,
+                      [question.key]: value,
+                    }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma opção" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {question.options.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Textarea
+                    value={profileAnswers[question.key] || ''}
+                    onChange={(e) => setProfileAnswers(prev => ({
+                      ...prev,
+                      [question.key]: e.target.value,
+                    }))}
+                    placeholder="Sua resposta..."
+                    rows={2}
+                  />
+                )}
               </div>
             ))}
             <Button onClick={handleSaveProfile} className="w-full">

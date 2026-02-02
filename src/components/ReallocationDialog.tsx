@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Shuffle, Sparkles, Users, ChevronRight, Check, X, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Shuffle, Sparkles, Users, Check, ArrowRight, Building2, Briefcase, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -23,11 +23,27 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAllocationStore } from '@/hooks/useAllocationStore';
+import { useClients } from '@/hooks/useClients';
+import { useCycles } from '@/hooks/useCycles';
+import { useAllocations } from '@/hooks/useAllocations';
 import { toast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { coordinations as mockCoordinations } from '@/data/mockData';
+import { useQuery } from '@tanstack/react-query';
+
+interface Profile {
+  id: string;
+  user_id: string;
+  email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+}
 
 interface PendingAllocation {
-  memberId: string;
-  coordinationId: string;
+  userId: string;
+  coordinationId: string | null;
+  gtClientId: string | null;
+  gtRole: string | null;
 }
 
 export const ReallocationDialog = () => {
@@ -40,56 +56,150 @@ export const ReallocationDialog = () => {
     generateSuggestions,
     applySuggestion,
     applyAllSuggestions,
-    updateMember,
-    selectedQuarter,
   } = useAllocationStore();
 
-  const getMember = (id: string) => members.find((m) => m.id === id);
-  const getCoordination = (id: string) => coordinations.find((c) => c.id === id);
+  const { clients, gtMembers } = useClients();
+  const { currentCycle } = useCycles();
+  const { allocations, setAllocation: saveAllocation } = useAllocations(currentCycle?.id);
 
-  const handleManualAllocation = (memberId: string, coordinationId: string) => {
-    setPendingAllocations((prev) => {
-      const existing = prev.findIndex((p) => p.memberId === memberId);
-      if (existing >= 0) {
-        if (coordinationId === '__keep__') {
-          return prev.filter((p) => p.memberId !== memberId);
-        }
+  const { data: profiles = [] } = useQuery({
+    queryKey: ['all_profiles_for_reallocation'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, user_id, email, display_name, avatar_url');
+      if (error) throw error;
+      return data as Profile[];
+    },
+  });
+
+  const getMember = (id: string) => members.find((m) => m.id === id);
+  const getCoordination = (id: string) => coordinations.find((c) => c.id === id) || mockCoordinations.find((c) => c.id === id);
+  
+  const getInitials = (name: string | null, email: string) => {
+    if (name) return name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase();
+    return email.charAt(0).toUpperCase();
+  };
+
+  const getCurrentAllocation = (userId: string) => {
+    return allocations.find(a => a.user_id === userId);
+  };
+
+  const getCurrentGT = (userId: string) => {
+    if (!currentCycle) return null;
+    return gtMembers.find(m => m.user_id === userId && m.cycle_id === currentCycle.id);
+  };
+
+  const handleAllocationChange = (userId: string, field: 'coordinationId' | 'gtClientId' | 'gtRole', value: string | null) => {
+    setPendingAllocations(prev => {
+      const existingIndex = prev.findIndex(p => p.userId === userId);
+      const currentAllocation = getCurrentAllocation(userId);
+      const currentGT = getCurrentGT(userId);
+      
+      const baseAlloc: PendingAllocation = {
+        userId,
+        coordinationId: currentAllocation?.coordination_id || null,
+        gtClientId: currentGT?.client_id || null,
+        gtRole: currentGT?.role || null,
+      };
+
+      if (existingIndex >= 0) {
         const updated = [...prev];
-        updated[existing] = { memberId, coordinationId };
+        updated[existingIndex] = { ...updated[existingIndex], [field]: value === '__none__' ? null : value };
         return updated;
       }
-      if (coordinationId === '__keep__') return prev;
-      return [...prev, { memberId, coordinationId }];
+
+      return [...prev, { ...baseAlloc, [field]: value === '__none__' ? null : value }];
     });
   };
 
-  const getPendingAllocation = (memberId: string) => {
-    return pendingAllocations.find((p) => p.memberId === memberId)?.coordinationId;
+  const getPendingAllocation = (userId: string) => {
+    return pendingAllocations.find(p => p.userId === userId);
   };
 
-  const applyManualAllocations = () => {
-    pendingAllocations.forEach(({ memberId, coordinationId }) => {
-      const member = getMember(memberId);
-      if (member) {
-        updateMember(memberId, {
-          currentCoordinationId: coordinationId,
-          history: [
-            ...member.history.map((h) =>
-              !h.endDate ? { ...h, endDate: new Date().toISOString().split('T')[0] } : h
-            ),
-            {
-              coordinationId,
-              quarter: selectedQuarter,
-              startDate: new Date().toISOString().split('T')[0],
-            },
-          ],
+  const hasChanges = (userId: string) => {
+    const pending = getPendingAllocation(userId);
+    if (!pending) return false;
+    
+    const currentAlloc = getCurrentAllocation(userId);
+    const currentGT = getCurrentGT(userId);
+    
+    return (
+      pending.coordinationId !== (currentAlloc?.coordination_id || null) ||
+      pending.gtClientId !== (currentGT?.client_id || null) ||
+      pending.gtRole !== (currentGT?.role || null)
+    );
+  };
+
+  const getAllocationStatus = (userId: string) => {
+    const pending = getPendingAllocation(userId);
+    const currentAlloc = getCurrentAllocation(userId);
+    const currentGT = getCurrentGT(userId);
+    
+    const coordId = pending?.coordinationId ?? currentAlloc?.coordination_id;
+    const gtId = pending?.gtClientId ?? currentGT?.client_id;
+    
+    if (coordId && gtId) return 'complete';
+    if (coordId || gtId) return 'partial';
+    return 'none';
+  };
+
+  const applyManualAllocations = async () => {
+    if (!currentCycle) {
+      toast({
+        title: 'Erro',
+        description: 'Nenhum ciclo selecionado.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const changedAllocations = pendingAllocations.filter(p => {
+      const currentAlloc = getCurrentAllocation(p.userId);
+      const currentGT = getCurrentGT(p.userId);
+      
+      return (
+        p.coordinationId !== (currentAlloc?.coordination_id || null) ||
+        p.gtClientId !== (currentGT?.client_id || null) ||
+        p.gtRole !== (currentGT?.role || null)
+      );
+    });
+
+    for (const alloc of changedAllocations) {
+      // Update coordination allocation
+      if (alloc.coordinationId) {
+        await saveAllocation(
+          alloc.userId,
+          currentCycle.id,
+          alloc.coordinationId,
+          alloc.gtClientId || undefined,
+          alloc.gtRole || undefined
+        );
+      }
+
+      // Update GT membership if changed
+      if (alloc.gtClientId && alloc.gtRole) {
+        const existingGT = getCurrentGT(alloc.userId);
+        
+        if (existingGT) {
+          // Remove old GT membership
+          await supabase.from('gt_members').delete().eq('id', existingGT.id);
+        }
+        
+        // Add new GT membership
+        await supabase.from('gt_members').insert({
+          user_id: alloc.userId,
+          client_id: alloc.gtClientId,
+          role: alloc.gtRole,
+          cycle_id: currentCycle.id,
         });
       }
-    });
+    }
+
     setPendingAllocations([]);
     toast({
       title: 'Realocações aplicadas!',
-      description: `${pendingAllocations.length} membro(s) realocado(s) com sucesso.`,
+      description: `${changedAllocations.length} membro(s) realocado(s) com sucesso.`,
     });
     setOpen(false);
   };
@@ -109,49 +219,53 @@ export const ReallocationDialog = () => {
     low: { color: 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20', label: 'Baixa' },
   };
 
+  const changesCount = pendingAllocations.filter(p => hasChanges(p.userId)).length;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90">
+        <Button className="gap-2 bg-gradient-to-r from-primary to-accent hover:opacity-90" size="sm">
           <Shuffle className="w-4 h-4" />
-          Realocar Membros
+          <span className="hidden sm:inline">Realocar</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[85vh] flex flex-col overflow-hidden">
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Shuffle className="w-5 h-5 text-primary" />
             Realocação de Membros
           </DialogTitle>
           <DialogDescription>
-            Gerencie a realocação trimestral dos membros entre coordenadorias.
+            Gerencie a alocação dos membros em coordenadorias e grupos de trabalho.
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="auto" className="flex-1 flex flex-col min-h-0">
+        <Tabs defaultValue="manual" className="flex-1 flex flex-col min-h-0">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="auto" className="gap-2">
               <Sparkles className="w-4 h-4" />
-              Sugestão Automática
+              <span className="hidden sm:inline">Sugestão Automática</span>
+              <span className="sm:hidden">Auto</span>
             </TabsTrigger>
             <TabsTrigger value="manual" className="gap-2">
               <Users className="w-4 h-4" />
-              Alocação Manual
+              <span className="hidden sm:inline">Alocação Manual</span>
+              <span className="sm:hidden">Manual</span>
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="auto" className="flex-1 flex flex-col mt-4 min-h-0 data-[state=inactive]:hidden">
-            <div className="flex items-center justify-between mb-4 flex-shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 flex-shrink-0">
               <p className="text-sm text-muted-foreground">
                 O sistema analisa o histórico e sugere realocações para maximizar a experiência 360°.
               </p>
-              <Button variant="outline" size="sm" onClick={generateSuggestions} className="gap-2 flex-shrink-0 ml-4">
+              <Button variant="outline" size="sm" onClick={generateSuggestions} className="gap-2 flex-shrink-0">
                 <Sparkles className="w-4 h-4" />
                 Gerar Sugestões
               </Button>
             </div>
 
-            <ScrollArea className="h-[350px]">
+            <ScrollArea className="flex-1 min-h-[300px]">
               <div className="pr-4">
               {suggestions.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-center">
@@ -178,9 +292,9 @@ export const ReallocationDialog = () => {
                         transition={{ delay: index * 0.05 }}
                         className="p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors"
                       >
-                        <div className="flex items-center justify-between gap-4">
-                          <div className="flex items-center gap-3 flex-1">
-                            <Avatar className="h-10 w-10">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div className="flex items-center gap-3 flex-1 min-w-0">
+                            <Avatar className="h-10 w-10 shrink-0">
                               <AvatarImage src={member?.avatar} />
                               <AvatarFallback>
                                 {member?.name.split(' ').map((n) => n[0]).join('')}
@@ -188,26 +302,28 @@ export const ReallocationDialog = () => {
                             </Avatar>
                             <div className="flex-1 min-w-0">
                               <p className="font-medium truncate">{member?.name}</p>
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <span className="truncate">{currentCoord?.name || 'Sem alocação'}</span>
+                              <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
+                                <span className="truncate max-w-[100px]">{currentCoord?.name || 'Sem alocação'}</span>
                                 <ArrowRight className="w-4 h-4 flex-shrink-0 text-primary" />
-                                <span className="truncate font-medium text-foreground">
+                                <span className="truncate max-w-[100px] font-medium text-foreground">
                                   {suggestedCoord?.name}
                                 </span>
                               </div>
                             </div>
                           </div>
-                          <Badge variant="outline" className={priority.color}>
-                            {priority.label}
-                          </Badge>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-primary hover:text-primary hover:bg-primary/10"
-                            onClick={() => applySuggestion(suggestion)}
-                          >
-                            <Check className="w-4 h-4" />
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Badge variant="outline" className={priority.color}>
+                              {priority.label}
+                            </Badge>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="text-primary hover:text-primary hover:bg-primary/10"
+                              onClick={() => applySuggestion(suggestion)}
+                            >
+                              <Check className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">{suggestion.reason}</p>
                       </motion.div>
@@ -219,11 +335,11 @@ export const ReallocationDialog = () => {
             </ScrollArea>
 
             {suggestions.length > 0 && (
-              <DialogFooter className="mt-4 pt-4 border-t">
-                <Button variant="outline" onClick={() => setOpen(false)}>
+              <DialogFooter className="mt-4 pt-4 border-t flex-col sm:flex-row gap-2">
+                <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">
                   Cancelar
                 </Button>
-                <Button onClick={handleApplyAllSuggestions} className="gap-2">
+                <Button onClick={handleApplyAllSuggestions} className="gap-2 w-full sm:w-auto">
                   <Check className="w-4 h-4" />
                   Aplicar Todas ({suggestions.length})
                 </Button>
@@ -233,66 +349,129 @@ export const ReallocationDialog = () => {
 
           <TabsContent value="manual" className="flex-1 flex flex-col mt-4 min-h-0 data-[state=inactive]:hidden">
             <p className="text-sm text-muted-foreground mb-4 flex-shrink-0">
-              Selecione manualmente a nova coordenadoria para cada membro.
+              Selecione a coordenadoria e/ou grupo de trabalho para cada membro.
             </p>
 
-            <ScrollArea className="h-[350px]">
+            <ScrollArea className="flex-1 min-h-[300px]">
               <div className="space-y-3 pr-4">
-                {members.map((member, index) => {
-                  const currentCoord = member.currentCoordinationId
-                    ? getCoordination(member.currentCoordinationId)
-                    : null;
-                  const pendingCoordId = getPendingAllocation(member.id);
-                  const pendingCoord = pendingCoordId ? getCoordination(pendingCoordId) : null;
+                {profiles.map((profile, index) => {
+                  const currentAlloc = getCurrentAllocation(profile.user_id);
+                  const currentGT = getCurrentGT(profile.user_id);
+                  const pending = getPendingAllocation(profile.user_id);
+                  const status = getAllocationStatus(profile.user_id);
+                  const changed = hasChanges(profile.user_id);
+
+                  const displayCoordId = pending?.coordinationId ?? currentAlloc?.coordination_id ?? '';
+                  const displayGtClientId = pending?.gtClientId ?? currentGT?.client_id ?? '';
+                  const displayGtRole = pending?.gtRole ?? currentGT?.role ?? '';
+
+                  const currentCoord = displayCoordId ? getCoordination(displayCoordId) : null;
+                  const currentClient = displayGtClientId ? clients.find(c => c.id === displayGtClientId) : null;
 
                   return (
                     <motion.div
-                      key={member.id}
+                      key={profile.user_id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.02 }}
                       className={`p-4 rounded-lg border transition-colors ${
-                        pendingCoordId ? 'bg-primary/5 border-primary/30' : 'bg-card'
+                        changed ? 'bg-primary/5 border-primary/30' : 'bg-card'
                       }`}
                     >
-                      <div className="flex items-center gap-4">
-                        <Avatar className="h-10 w-10">
-                          <AvatarImage src={member.avatar} />
-                          <AvatarFallback>
-                            {member.name.split(' ').map((n) => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium truncate">{member.name}</p>
-                          <p className="text-sm text-muted-foreground">
-                            Atual: {currentCoord?.name || 'Sem alocação'}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {pendingCoord && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <ArrowRight className="w-4 h-4 text-primary" />
-                              <span className="font-medium text-primary">{pendingCoord.name}</span>
+                      <div className="flex flex-col gap-3">
+                        {/* Header with avatar and name */}
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10 shrink-0">
+                            <AvatarImage src={profile.avatar_url || undefined} />
+                            <AvatarFallback>
+                              {getInitials(profile.display_name, profile.email)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium truncate">{profile.display_name || profile.email}</p>
+                            <div className="flex items-center gap-2">
+                              <Badge 
+                                variant={status === 'complete' ? 'default' : status === 'partial' ? 'secondary' : 'outline'}
+                                className="text-xs"
+                              >
+                                {status === 'complete' ? 'Completo' : status === 'partial' ? 'Parcial' : 'Pendente'}
+                              </Badge>
+                              {status === 'partial' && (
+                                <AlertCircle className="w-3 h-3 text-amber-500" />
+                              )}
                             </div>
-                          )}
-                          <Select
-                            value={pendingCoordId || '__keep__'}
-                            onValueChange={(value) => handleManualAllocation(member.id, value)}
-                          >
-                            <SelectTrigger className="w-48">
-                              <SelectValue placeholder="Nova coordenadoria" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="__keep__">Manter atual</SelectItem>
-                              {coordinations
-                                .filter((c) => c.id !== member.currentCoordinationId)
-                                .map((coord) => (
+                          </div>
+                        </div>
+
+                        {/* Allocation selects */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          {/* Coordination */}
+                          <div className="space-y-1">
+                            <label className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Building2 className="w-3 h-3" />
+                              Coordenadoria
+                            </label>
+                            <Select
+                              value={displayCoordId || '__none__'}
+                              onValueChange={(value) => handleAllocationChange(profile.user_id, 'coordinationId', value)}
+                            >
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Selecionar..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">Nenhuma</SelectItem>
+                                {mockCoordinations.map((coord) => (
                                   <SelectItem key={coord.id} value={coord.id}>
-                                    {coord.name}
+                                    <span className="truncate">{coord.name}</span>
                                   </SelectItem>
                                 ))}
-                            </SelectContent>
-                          </Select>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* GT Client */}
+                          <div className="space-y-1">
+                            <label className="text-xs text-muted-foreground flex items-center gap-1">
+                              <Briefcase className="w-3 h-3" />
+                              Grupo de Trabalho
+                            </label>
+                            <Select
+                              value={displayGtClientId || '__none__'}
+                              onValueChange={(value) => handleAllocationChange(profile.user_id, 'gtClientId', value)}
+                            >
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Selecionar..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">Nenhum</SelectItem>
+                                {clients.map((client) => (
+                                  <SelectItem key={client.id} value={client.id}>
+                                    <span className="truncate">{client.name}</span>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          {/* GT Role */}
+                          <div className="space-y-1">
+                            <label className="text-xs text-muted-foreground">Função no GT</label>
+                            <Select
+                              value={displayGtRole || '__none__'}
+                              onValueChange={(value) => handleAllocationChange(profile.user_id, 'gtRole', value)}
+                              disabled={!displayGtClientId}
+                            >
+                              <SelectTrigger className="h-9 text-sm">
+                                <SelectValue placeholder="Selecionar..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">Nenhuma</SelectItem>
+                                <SelectItem value="director">Diretor de Demandas</SelectItem>
+                                <SelectItem value="manager">Gerente de Demandas</SelectItem>
+                                <SelectItem value="consultant">Consultor</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
                         </div>
                       </div>
                     </motion.div>
@@ -301,21 +480,21 @@ export const ReallocationDialog = () => {
               </div>
             </ScrollArea>
 
-            <DialogFooter className="mt-4 pt-4 border-t">
-              <div className="flex items-center gap-2 mr-auto">
-                {pendingAllocations.length > 0 && (
+            <DialogFooter className="mt-4 pt-4 border-t flex-col sm:flex-row gap-2">
+              <div className="flex items-center gap-2 sm:mr-auto w-full sm:w-auto justify-center sm:justify-start">
+                {changesCount > 0 && (
                   <Badge variant="secondary" className="gap-1">
-                    {pendingAllocations.length} alteração(ões) pendente(s)
+                    {changesCount} alteração(ões) pendente(s)
                   </Badge>
                 )}
               </div>
-              <Button variant="outline" onClick={() => setOpen(false)}>
+              <Button variant="outline" onClick={() => setOpen(false)} className="w-full sm:w-auto">
                 Cancelar
               </Button>
               <Button
                 onClick={applyManualAllocations}
-                disabled={pendingAllocations.length === 0}
-                className="gap-2"
+                disabled={changesCount === 0}
+                className="gap-2 w-full sm:w-auto"
               >
                 <Check className="w-4 h-4" />
                 Aplicar Alterações
