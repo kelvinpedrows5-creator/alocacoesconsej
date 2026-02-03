@@ -347,12 +347,12 @@ export const ReallocationDialog = () => {
             )}
           </TabsContent>
 
-          <TabsContent value="manual" className="flex-1 flex flex-col mt-4 min-h-0 data-[state=inactive]:hidden">
+          <TabsContent value="manual" className="flex-1 flex flex-col mt-4 min-h-0 data-[state=inactive]:hidden overflow-hidden">
             <p className="text-sm text-muted-foreground mb-4 flex-shrink-0">
               Selecione a coordenadoria e/ou grupo de trabalho para cada membro.
             </p>
 
-            <ScrollArea className="flex-1 min-h-[300px]">
+            <div className="flex-1 overflow-y-auto min-h-0 max-h-[400px]">
               <div className="space-y-3 pr-4">
                 {profiles.map((profile, index) => {
                   const currentAlloc = getCurrentAllocation(profile.user_id);
@@ -365,8 +365,6 @@ export const ReallocationDialog = () => {
                   const displayGtClientId = pending?.gtClientId ?? currentGT?.client_id ?? '';
                   const displayGtRole = pending?.gtRole ?? currentGT?.role ?? '';
 
-                  const currentCoord = displayCoordId ? getCoordination(displayCoordId) : null;
-                  const currentClient = displayGtClientId ? clients.find(c => c.id === displayGtClientId) : null;
 
                   return (
                     <motion.div
@@ -478,7 +476,7 @@ export const ReallocationDialog = () => {
                   );
                 })}
               </div>
-            </ScrollArea>
+            </div>
 
             <DialogFooter className="mt-4 pt-4 border-t flex-col sm:flex-row gap-2">
               <div className="flex items-center gap-2 sm:mr-auto w-full sm:w-auto justify-center sm:justify-start">

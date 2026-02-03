@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Search } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
+import { useCycles } from '@/hooks/useCycles';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -24,28 +25,48 @@ interface ProfileData {
   avatar_url: string | null;
 }
 
+interface AllocationData {
+  user_id: string;
+  coordination_id: string;
+}
+
 export const MembersSection = () => {
   const [profiles, setProfiles] = useState<ProfileData[]>([]);
+  const [allocations, setAllocations] = useState<AllocationData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDirectorate, setSelectedDirectorate] = useState<string>('all');
+  const { currentCycle } = useCycles();
 
   useEffect(() => {
-    fetchProfiles();
-  }, []);
+    fetchData();
+  }, [currentCycle?.id]);
 
-  const fetchProfiles = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
+      
+      // Fetch profiles
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, user_id, email, display_name, avatar_url')
         .order('display_name', { ascending: true });
 
-      if (error) throw error;
-      setProfiles(data || []);
+      if (profilesError) throw profilesError;
+      setProfiles(profilesData || []);
+
+      // Fetch allocations for current cycle
+      if (currentCycle?.id) {
+        const { data: allocationsData, error: allocationsError } = await supabase
+          .from('member_allocations')
+          .select('user_id, coordination_id')
+          .eq('cycle_id', currentCycle.id);
+
+        if (allocationsError) throw allocationsError;
+        setAllocations(allocationsData || []);
+      }
     } catch (error) {
-      console.error('Error fetching profiles:', error);
+      console.error('Error fetching data:', error);
     } finally {
       setLoading(false);
     }
@@ -63,12 +84,12 @@ export const MembersSection = () => {
     return email.charAt(0).toUpperCase();
   };
 
-  // Mock coordination assignment based on email (in production, this would come from the database)
-  const getCoordinationForProfile = (email: string) => {
-    // Simple hash to assign coordination consistently
-    const hash = email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    const coordIndex = hash % coordinations.length;
-    return coordinations[coordIndex];
+  const getCoordinationForProfile = (userId: string) => {
+    const allocation = allocations.find(a => a.user_id === userId);
+    if (allocation) {
+      return coordinations.find(c => c.id === allocation.coordination_id);
+    }
+    return null;
   };
 
   const filteredProfiles = profiles.filter((p) => {
@@ -78,22 +99,23 @@ export const MembersSection = () => {
     
     if (selectedDirectorate === 'all') return matchesSearch;
     
-    const coord = getCoordinationForProfile(p.email);
-    return matchesSearch && coord.directorateId === selectedDirectorate;
+    const coord = getCoordinationForProfile(p.user_id);
+    return matchesSearch && coord?.directorateId === selectedDirectorate;
   });
 
   const groupedByDirectorate = directorates.map((dir) => {
-    const dirCoords = coordinations.filter((c) => c.directorateId === dir.id);
     const dirMembers = filteredProfiles.filter((p) => {
-      const coord = getCoordinationForProfile(p.email);
-      return coord.directorateId === dir.id;
+      const coord = getCoordinationForProfile(p.user_id);
+      return coord?.directorateId === dir.id;
     });
     return {
       directorate: dir,
-      coordinations: dirCoords,
       members: dirMembers,
     };
   });
+
+  // Members without allocation
+  const unallocatedMembers = filteredProfiles.filter(p => !getCoordinationForProfile(p.user_id));
 
   return (
     <Card>
@@ -161,7 +183,7 @@ export const MembersSection = () => {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                       {group.members.map((profile) => {
-                        const coord = getCoordinationForProfile(profile.email);
+                        const coord = getCoordinationForProfile(profile.user_id);
                         return (
                           <motion.div
                             key={profile.id}
@@ -173,7 +195,10 @@ export const MembersSection = () => {
                               <AvatarImage src={profile.avatar_url || undefined} />
                               <AvatarFallback 
                                 className="text-sm"
-                                style={{ backgroundColor: `${coord.color}20`, color: coord.color }}
+                                style={{ 
+                                  backgroundColor: coord ? `${coord.color}20` : undefined, 
+                                  color: coord?.color 
+                                }}
                               >
                                 {getInitials(profile.display_name, profile.email)}
                               </AvatarFallback>
@@ -182,13 +207,15 @@ export const MembersSection = () => {
                               <p className="font-medium text-foreground truncate">
                                 {profile.display_name || profile.email.split('@')[0]}
                               </p>
-                              <Badge
-                                variant="outline"
-                                className="text-xs mt-1 max-w-full"
-                                style={{ borderColor: `${coord.color}50`, color: coord.color }}
-                              >
-                                <span className="truncate">{coord.name}</span>
-                              </Badge>
+                              {coord && (
+                                <Badge
+                                  variant="outline"
+                                  className="text-xs mt-1 max-w-full"
+                                  style={{ borderColor: `${coord.color}50`, color: coord.color }}
+                                >
+                                  <span className="truncate">{coord.name}</span>
+                                </Badge>
+                              )}
                             </div>
                           </motion.div>
                         );
@@ -196,6 +223,50 @@ export const MembersSection = () => {
                     </div>
                   </motion.div>
                 ))}
+
+              {/* Unallocated members */}
+              {selectedDirectorate === 'all' && unallocatedMembers.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <h3 className="font-semibold text-muted-foreground">
+                      Sem Alocação
+                    </h3>
+                    <Badge variant="outline" className="text-xs">
+                      {unallocatedMembers.length} membros
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {unallocatedMembers.map((profile) => (
+                      <motion.div
+                        key={profile.id}
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex items-center gap-3 p-3 rounded-lg border border-dashed hover:border-primary/30 transition-colors bg-card min-w-0"
+                      >
+                        <Avatar className="h-10 w-10 shrink-0">
+                          <AvatarImage src={profile.avatar_url || undefined} />
+                          <AvatarFallback className="text-sm bg-muted">
+                            {getInitials(profile.display_name, profile.email)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-foreground truncate">
+                            {profile.display_name || profile.email.split('@')[0]}
+                          </p>
+                          <Badge variant="outline" className="text-xs mt-1 text-muted-foreground">
+                            Pendente
+                          </Badge>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+
               {filteredProfiles.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
                   Nenhum membro encontrado

@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { Sparkles, Check, ArrowRight, AlertCircle, CheckCircle2, Clock } from 'lucide-react';
+import { Sparkles, Check, ArrowRight, AlertCircle, CheckCircle2, Clock, RefreshCw } from 'lucide-react';
 import { useAllocationStore } from '@/hooks/useAllocationStore';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,7 +27,7 @@ export const SuggestionsPanel = () => {
   return (
     <div className="bg-card rounded-xl card-shadow overflow-hidden">
       <div className="p-6 border-b border-border">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-lg bg-accent/10">
               <Sparkles className="w-5 h-5 text-accent" />
@@ -39,10 +39,19 @@ export const SuggestionsPanel = () => {
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={generateSuggestions}>
-              <Sparkles className="w-4 h-4 mr-2" />
-              Gerar Sugestões
+          <div className="flex gap-2 flex-wrap">
+            <Button variant="outline" onClick={generateSuggestions} className="gap-2">
+              {suggestions.length > 0 ? (
+                <>
+                  <RefreshCw className="w-4 h-4" />
+                  Nova Sugestão
+                </>
+              ) : (
+                <>
+                  <Sparkles className="w-4 h-4" />
+                  Gerar Sugestões
+                </>
+              )}
             </Button>
             {suggestions.length > 0 && (
               <Button onClick={applyAllSuggestions}>

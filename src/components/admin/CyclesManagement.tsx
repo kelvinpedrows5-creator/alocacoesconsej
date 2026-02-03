@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Plus, Eye, EyeOff, Trash2, Star, AlertTriangle } from 'lucide-react';
+import { Calendar, Plus, Eye, EyeOff, Trash2, Star, AlertTriangle, History } from 'lucide-react';
 import { useCycles, AllocationCycle } from '@/hooks/useCycles';
+import { CycleHistoryView } from '@/components/CycleHistoryView';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +33,7 @@ export const CyclesManagement = () => {
   const { cycles, loading, addCycle, updateCycleVisibility, setCurrentCycle, deleteCycle } = useCycles();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<AllocationCycle | null>(null);
+  const [historyTarget, setHistoryTarget] = useState<AllocationCycle | null>(null);
   const [newCycleLabel, setNewCycleLabel] = useState('');
   const [newCycleValue, setNewCycleValue] = useState('');
   const [adding, setAdding] = useState(false);
@@ -130,12 +132,15 @@ export const CyclesManagement = () => {
                     animate={{ opacity: 1 }}
                     className="flex items-center justify-between p-4 rounded-lg border hover:border-primary/30 transition-colors bg-card"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className="flex flex-col">
+                    <div 
+                      className="flex items-center gap-3 cursor-pointer flex-1 min-w-0"
+                      onClick={() => setHistoryTarget(cycle)}
+                    >
+                      <div className="flex flex-col min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="font-medium text-foreground">{cycle.label}</p>
+                          <p className="font-medium text-foreground truncate">{cycle.label}</p>
                           {cycle.is_current && (
-                            <Badge variant="default" className="text-xs">
+                            <Badge variant="default" className="text-xs shrink-0">
                               <Star className="w-3 h-3 mr-1" />
                               Atual
                             </Badge>
@@ -145,7 +150,26 @@ export const CyclesManagement = () => {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+                      {/* View History Button */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setHistoryTarget(cycle)}
+                        className="gap-1 hidden sm:flex"
+                      >
+                        <History className="w-4 h-4" />
+                        Ver
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setHistoryTarget(cycle)}
+                        className="sm:hidden"
+                      >
+                        <History className="w-4 h-4" />
+                      </Button>
+
                       {/* Visibility Toggle */}
                       <div className="flex items-center gap-2">
                         <Switch
@@ -155,7 +179,7 @@ export const CyclesManagement = () => {
                         />
                         <Label
                           htmlFor={`visibility-${cycle.id}`}
-                          className="text-sm cursor-pointer"
+                          className="text-sm cursor-pointer hidden sm:block"
                         >
                           {cycle.is_visible ? (
                             <span className="flex items-center gap-1 text-primary">
@@ -177,6 +201,7 @@ export const CyclesManagement = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => setCurrentCycle(cycle.id)}
+                          className="hidden sm:flex"
                         >
                           <Star className="w-4 h-4 mr-1" />
                           Definir Atual
@@ -200,6 +225,15 @@ export const CyclesManagement = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Cycle History View */}
+      {historyTarget && (
+        <CycleHistoryView
+          cycle={historyTarget}
+          open={!!historyTarget}
+          onClose={() => setHistoryTarget(null)}
+        />
+      )}
 
       {/* Add Cycle Dialog */}
       <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>

@@ -181,7 +181,7 @@ const Index = () => {
                   </TabsTrigger>
                   <TabsTrigger value="my-profile" className="gap-2">
                     <User className="w-4 h-4" />
-                    <span className="hidden sm:inline">Perfil de Alocação</span>
+                    <span className="hidden sm:inline">Pesquisa de Perfil</span>
                   </TabsTrigger>
                   <TabsTrigger value="consej" className="gap-2">
                     <Users className="w-4 h-4" />
