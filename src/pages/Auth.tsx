@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -41,6 +42,15 @@ const Auth = () => {
     setLoading(false);
   };
 
+  const isPasswordValid = () => {
+    if (signupPassword.length < 8) return false;
+    if (!/[A-Z]/.test(signupPassword)) return false;
+    if (!/[a-z]/.test(signupPassword)) return false;
+    if (!/[0-9]/.test(signupPassword)) return false;
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signupPassword)) return false;
+    return true;
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -51,34 +61,8 @@ const Auth = () => {
       return;
     }
 
-    // Strong password validation
-    if (signupPassword.length < 8) {
-      setError('A senha deve ter pelo menos 8 caracteres');
-      return;
-    }
-
-    const hasUppercase = /[A-Z]/.test(signupPassword);
-    const hasLowercase = /[a-z]/.test(signupPassword);
-    const hasNumber = /[0-9]/.test(signupPassword);
-    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(signupPassword);
-
-    if (!hasUppercase) {
-      setError('A senha deve conter pelo menos uma letra maiúscula');
-      return;
-    }
-
-    if (!hasLowercase) {
-      setError('A senha deve conter pelo menos uma letra minúscula');
-      return;
-    }
-
-    if (!hasNumber) {
-      setError('A senha deve conter pelo menos um número');
-      return;
-    }
-
-    if (!hasSpecialChar) {
-      setError('A senha deve conter pelo menos um caractere especial (!@#$%^&*...)');
+    if (!isPasswordValid()) {
+      setError('A senha não atende aos requisitos mínimos');
       return;
     }
 
@@ -237,6 +221,9 @@ const Auth = () => {
                         required
                       />
                     </div>
+                    <AnimatePresence>
+                      {signupPassword && <PasswordStrengthIndicator password={signupPassword} />}
+                    </AnimatePresence>
                   </div>
 
                   <div className="space-y-2">
@@ -253,9 +240,16 @@ const Auth = () => {
                         required
                       />
                     </div>
+                    {signupConfirmPassword && signupPassword !== signupConfirmPassword && (
+                      <p className="text-xs text-destructive">As senhas não coincidem</p>
+                    )}
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button 
+                    type="submit" 
+                    className="w-full" 
+                    disabled={loading || !isPasswordValid() || signupPassword !== signupConfirmPassword}
+                  >
                     {loading ? 'Criando conta...' : 'Criar Conta'}
                     <User className="ml-2 h-4 w-4" />
                   </Button>

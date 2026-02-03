@@ -140,27 +140,38 @@ export const AdminMembersManagement = () => {
     try {
       setUpdating(profile.id);
 
-      // Delete from user_roles first
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .delete()
-        .eq('user_id', profile.user_id);
+      // Get the current user's session token
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
 
-      if (roleError) throw roleError;
+      if (!token) {
+        throw new Error('Sessão expirada. Faça login novamente.');
+      }
 
-      // Delete from profiles
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('user_id', profile.user_id);
+      // Call edge function to delete user completely
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/delete-user`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ userId: profile.user_id }),
+        }
+      );
 
-      if (profileError) throw profileError;
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao remover usuário');
+      }
 
       setProfiles((prev) => prev.filter((p) => p.id !== profile.id));
 
       toast({
         title: 'Membro removido',
-        description: `${profile.display_name || profile.email} foi removido do sistema.`,
+        description: `${profile.display_name || profile.email} foi removido completamente do sistema.`,
       });
     } catch (error: any) {
       console.error('Error deleting member:', error);
@@ -287,12 +298,16 @@ export const AdminMembersManagement = () => {
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <AlertTriangle className="w-5 h-5 text-destructive" />
-              Confirmar Remoção
+              Confirmar Remoção Definitiva
             </AlertDialogTitle>
             <AlertDialogDescription>
               Tem certeza que deseja remover{' '}
-              <strong>{deleteTarget?.display_name || deleteTarget?.email}</strong> do sistema?
-              Esta ação não pode ser desfeita.
+              <strong>{deleteTarget?.display_name || deleteTarget?.email}</strong> completamente do sistema?
+              <br /><br />
+              <span className="text-destructive font-medium">
+                Esta ação removerá a conta de autenticação, perfil e todos os dados associados.
+                Esta ação não pode ser desfeita.
+              </span>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -301,7 +316,7 @@ export const AdminMembersManagement = () => {
               onClick={() => deleteTarget && handleDeleteMember(deleteTarget)}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Remover
+              Remover Definitivamente
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -334,22 +349,22 @@ const MemberRow = ({
       animate={{ opacity: 1 }}
       className="flex items-center justify-between p-4 rounded-lg border hover:border-primary/30 transition-colors bg-card"
     >
-      <div className="flex items-center gap-3">
-        <Avatar className="h-10 w-10">
+      <div className="flex items-center gap-3 min-w-0 flex-1">
+        <Avatar className="h-10 w-10 shrink-0">
           <AvatarImage src={profile.avatar_url || undefined} />
           <AvatarFallback className={isAdmin ? 'bg-primary/10 text-primary' : ''}>
             {getInitials(profile.display_name, profile.email)}
           </AvatarFallback>
         </Avatar>
-        <div>
-          <p className="font-medium text-foreground">
+        <div className="min-w-0">
+          <p className="font-medium text-foreground truncate">
             {profile.display_name || profile.email}
           </p>
-          <p className="text-sm text-muted-foreground">{profile.email}</p>
+          <p className="text-sm text-muted-foreground truncate">{profile.email}</p>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 shrink-0">
         {/* Role Toggle */}
         <div className="flex items-center gap-2">
           <Switch
@@ -360,7 +375,7 @@ const MemberRow = ({
           />
           <Label
             htmlFor={`role-${profile.id}`}
-            className="text-sm cursor-pointer"
+            className="text-sm cursor-pointer hidden sm:block"
           >
             {isAdmin ? (
               <span className="flex items-center gap-1 text-primary">

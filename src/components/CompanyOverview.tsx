@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { supabase } from '@/integrations/supabase/client';
 import { useLeadership } from '@/hooks/useLeadership';
 import { useClients } from '@/hooks/useClients';
@@ -241,36 +241,34 @@ export const CompanyOverview = () => {
                           </div>
                         )}
 
-                        <div className="flex flex-wrap gap-1.5">
-                          {coordMembers.length === 0 ? (
-                            <p className="text-sm text-muted-foreground italic">Nenhum membro</p>
-                          ) : (
-                            coordMembers.slice(0, 6).map(member => (
-                              <div 
-                                key={member.id}
-                                className="flex items-center gap-1.5 bg-secondary/50 rounded-full pl-0.5 pr-2 py-0.5"
-                              >
-                                <Avatar className="h-5 w-5">
-                                  <AvatarImage src={member.avatar_url || undefined} />
-                                  <AvatarFallback 
-                                    className="text-[10px]"
-                                    style={{ backgroundColor: `${coord.color}30`, color: coord.color }}
-                                  >
-                                    {getInitials(member.display_name, member.email)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-xs text-foreground truncate max-w-[60px]">
-                                  {member.display_name?.split(' ')[0] || member.email.split('@')[0]}
-                                </span>
-                              </div>
-                            ))
-                          )}
-                          {coordMembers.length > 6 && (
-                            <Badge variant="outline" className="text-xs">
-                              +{coordMembers.length - 6}
-                            </Badge>
-                          )}
-                        </div>
+                        <ScrollArea className="w-full">
+                          <div className="flex gap-1.5 pb-2">
+                            {coordMembers.length === 0 ? (
+                              <p className="text-sm text-muted-foreground italic">Nenhum membro</p>
+                            ) : (
+                              coordMembers.map(member => (
+                                <div 
+                                  key={member.id}
+                                  className="flex items-center gap-1.5 bg-secondary/50 rounded-full pl-0.5 pr-2 py-0.5 shrink-0"
+                                >
+                                  <Avatar className="h-5 w-5">
+                                    <AvatarImage src={member.avatar_url || undefined} />
+                                    <AvatarFallback 
+                                      className="text-[10px]"
+                                      style={{ backgroundColor: `${coord.color}30`, color: coord.color }}
+                                    >
+                                      {getInitials(member.display_name, member.email)}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-xs text-foreground whitespace-nowrap">
+                                    {member.display_name?.split(' ')[0] || member.email.split('@')[0]}
+                                  </span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                          <ScrollBar orientation="horizontal" />
+                        </ScrollArea>
 
                         {/* Capacity bar */}
                         <div className="mt-3">

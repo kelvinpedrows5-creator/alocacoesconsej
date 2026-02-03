@@ -79,7 +79,7 @@ export const MemberProfileResults = () => {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-primary" />
-          Meu Perfil de Alocação
+          Pesquisa de Perfil
         </CardTitle>
         <CardDescription>
           Coordenadorias que mais combinam com seu perfil
