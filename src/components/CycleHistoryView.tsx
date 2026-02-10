@@ -47,28 +47,15 @@ export const CycleHistoryView = ({ cycle, open, onClose }: CycleHistoryViewProps
     try {
       setLoading(true);
       
-      // Fetch profiles
-      const { data: profilesData } = await supabase
-        .from('profiles')
-        .select('id, user_id, email, display_name, avatar_url');
-      
-      setProfiles(profilesData || []);
+      const [profilesRes, allocationsRes, gtMembersRes] = await Promise.all([
+        supabase.from('profiles').select('id, user_id, email, display_name, avatar_url'),
+        supabase.from('member_allocations').select('*').eq('cycle_id', cycle.id),
+        supabase.from('gt_members').select('*').eq('cycle_id', cycle.id),
+      ]);
 
-      // Fetch allocations for this cycle
-      const { data: allocationsData } = await supabase
-        .from('member_allocations')
-        .select('*')
-        .eq('cycle_id', cycle.id);
-      
-      setAllocations(allocationsData || []);
-
-      // Fetch GT members for this cycle
-      const { data: gtMembersData } = await supabase
-        .from('gt_members')
-        .select('*')
-        .eq('cycle_id', cycle.id);
-      
-      setGtMembers(gtMembersData || []);
+      setProfiles(profilesRes.data || []);
+      setAllocations(allocationsRes.data || []);
+      setGtMembers(gtMembersRes.data || []);
     } catch (error) {
       console.error('Error fetching historical data:', error);
     } finally {
@@ -81,9 +68,7 @@ export const CycleHistoryView = ({ cycle, open, onClose }: CycleHistoryViewProps
     return email.charAt(0).toUpperCase();
   };
 
-  const getProfileByUserId = (userId: string) => {
-    return profiles.find(p => p.user_id === userId);
-  };
+  const getProfileByUserId = (userId: string) => profiles.find(p => p.user_id === userId);
 
   const getMembersForCoordination = (coordId: string) => {
     return allocations
@@ -103,8 +88,8 @@ export const CycleHistoryView = ({ cycle, open, onClose }: CycleHistoryViewProps
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[85vh] flex flex-col overflow-hidden">
-        <DialogHeader className="flex-shrink-0">
+      <DialogContent className="max-w-5xl max-h-[90vh] flex flex-col p-0 overflow-hidden">
+        <DialogHeader className="flex-shrink-0 p-6 pb-0">
           <DialogTitle className="flex items-center gap-2">
             <Building2 className="w-5 h-5 text-primary" />
             Organização em {cycle.label}
@@ -116,7 +101,7 @@ export const CycleHistoryView = ({ cycle, open, onClose }: CycleHistoryViewProps
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           </div>
         ) : (
-          <Tabs defaultValue="coordinations" className="flex-1 flex flex-col min-h-0">
+          <Tabs defaultValue="coordinations" className="flex-1 flex flex-col min-h-0 px-6 pb-6">
             <TabsList className="w-full sm:w-auto flex-shrink-0">
               <TabsTrigger value="coordinations" className="gap-2">
                 <Building2 className="w-4 h-4" />
@@ -128,87 +113,87 @@ export const CycleHistoryView = ({ cycle, open, onClose }: CycleHistoryViewProps
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="coordinations" className="flex-1 mt-4 overflow-hidden">
-              <ScrollArea className="h-[500px]">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pr-4">
-                  {coordinations.map((coord, index) => {
-                    const coordMembers = getMembersForCoordination(coord.id);
-                    const directorate = directorates.find(d => d.id === coord.directorateId);
-
+            <TabsContent value="coordinations" className="flex-1 mt-4 min-h-0">
+              <ScrollArea className="h-[calc(90vh-200px)]">
+                <div className="space-y-6 pr-4">
+                  {directorates.map(directorate => {
+                    const dirCoords = coordinations.filter(c => c.directorateId === directorate.id);
                     return (
-                      <motion.div
-                        key={coord.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.02 }}
-                        className="border border-border rounded-xl p-4 bg-card"
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <div 
-                                className="w-3 h-3 rounded-full shrink-0"
-                                style={{ backgroundColor: coord.color }}
-                              />
-                              <h3 className="font-medium text-foreground truncate">{coord.name}</h3>
-                            </div>
-                            {directorate && (
-                              <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                                {directorate.name}
-                              </p>
-                            )}
-                          </div>
-                          <Badge variant="secondary" className="text-xs shrink-0 ml-2">
-                            {coordMembers.length}
-                          </Badge>
-                        </div>
-
-                        <ScrollArea className="w-full">
-                          <div className="flex gap-1.5 pb-2">
-                            {coordMembers.length === 0 ? (
-                              <p className="text-sm text-muted-foreground italic">Nenhum membro</p>
-                            ) : (
-                              coordMembers.map(member => (
-                                <div 
-                                  key={member.id}
-                                  className="flex items-center gap-1.5 bg-secondary/50 rounded-full pl-0.5 pr-2 py-0.5 shrink-0"
-                                >
-                                  <Avatar className="h-5 w-5">
-                                    <AvatarImage src={member.avatar_url || undefined} />
-                                    <AvatarFallback 
-                                      className="text-[10px]"
-                                      style={{ backgroundColor: `${coord.color}30`, color: coord.color }}
-                                    >
-                                      {getInitials(member.display_name, member.email)}
-                                    </AvatarFallback>
-                                  </Avatar>
-                                  <span className="text-xs text-foreground whitespace-nowrap">
-                                    {member.display_name?.split(' ')[0] || member.email.split('@')[0]}
-                                  </span>
+                      <div key={directorate.id}>
+                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">
+                          {directorate.name}
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                          {dirCoords.map((coord, index) => {
+                            const coordMembers = getMembersForCoordination(coord.id);
+                            return (
+                              <motion.div
+                                key={coord.id}
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.02 }}
+                                className="border border-border rounded-lg p-3 bg-card"
+                              >
+                                <div className="flex items-center justify-between mb-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <div
+                                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                                      style={{ backgroundColor: coord.color }}
+                                    />
+                                    <span className="text-sm font-medium text-foreground truncate">
+                                      {coord.name}
+                                    </span>
+                                  </div>
+                                  <Badge variant="secondary" className="text-xs shrink-0 ml-1">
+                                    {coordMembers.length}
+                                  </Badge>
                                 </div>
-                              ))
-                            )}
-                          </div>
-                          <ScrollBar orientation="horizontal" />
-                        </ScrollArea>
-                      </motion.div>
+
+                                {coordMembers.length === 0 ? (
+                                  <p className="text-xs text-muted-foreground italic">Nenhum membro</p>
+                                ) : (
+                                  <div className="flex flex-wrap gap-1">
+                                    {coordMembers.map(member => (
+                                      <div
+                                        key={member.id}
+                                        className="flex items-center gap-1 bg-secondary/50 rounded-full pl-0.5 pr-2 py-0.5"
+                                      >
+                                        <Avatar className="h-4 w-4">
+                                          <AvatarImage src={member.avatar_url || undefined} />
+                                          <AvatarFallback
+                                            className="text-[8px]"
+                                            style={{ backgroundColor: `${coord.color}30`, color: coord.color }}
+                                          >
+                                            {getInitials(member.display_name, member.email)}
+                                          </AvatarFallback>
+                                        </Avatar>
+                                        <span className="text-[10px] text-foreground whitespace-nowrap">
+                                          {member.display_name?.split(' ')[0] || member.email.split('@')[0]}
+                                        </span>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
               </ScrollArea>
             </TabsContent>
 
-            <TabsContent value="gts" className="flex-1 mt-4 overflow-hidden">
-              <ScrollArea className="h-[500px]">
+            <TabsContent value="gts" className="flex-1 mt-4 min-h-0">
+              <ScrollArea className="h-[calc(90vh-200px)]">
                 {clients.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-12 text-center">
                     <Briefcase className="w-12 h-12 text-muted-foreground/50 mb-4" />
-                    <p className="text-muted-foreground">
-                      Nenhum grupo de trabalho neste ciclo.
-                    </p>
+                    <p className="text-muted-foreground">Nenhum grupo de trabalho neste ciclo.</p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pr-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pr-4">
                     {clients.map((client, index) => {
                       const members = gtMembers.filter(m => m.client_id === client.id);
                       const director = members.find(m => m.role === 'director');
@@ -218,93 +203,84 @@ export const CycleHistoryView = ({ cycle, open, onClose }: CycleHistoryViewProps
                       return (
                         <motion.div
                           key={client.id}
-                          initial={{ opacity: 0, y: 20 }}
+                          initial={{ opacity: 0, y: 10 }}
                           animate={{ opacity: 1, y: 0 }}
                           transition={{ delay: index * 0.02 }}
-                          className="border border-border rounded-xl p-4 bg-card"
+                          className="border border-border rounded-lg p-3 bg-card"
                         >
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <Briefcase className="w-4 h-4 text-primary shrink-0" />
-                                <h3 className="font-medium text-foreground truncate">{client.name}</h3>
-                              </div>
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Briefcase className="w-4 h-4 text-primary shrink-0" />
+                              <span className="text-sm font-medium text-foreground truncate">{client.name}</span>
                             </div>
-                            <Badge variant="secondary" className="text-xs shrink-0 ml-2">
+                            <Badge variant="secondary" className="text-xs shrink-0 ml-1">
                               {members.length}
                             </Badge>
                           </div>
 
-                          <div className="space-y-2">
-                            {director && (
-                              <div className="flex items-center gap-2 p-2 bg-primary/5 rounded-lg">
-                                <Avatar className="h-5 w-5">
-                                  <AvatarImage src={getProfileByUserId(director.user_id)?.avatar_url || undefined} />
-                                  <AvatarFallback className="text-[10px] bg-primary/10 text-primary">
-                                    {getInitials(
-                                      getProfileByUserId(director.user_id)?.display_name || null,
-                                      getProfileByUserId(director.user_id)?.email || ''
-                                    )}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-xs truncate flex-1">
-                                  {getProfileByUserId(director.user_id)?.display_name || 'Diretor'}
-                                </span>
-                                <Badge className={`text-[9px] ${getRoleBadgeVariant('director')}`}>
-                                  Dir.
-                                </Badge>
-                              </div>
-                            )}
+                          <div className="space-y-1.5">
+                            {director && (() => {
+                              const profile = getProfileByUserId(director.user_id);
+                              return (
+                                <div className="flex items-center gap-1.5 p-1.5 bg-primary/5 rounded-md">
+                                  <Avatar className="h-4 w-4">
+                                    <AvatarImage src={profile?.avatar_url || undefined} />
+                                    <AvatarFallback className="text-[8px] bg-primary/10 text-primary">
+                                      {getInitials(profile?.display_name || null, profile?.email || '')}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-[10px] truncate flex-1">
+                                    {profile?.display_name || 'Diretor'}
+                                  </span>
+                                  <Badge className={`text-[8px] px-1 py-0 ${getRoleBadgeVariant('director')}`}>Dir.</Badge>
+                                </div>
+                              );
+                            })()}
 
-                            {manager && (
-                              <div className="flex items-center gap-2 p-2 bg-accent/5 rounded-lg">
-                                <Avatar className="h-5 w-5">
-                                  <AvatarImage src={getProfileByUserId(manager.user_id)?.avatar_url || undefined} />
-                                  <AvatarFallback className="text-[10px] bg-accent/10 text-accent">
-                                    {getInitials(
-                                      getProfileByUserId(manager.user_id)?.display_name || null,
-                                      getProfileByUserId(manager.user_id)?.email || ''
-                                    )}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span className="text-xs truncate flex-1">
-                                  {getProfileByUserId(manager.user_id)?.display_name || 'Gerente'}
-                                </span>
-                                <Badge className={`text-[9px] ${getRoleBadgeVariant('manager')}`}>
-                                  Ger.
-                                </Badge>
-                              </div>
-                            )}
+                            {manager && (() => {
+                              const profile = getProfileByUserId(manager.user_id);
+                              return (
+                                <div className="flex items-center gap-1.5 p-1.5 bg-accent/5 rounded-md">
+                                  <Avatar className="h-4 w-4">
+                                    <AvatarImage src={profile?.avatar_url || undefined} />
+                                    <AvatarFallback className="text-[8px] bg-accent/10 text-accent">
+                                      {getInitials(profile?.display_name || null, profile?.email || '')}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-[10px] truncate flex-1">
+                                    {profile?.display_name || 'Gerente'}
+                                  </span>
+                                  <Badge className={`text-[8px] px-1 py-0 ${getRoleBadgeVariant('manager')}`}>Ger.</Badge>
+                                </div>
+                              );
+                            })()}
 
                             {consultants.length > 0 && (
-                              <ScrollArea className="w-full">
-                                <div className="flex gap-1 pb-2">
-                                  {consultants.map(c => {
-                                    const profile = getProfileByUserId(c.user_id);
-                                    return (
-                                      <div 
-                                        key={c.id}
-                                        className="flex items-center gap-1 bg-secondary rounded-full pl-0.5 pr-2 py-0.5 shrink-0"
-                                      >
-                                        <Avatar className="h-4 w-4">
-                                          <AvatarImage src={profile?.avatar_url || undefined} />
-                                          <AvatarFallback className="text-[8px] bg-secondary text-secondary-foreground">
-                                            {getInitials(profile?.display_name || null, profile?.email || '')}
-                                          </AvatarFallback>
-                                        </Avatar>
-                                        <span className="text-[10px] whitespace-nowrap">
-                                          {profile?.display_name?.split(' ')[0] || 'Consultor'}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                                <ScrollBar orientation="horizontal" />
-                              </ScrollArea>
+                              <div className="flex flex-wrap gap-1">
+                                {consultants.map(c => {
+                                  const profile = getProfileByUserId(c.user_id);
+                                  return (
+                                    <div
+                                      key={c.id}
+                                      className="flex items-center gap-1 bg-secondary rounded-full pl-0.5 pr-1.5 py-0.5"
+                                    >
+                                      <Avatar className="h-3.5 w-3.5">
+                                        <AvatarImage src={profile?.avatar_url || undefined} />
+                                        <AvatarFallback className="text-[7px] bg-secondary text-secondary-foreground">
+                                          {getInitials(profile?.display_name || null, profile?.email || '')}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <span className="text-[9px] whitespace-nowrap">
+                                        {profile?.display_name?.split(' ')[0] || 'Consultor'}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             )}
 
                             {members.length === 0 && (
-                              <p className="text-xs text-muted-foreground italic text-center py-2">
+                              <p className="text-xs text-muted-foreground italic text-center py-1">
                                 Sem membros neste ciclo
                               </p>
                             )}
