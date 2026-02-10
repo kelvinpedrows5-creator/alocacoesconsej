@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
   Users,
@@ -15,13 +15,10 @@ import {
   Crown,
   Briefcase,
 } from 'lucide-react';
-import { useAllocationStore } from '@/hooks/useAllocationStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useCycles } from '@/hooks/useCycles';
 import { supabase } from '@/integrations/supabase/client';
 import { StatsOverview } from '@/components/StatsOverview';
-import { MemberCard } from '@/components/MemberCard';
-import { MemberHistoryModal } from '@/components/MemberHistoryModal';
 import { SuggestionsPanel } from '@/components/SuggestionsPanel';
 import { CoordinationGridFiltered } from '@/components/CoordinationGridFiltered';
 import { AdminMembersManagement } from '@/components/AdminMembersManagement';
@@ -81,11 +78,9 @@ interface ProfileData {
 
 const Admin = () => {
   const navigate = useNavigate();
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
-  const { members, selectedQuarter, setSelectedQuarter } = useAllocationStore();
   const { profile } = useAuthContext();
-  const { cycles, loading: loadingCycles } = useCycles();
-
+  const { cycles, loading: loadingCycles, currentCycle } = useCycles();
+  const [selectedQuarter, setSelectedQuarter] = useState(currentCycle?.value || '2026-C1');
   const [allProfiles, setAllProfiles] = useState<ProfileData[]>([]);
   const [loadingProfiles, setLoadingProfiles] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,13 +92,13 @@ const Admin = () => {
 
   // Set selected quarter when cycles load
   useEffect(() => {
-    if (cycles.length > 0 && !selectedQuarter) {
-      const currentCycle = cycles.find((c) => c.is_current);
-      if (currentCycle) {
-        setSelectedQuarter(currentCycle.value);
+    if (cycles.length > 0 && selectedQuarter === '2026-C1') {
+      const current = cycles.find((c) => c.is_current);
+      if (current) {
+        setSelectedQuarter(current.value);
       }
     }
-  }, [cycles, selectedQuarter, setSelectedQuarter]);
+  }, [cycles]);
 
   const fetchAllProfiles = async () => {
     try {
@@ -395,16 +390,6 @@ const Admin = () => {
           </Tabs>
         </motion.div>
       </main>
-
-      {/* History Modal */}
-      <AnimatePresence>
-        {selectedMemberId && (
-          <MemberHistoryModal
-            memberId={selectedMemberId}
-            onClose={() => setSelectedMemberId(null)}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Profile Details Modal */}
       <Dialog open={!!selectedProfile} onOpenChange={() => setSelectedProfile(null)}>
