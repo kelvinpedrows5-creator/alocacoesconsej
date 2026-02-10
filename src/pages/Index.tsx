@@ -3,17 +3,12 @@ import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { LayoutDashboard, Users, Building2, User, Shield } from 'lucide-react';
 import { StatsOverview } from '@/components/StatsOverview';
-import { MemberCard } from '@/components/MemberCard';
-import { MemberHistoryModal } from '@/components/MemberHistoryModal';
-import { SuggestionsPanel } from '@/components/SuggestionsPanel';
-import { CoordinationGridFiltered } from '@/components/CoordinationGridFiltered';
 import { MemberProfileResults } from '@/components/MemberProfileResults';
 import { MembersSection } from '@/components/MembersSection';
 import { CompanyOverview } from '@/components/CompanyOverview';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { WelcomeOnboarding } from '@/components/WelcomeOnboarding';
-import { useAllocationStore } from '@/hooks/useAllocationStore';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useCycles } from '@/hooks/useCycles';
 import { Button } from '@/components/ui/button';
@@ -29,11 +24,11 @@ import {
 
 const Index = () => {
   const navigate = useNavigate();
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { members, selectedQuarter, setSelectedQuarter } = useAllocationStore();
   const { profile, isAdmin, roleLoading, refreshProfile } = useAuthContext();
-  const { cycles } = useCycles();
+  const { cycles, currentCycle } = useCycles();
+
+  const [selectedQuarter, setSelectedQuarter] = useState(currentCycle?.value || '2026-C1');
 
   // Check if new user needs onboarding (no display_name set)
   const needsOnboarding = profile && !profile.display_name;
@@ -50,7 +45,6 @@ const Index = () => {
     return profile?.email?.charAt(0).toUpperCase() || 'U';
   };
 
-  // Find the current cycle label for display
   const currentCycleLabel = cycles.find((c) => c.value === selectedQuarter)?.label || selectedQuarter;
   const cycleOptions = cycles.map((c) => ({ label: c.label, value: c.value }));
 
@@ -67,7 +61,6 @@ const Index = () => {
     );
   }
 
-  // Show onboarding for new users
   if (needsOnboarding || showOnboarding) {
     return <WelcomeOnboarding onComplete={handleOnboardingComplete} />;
   }
@@ -155,93 +148,37 @@ const Index = () => {
           {/* Stats */}
           <StatsOverview />
 
-          {/* Tabs for different views */}
-          <Tabs defaultValue={isAdmin ? "suggestions" : "overview"} className="space-y-6">
+          {/* Unified tabs for all users */}
+          <Tabs defaultValue="overview" className="space-y-6">
             <TabsList className="bg-secondary/50 w-full sm:w-auto overflow-x-auto flex-wrap justify-start">
-              {isAdmin ? (
-                <>
-                  <TabsTrigger value="suggestions" className="gap-2">
-                    <LayoutDashboard className="w-4 h-4" />
-                    <span className="hidden sm:inline">Sugestões</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="members" className="gap-2">
-                    <Users className="w-4 h-4" />
-                    <span className="hidden sm:inline">Membros</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="coordinations" className="gap-2">
-                    <Building2 className="w-4 h-4" />
-                    <span className="hidden sm:inline">Coordenadorias</span>
-                  </TabsTrigger>
-                </>
-              ) : (
-                <>
-                  <TabsTrigger value="overview" className="gap-2">
-                    <Building2 className="w-4 h-4" />
-                    <span className="hidden sm:inline">Panorama</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="my-profile" className="gap-2">
-                    <User className="w-4 h-4" />
-                    <span className="hidden sm:inline">Pesquisa de Perfil</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="consej" className="gap-2">
-                    <Users className="w-4 h-4" />
-                    <span className="hidden sm:inline">CONSEJ</span>
-                  </TabsTrigger>
-                </>
-              )}
+              <TabsTrigger value="overview" className="gap-2">
+                <Building2 className="w-4 h-4" />
+                <span className="hidden sm:inline">Panorama</span>
+              </TabsTrigger>
+              <TabsTrigger value="my-profile" className="gap-2">
+                <User className="w-4 h-4" />
+                <span className="hidden sm:inline">Pesquisa de Perfil</span>
+              </TabsTrigger>
+              <TabsTrigger value="consej" className="gap-2">
+                <Users className="w-4 h-4" />
+                <span className="hidden sm:inline">CONSEJ</span>
+              </TabsTrigger>
             </TabsList>
 
-            {isAdmin ? (
-              <>
-                <TabsContent value="suggestions" className="space-y-6">
-                  <SuggestionsPanel />
-                  <CoordinationGridFiltered />
-                </TabsContent>
+            <TabsContent value="overview" className="space-y-6">
+              <CompanyOverview />
+            </TabsContent>
 
-                <TabsContent value="members">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {members.map((member) => (
-                      <MemberCard
-                        key={member.id}
-                        memberId={member.id}
-                        onViewHistory={setSelectedMemberId}
-                      />
-                    ))}
-                  </div>
-                </TabsContent>
+            <TabsContent value="my-profile" className="space-y-6">
+              <MemberProfileResults />
+            </TabsContent>
 
-                <TabsContent value="coordinations">
-                  <CoordinationGridFiltered />
-                </TabsContent>
-              </>
-            ) : (
-              <>
-                <TabsContent value="overview" className="space-y-6">
-                  <CompanyOverview />
-                </TabsContent>
-
-                <TabsContent value="my-profile" className="space-y-6">
-                  <MemberProfileResults />
-                </TabsContent>
-
-                <TabsContent value="consej" className="space-y-6">
-                  <MembersSection />
-                </TabsContent>
-              </>
-            )}
+            <TabsContent value="consej" className="space-y-6">
+              <MembersSection />
+            </TabsContent>
           </Tabs>
         </motion.div>
       </main>
-
-      {/* History Modal */}
-      <AnimatePresence>
-        {selectedMemberId && (
-          <MemberHistoryModal
-            memberId={selectedMemberId}
-            onClose={() => setSelectedMemberId(null)}
-          />
-        )}
-      </AnimatePresence>
     </div>
   );
 };
