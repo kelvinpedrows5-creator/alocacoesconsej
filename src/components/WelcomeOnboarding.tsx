@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { User, Building2, ArrowRight, Check, Briefcase, Plus, X } from 'lucide-react';
+import { User, Building2, ArrowRight, Check, Briefcase, Plus, X, Crown, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { coordinations, directorates } from '@/data/mockData';
 import { useToast } from '@/hooks/use-toast';
@@ -36,7 +37,9 @@ export const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
   const { currentCycle } = useCycles();
   
   const [displayName, setDisplayName] = useState('');
+  const [memberRole, setMemberRole] = useState<'coordinator' | 'manager' | 'director' | ''>('');
   const [selectedCoordination, setSelectedCoordination] = useState('');
+  const [selectedDirectorate, setSelectedDirectorate] = useState('');
   const [gtSelections, setGtSelections] = useState<GTSelection[]>([]);
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
@@ -55,7 +58,6 @@ export const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
       return;
     }
 
-    // Check if already selected
     if (gtSelections.some(g => g.clientId === currentGtClient)) {
       toast({
         title: 'GT já adicionado',
@@ -84,10 +86,28 @@ export const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
       return;
     }
 
-    if (!selectedCoordination) {
+    if (!memberRole) {
+      toast({
+        title: 'Cargo obrigatório',
+        description: 'Por favor, selecione seu cargo.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (memberRole === 'coordinator' && !selectedCoordination) {
       toast({
         title: 'Coordenadoria obrigatória',
-        description: 'Por favor, selecione sua coordenadoria atual.',
+        description: 'Por favor, selecione sua coordenadoria.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if ((memberRole === 'manager' || memberRole === 'director') && !selectedDirectorate) {
+      toast({
+        title: 'Diretoria obrigatória',
+        description: 'Por favor, selecione sua diretoria.',
         variant: 'destructive',
       });
       return;
@@ -95,12 +115,45 @@ export const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
 
     setLoading(true);
     try {
-      const { error } = await updateProfile({
+      // Save the coordination or directorate based on role
+      const profileUpdate: Record<string, any> = {
         display_name: displayName.trim(),
-        profile_preferred_directorate: selectedCoordination,
-      });
+      };
 
+      if (memberRole === 'coordinator') {
+        profileUpdate.profile_preferred_directorate = selectedCoordination;
+      } else {
+        profileUpdate.profile_preferred_directorate = selectedDirectorate;
+      }
+
+      const { error } = await updateProfile(profileUpdate);
       if (error) throw error;
+
+      // If manager or director, save leadership position
+      if ((memberRole === 'manager' || memberRole === 'director') && selectedDirectorate) {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('leadership_positions').insert({
+            user_id: user.id,
+            directorate_id: selectedDirectorate,
+            position_type: memberRole === 'manager' ? 'manager' : 'director',
+          });
+        }
+      }
+
+      // If coordinator, save allocation
+      if (memberRole === 'coordinator' && selectedCoordination && currentCycle) {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await supabase.from('member_allocations').insert({
+            user_id: user.id,
+            cycle_id: currentCycle.id,
+            coordination_id: selectedCoordination,
+          });
+        }
+      }
 
       toast({
         title: 'Bem-vindo(a)!',
@@ -138,6 +191,23 @@ export const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
     }
   };
 
+
+  const getPositionTitle = () => {
+    if (memberRole === 'director') {
+      const dir = directorates.find(d => d.id === selectedDirectorate);
+      if (dir) {
+        if (dir.id === 'dir-3') return 'Presidente Executivo';
+        if (dir.id === 'dir-4') return 'Vice-Presidente';
+        return `Diretor(a) de ${dir.name}`;
+      }
+    }
+    if (memberRole === 'manager') {
+      const dir = directorates.find(d => d.id === selectedDirectorate);
+      if (dir) return `Gerente de ${dir.name}`;
+    }
+    return '';
+  };
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div
@@ -157,34 +227,27 @@ export const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
               )}
             </div>
             <CardTitle className="text-2xl">
-              {step === 1 ? 'Bem-vindo(a) ao CONSEJ!' : step === 2 ? 'Sua Coordenadoria' : 'Grupos de Trabalho'}
+              {step === 1 ? 'Bem-vindo(a) ao CONSEJ!' : step === 2 ? 'Seu Cargo' : 'Grupos de Trabalho'}
             </CardTitle>
             <CardDescription>
               {step === 1
                 ? 'Como você gostaria de ser chamado(a)?'
                 : step === 2
-                ? 'Selecione a coordenadoria onde você está alocado(a)'
+                ? 'Selecione seu cargo na empresa'
                 : 'Informe os GTs em que você participa (opcional)'}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Progress indicator */}
             <div className="flex justify-center gap-2 mb-4">
-              <div
-                className={`h-2 w-12 rounded-full transition-colors ${
-                  step >= 1 ? 'bg-primary' : 'bg-muted'
-                }`}
-              />
-              <div
-                className={`h-2 w-12 rounded-full transition-colors ${
-                  step >= 2 ? 'bg-primary' : 'bg-muted'
-                }`}
-              />
-              <div
-                className={`h-2 w-12 rounded-full transition-colors ${
-                  step >= 3 ? 'bg-primary' : 'bg-muted'
-                }`}
-              />
+              {[1, 2, 3].map(s => (
+                <div
+                  key={s}
+                  className={`h-2 w-12 rounded-full transition-colors ${
+                    step >= s ? 'bg-primary' : 'bg-muted'
+                  }`}
+                />
+              ))}
             </div>
 
             {step === 1 && (
@@ -232,37 +295,101 @@ export const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
                 animate={{ opacity: 1, x: 0 }}
                 className="space-y-4"
               >
-                <div className="space-y-2">
-                  <Label htmlFor="coordination">Coordenadoria atual</Label>
-                  <Select
-                    value={selectedCoordination}
-                    onValueChange={setSelectedCoordination}
-                  >
-                    <SelectTrigger id="coordination">
-                      <SelectValue placeholder="Selecione sua coordenadoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {groupedCoordinations.map((dir) => (
-                        <div key={dir.id}>
-                          <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
-                            {dir.name}
-                          </div>
-                          {dir.coordinations.map((coord) => (
-                            <SelectItem key={coord.id} value={coord.id}>
-                              <div className="flex items-center gap-2">
-                                <div
-                                  className="w-2 h-2 rounded-full shrink-0"
-                                  style={{ backgroundColor: coord.color }}
-                                />
-                                <span className="truncate">{coord.name}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
+                {/* Role selection */}
+                <div className="space-y-3">
+                  <Label>Qual é o seu cargo?</Label>
+                  <RadioGroup value={memberRole} onValueChange={(v) => {
+                    setMemberRole(v as any);
+                    setSelectedCoordination('');
+                    setSelectedDirectorate('');
+                  }}>
+                    <div className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-accent/5 transition-colors">
+                      <RadioGroupItem value="coordinator" id="role-coordinator" />
+                      <Label htmlFor="role-coordinator" className="flex-1 cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <User className="w-4 h-4 text-green-600" />
+                          <span>Coordenador(a)</span>
                         </div>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        <p className="text-xs text-muted-foreground mt-0.5">Membro de uma coordenadoria</p>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-accent/5 transition-colors">
+                      <RadioGroupItem value="manager" id="role-manager" />
+                      <Label htmlFor="role-manager" className="flex-1 cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <UserCheck className="w-4 h-4 text-blue-600" />
+                          <span>Gerente</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">Gerente de uma diretoria</p>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2 p-3 rounded-lg border hover:bg-accent/5 transition-colors">
+                      <RadioGroupItem value="director" id="role-director" />
+                      <Label htmlFor="role-director" className="flex-1 cursor-pointer">
+                        <div className="flex items-center gap-2">
+                          <Crown className="w-4 h-4 text-amber-600" />
+                          <span>Diretor(a)</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">Diretor(a) de uma diretoria</p>
+                      </Label>
+                    </div>
+                  </RadioGroup>
                 </div>
+
+                {/* Conditional selection based on role */}
+                {memberRole === 'coordinator' && (
+                  <div className="space-y-2">
+                    <Label>Coordenadoria</Label>
+                    <Select value={selectedCoordination} onValueChange={setSelectedCoordination}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione sua coordenadoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {groupedCoordinations.map((dir) => (
+                          <div key={dir.id}>
+                            <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                              {dir.name}
+                            </div>
+                            {dir.coordinations.map((coord) => (
+                              <SelectItem key={coord.id} value={coord.id}>
+                                <div className="flex items-center gap-2">
+                                  <div
+                                    className="w-2 h-2 rounded-full shrink-0"
+                                    style={{ backgroundColor: coord.color }}
+                                  />
+                                  <span className="truncate">{coord.name}</span>
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </div>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {(memberRole === 'manager' || memberRole === 'director') && (
+                  <div className="space-y-2">
+                    <Label>Diretoria</Label>
+                    <Select value={selectedDirectorate} onValueChange={setSelectedDirectorate}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione sua diretoria" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {directorates.map((dir) => (
+                          <SelectItem key={dir.id} value={dir.id}>
+                            {dir.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {selectedDirectorate && (
+                      <p className="text-sm text-primary font-medium">
+                        Cargo: {getPositionTitle()}
+                      </p>
+                    )}
+                  </div>
+                )}
 
                 <div className="flex gap-2">
                   <Button
@@ -275,15 +402,19 @@ export const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
                   <Button
                     className="flex-1"
                     onClick={() => {
-                      if (selectedCoordination) {
-                        setStep(3);
-                      } else {
-                        toast({
-                          title: 'Coordenadoria obrigatória',
-                          description: 'Por favor, selecione uma coordenadoria.',
-                          variant: 'destructive',
-                        });
+                      if (!memberRole) {
+                        toast({ title: 'Selecione seu cargo', variant: 'destructive' });
+                        return;
                       }
+                      if (memberRole === 'coordinator' && !selectedCoordination) {
+                        toast({ title: 'Selecione a coordenadoria', variant: 'destructive' });
+                        return;
+                      }
+                      if ((memberRole === 'manager' || memberRole === 'director') && !selectedDirectorate) {
+                        toast({ title: 'Selecione a diretoria', variant: 'destructive' });
+                        return;
+                      }
+                      setStep(3);
                     }}
                   >
                     Continuar

@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion';
-import { Sparkles, AlertCircle } from 'lucide-react';
+import { Sparkles, AlertCircle, ArrowRight } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { coordinations, coordinationMatchingProfile } from '@/data/mockData';
 
@@ -14,6 +16,7 @@ interface CoordinationMatch {
 
 export const MemberProfileResults = () => {
   const { profile } = useAuthContext();
+  const navigate = useNavigate();
 
   const hasFilledProfile = profile?.profile_skills || profile?.profile_work_style || 
     profile?.profile_activities || profile?.profile_competencies || 
@@ -87,45 +90,60 @@ export const MemberProfileResults = () => {
       </CardHeader>
       <CardContent>
         {!hasFilledProfile ? (
-          <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <div className="flex flex-col items-center gap-4 py-6 text-center">
             <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
               <AlertCircle className="w-6 h-6 text-muted-foreground" />
             </div>
             <div>
               <p className="font-medium text-foreground">Perfil não preenchido</p>
-              <p className="text-sm text-muted-foreground">
-                Acesse "Meu Perfil" e preencha o questionário de alocação para ver suas coordenadorias recomendadas.
+              <p className="text-sm text-muted-foreground mb-4">
+                Responda o questionário de alocação para ver suas coordenadorias recomendadas.
               </p>
+              <Button onClick={() => navigate('/profile')} className="gap-2">
+                <Sparkles className="w-4 h-4" />
+                Responder Pesquisa
+                <ArrowRight className="w-4 h-4" />
+              </Button>
             </div>
           </div>
-        ) : matches.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              Nenhuma correspondência encontrada. Tente atualizar suas respostas.
-            </p>
-          </div>
         ) : (
-          <div className="space-y-3">
-            {matches.map((match, index) => (
-              <motion.div
-                key={match.coordinationId}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="flex items-center gap-3 p-3 rounded-lg border bg-card"
-              >
-                <div
-                  className="w-3 h-3 rounded-full shrink-0"
-                  style={{ backgroundColor: match.color }}
-                />
-                <div className="flex-1">
-                  <p className="font-medium">{match.coordinationName}</p>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              {matches.length === 0 ? (
+                <div className="flex flex-col items-center gap-3 py-6 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Nenhuma correspondência encontrada. Tente atualizar suas respostas.
+                  </p>
                 </div>
-                <Badge variant={index === 0 ? 'default' : 'secondary'}>
-                  {match.score}% match
-                </Badge>
-              </motion.div>
-            ))}
+              ) : (
+                matches.map((match, index) => (
+                  <motion.div
+                    key={match.coordinationId}
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: index * 0.1 }}
+                    className="flex items-center gap-3 p-3 rounded-lg border bg-card"
+                  >
+                    <div
+                      className="w-3 h-3 rounded-full shrink-0"
+                      style={{ backgroundColor: match.color }}
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium">{match.coordinationName}</p>
+                    </div>
+                    <Badge variant={index === 0 ? 'default' : 'secondary'}>
+                      {match.score}% match
+                    </Badge>
+                  </motion.div>
+                ))
+              )}
+            </div>
+            <div className="pt-2 border-t">
+              <Button variant="outline" size="sm" onClick={() => navigate('/profile')} className="gap-2 w-full">
+                <Sparkles className="w-4 h-4" />
+                Refazer Pesquisa
+              </Button>
+            </div>
           </div>
         )}
       </CardContent>

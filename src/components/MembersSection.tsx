@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Users, Search } from 'lucide-react';
+import { Users, Search, Crown, UserCheck } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useCycles } from '@/hooks/useCycles';
+import { useLeadership } from '@/hooks/useLeadership';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -37,6 +38,7 @@ export const MembersSection = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedDirectorate, setSelectedDirectorate] = useState<string>('all');
   const { currentCycle } = useCycles();
+  const { positions } = useLeadership();
 
   useEffect(() => {
     fetchData();
@@ -46,7 +48,6 @@ export const MembersSection = () => {
     try {
       setLoading(true);
       
-      // Fetch profiles
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, user_id, email, display_name, avatar_url')
@@ -55,7 +56,6 @@ export const MembersSection = () => {
       if (profilesError) throw profilesError;
       setProfiles(profilesData || []);
 
-      // Fetch allocations for current cycle
       if (currentCycle?.id) {
         const { data: allocationsData, error: allocationsError } = await supabase
           .from('member_allocations')
@@ -74,12 +74,7 @@ export const MembersSection = () => {
 
   const getInitials = (displayName: string | null, email: string) => {
     if (displayName) {
-      return displayName
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
+      return displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
     }
     return email.charAt(0).toUpperCase();
   };
@@ -92,6 +87,22 @@ export const MembersSection = () => {
     return null;
   };
 
+  const getLeaderPosition = (userId: string) => {
+    return positions.find(p => p.user_id === userId);
+  };
+
+  const getPositionTitle = (position: { position_type: string; directorate_id: string }) => {
+    const dir = directorates.find(d => d.id === position.directorate_id);
+    if (!dir) return position.position_type;
+    
+    if (position.position_type === 'director') {
+      if (dir.id === 'dir-3') return 'Presidente Executivo';
+      if (dir.id === 'dir-4') return 'Vice-Presidente';
+      return `Diretor(a) de ${dir.name}`;
+    }
+    return `Gerente de ${dir.name}`;
+  };
+
   const filteredProfiles = profiles.filter((p) => {
     const matchesSearch =
       p.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -100,22 +111,23 @@ export const MembersSection = () => {
     if (selectedDirectorate === 'all') return matchesSearch;
     
     const coord = getCoordinationForProfile(p.user_id);
-    return matchesSearch && coord?.directorateId === selectedDirectorate;
+    const leaderPos = getLeaderPosition(p.user_id);
+    return matchesSearch && (coord?.directorateId === selectedDirectorate || leaderPos?.directorate_id === selectedDirectorate);
   });
 
+  // Separate leaders from coordinators
+  const leaders = filteredProfiles.filter(p => getLeaderPosition(p.user_id));
+  const coordinatorProfiles = filteredProfiles.filter(p => !getLeaderPosition(p.user_id));
+
   const groupedByDirectorate = directorates.map((dir) => {
-    const dirMembers = filteredProfiles.filter((p) => {
+    const dirMembers = coordinatorProfiles.filter((p) => {
       const coord = getCoordinationForProfile(p.user_id);
       return coord?.directorateId === dir.id;
     });
-    return {
-      directorate: dir,
-      members: dirMembers,
-    };
+    return { directorate: dir, members: dirMembers };
   });
 
-  // Members without allocation
-  const unallocatedMembers = filteredProfiles.filter(p => !getCoordinationForProfile(p.user_id));
+  const unallocatedMembers = coordinatorProfiles.filter(p => !getCoordinationForProfile(p.user_id));
 
   return (
     <Card>
@@ -125,7 +137,7 @@ export const MembersSection = () => {
           Membros CONSEJ
         </CardTitle>
         <CardDescription>
-          Visualize todos os membros da empresa e suas coordenadorias
+          Visualize todos os membros da empresa e suas posições
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -161,6 +173,69 @@ export const MembersSection = () => {
         ) : (
           <ScrollArea className="h-[500px]">
             <div className="space-y-6">
+              {/* Leaders section */}
+              {leaders.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-3"
+                >
+                  <div className="flex items-center gap-2 pb-2 border-b">
+                    <Crown className="w-4 h-4 text-amber-500" />
+                    <h3 className="font-semibold text-foreground">Lideranças</h3>
+                    <Badge variant="secondary" className="text-xs">
+                      {leaders.length} membros
+                    </Badge>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    {leaders.map((profile) => {
+                      const position = getLeaderPosition(profile.user_id);
+                      const isDirector = position?.position_type === 'director';
+                      return (
+                        <motion.div
+                          key={profile.id}
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="flex items-center gap-3 p-3 rounded-lg border hover:border-primary/30 transition-colors bg-card min-w-0"
+                        >
+                          <Avatar className="h-10 w-10 shrink-0">
+                            <AvatarImage src={profile.avatar_url || undefined} />
+                            <AvatarFallback 
+                              className="text-sm"
+                              style={{ 
+                                backgroundColor: isDirector ? 'hsl(var(--chart-4) / 0.2)' : 'hsl(var(--primary) / 0.1)',
+                                color: isDirector ? 'hsl(var(--chart-4))' : 'hsl(var(--primary))'
+                              }}
+                            >
+                              {getInitials(profile.display_name, profile.email)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-foreground truncate">
+                              {profile.display_name || profile.email.split('@')[0]}
+                            </p>
+                            {position && (
+                              <Badge
+                                variant="outline"
+                                className="text-xs mt-1 max-w-full"
+                                style={{ 
+                                  borderColor: isDirector ? 'hsl(var(--chart-4) / 0.5)' : 'hsl(var(--primary) / 0.5)',
+                                  color: isDirector ? 'hsl(var(--chart-4))' : 'hsl(var(--primary))'
+                                }}
+                              >
+                                {isDirector ? <Crown className="w-3 h-3 mr-1 inline" /> : <UserCheck className="w-3 h-3 mr-1 inline" />}
+                                <span className="truncate">{getPositionTitle(position)}</span>
+                              </Badge>
+                            )}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Coordinators grouped by directorate */}
               {groupedByDirectorate
                 .filter((group) => 
                   selectedDirectorate === 'all' || group.directorate.id === selectedDirectorate
