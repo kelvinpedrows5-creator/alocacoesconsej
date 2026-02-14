@@ -14,7 +14,7 @@ export const coordinations: Coordination[] = [
   { id: 'coord-1', name: 'Procedimentos Internos', description: 'Gestão de processos e procedimentos internos', color: '#3B82F6', directorateId: 'dir-1', maxMembers: 5 },
   { id: 'coord-2', name: 'Clientes', description: 'Atendimento e gestão de clientes', color: '#06B6D4', directorateId: 'dir-1', maxMembers: 5 },
   // Negócios
-  { id: 'coord-3', name: 'Closing', description: 'Fechamento de negócios e contratos', color: '#10B981', directorateId: 'dir-2', maxMembers: 5 },
+  { id: 'coord-3', name: 'Closer', description: 'Fechamento de negócios e contratos', color: '#10B981', directorateId: 'dir-2', maxMembers: 5 },
   { id: 'coord-4', name: 'Growth', description: 'Crescimento e expansão de mercado', color: '#14B8A6', directorateId: 'dir-2', maxMembers: 5 },
   // Presidência
   { id: 'coord-5', name: 'Operações', description: 'Coordenação operacional geral', color: '#8B5CF6', directorateId: 'dir-3', maxMembers: 4 },
@@ -324,7 +324,7 @@ export const profileQuestions = [
     question: 'Em qual diretoria você tem mais interesse em atuar?',
     options: [
       { value: 'dir-1', label: 'Demandas - Procedimentos e Clientes' },
-      { value: 'dir-2', label: 'Negócios - Closing e Growth' },
+      { value: 'dir-2', label: 'Negócios - Closer e Growth' },
       { value: 'dir-3', label: 'Presidência - Operações e Parcerias' },
       { value: 'dir-4', label: 'Vice-Presidência - Inovação, Finanças e Estratégia' },
       { value: 'dir-5', label: 'Marketing - Branding, Social Media e Inbound' },

@@ -5,6 +5,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { coordinations } from '@/data/mockData';
 import { useCycles } from '@/hooks/useCycles';
 import { useAllocations } from '@/hooks/useAllocations';
+import { useLeadership } from '@/hooks/useLeadership';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -35,7 +36,10 @@ export const SuggestionsPanel = () => {
   const [iteration, setIteration] = useState(0);
   const { currentCycle } = useCycles();
   const { allocations: currentAllocations, setAllocation, fetchAllocations } = useAllocations(currentCycle?.id);
+  const { positions } = useLeadership();
   const { toast } = useToast();
+
+  const isLeader = (userId: string) => positions.some(p => p.user_id === userId);
 
   // Fetch all profiles and all historical allocations
   const fetchData = useCallback(async () => {
@@ -82,7 +86,10 @@ export const SuggestionsPanel = () => {
 
     const newSuggestions: Suggestion[] = [];
 
-    profiles.forEach(profile => {
+    // Only suggest for coordinators (exclude directors and managers)
+    const coordinatorProfiles = profiles.filter(p => !isLeader(p.user_id));
+
+    coordinatorProfiles.forEach(profile => {
       const visited = historyMap.get(profile.user_id) || new Set<string>();
       const unvisited = coordinations.filter(c => !visited.has(c.id));
       const pool = unvisited.length > 0 ? unvisited : coordinations;

@@ -414,11 +414,16 @@ export const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
                         toast({ title: 'Selecione a diretoria', variant: 'destructive' });
                         return;
                       }
-                      setStep(3);
+                      if (memberRole === 'director') {
+                        // Directors skip GT step
+                        handleSubmit();
+                      } else {
+                        setStep(3);
+                      }
                     }}
                   >
-                    Continuar
-                    <ArrowRight className="ml-2 w-4 h-4" />
+                    {memberRole === 'director' ? 'Concluir' : 'Continuar'}
+                    {memberRole === 'director' ? <Check className="ml-2 w-4 h-4" /> : <ArrowRight className="ml-2 w-4 h-4" />}
                   </Button>
                 </div>
               </motion.div>
