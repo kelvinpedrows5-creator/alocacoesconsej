@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -8,9 +8,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Plus, Trash2, FileText, UserPlus, Building } from 'lucide-react';
-import { useClients, GT_PROFILE_QUESTIONS, Client } from '@/hooks/useClients';
+import { Plus, Trash2, FileText, UserPlus, Building, Sparkles, Users } from 'lucide-react';
+import { useClients, GT_PROFILE_QUESTIONS, Client, ClientProfile } from '@/hooks/useClients';
 import { useCycles } from '@/hooks/useCycles';
+import { useLeadership } from '@/hooks/useLeadership';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -20,6 +21,89 @@ interface Profile {
   email: string;
   display_name: string | null;
   avatar_url: string | null;
+  profile_skills: string | null;
+  profile_work_style: string | null;
+  profile_activities: string | null;
+  profile_competencies: string | null;
+  profile_communication_style: string | null;
+  profile_problem_solving: string | null;
+  profile_time_management: string | null;
+  profile_team_role: string | null;
+  profile_stress_handling: string | null;
+}
+
+function computeTeamSuggestion(clientProfile: ClientProfile, profiles: Profile[], leaderUserIds: Set<string>) {
+  // Determine recommended team size based on complexity and contact frequency
+  let recommendedSize = 2;
+  
+  const complexity = clientProfile.question_5;
+  const contactFreq = clientProfile.question_2;
+  const clientHistory = clientProfile.question_9;
+  
+  if (complexity?.includes('Alta')) recommendedSize = 3;
+  else if (complexity?.includes('Baixa')) recommendedSize = 1;
+  
+  if (contactFreq?.includes('Alta')) recommendedSize = Math.min(3, recommendedSize + 1);
+  if (clientHistory?.includes('novo')) recommendedSize = Math.min(3, recommendedSize + 1);
+  
+  // Score each coordinator (non-leader) for this client
+  const coordinators = profiles.filter(p => !leaderUserIds.has(p.user_id));
+  
+  const scored = coordinators.map(profile => {
+    let score = 0;
+    
+    // Client values results → analytical members
+    if (clientProfile.question_1?.includes('Resultados tangíveis')) {
+      if (profile.profile_skills === 'analytical') score += 3;
+      if (profile.profile_competencies === 'finance') score += 2;
+    }
+    if (clientProfile.question_1?.includes('Inovação')) {
+      if (profile.profile_skills === 'creative') score += 3;
+      if (profile.profile_activities === 'innovation') score += 2;
+    }
+    if (clientProfile.question_1?.includes('Relacionamento')) {
+      if (profile.profile_skills === 'people') score += 3;
+      if (profile.profile_work_style === 'collaborative') score += 2;
+    }
+    
+    // High contact → collaborative, direct communicators
+    if (contactFreq?.includes('Alta') || contactFreq?.includes('Média')) {
+      if (profile.profile_work_style === 'collaborative') score += 2;
+      if (profile.profile_communication_style === 'direct') score += 2;
+    }
+    
+    // Complex demands → specialists, analytical problem solvers
+    if (complexity?.includes('Alta')) {
+      if (profile.profile_team_role === 'specialist') score += 3;
+      if (profile.profile_problem_solving === 'analytical_approach') score += 2;
+    }
+    
+    // Urgent demands → deadline-driven, calm under pressure
+    if (clientProfile.question_3?.includes('emergenciais')) {
+      if (profile.profile_time_management === 'deadline_driven') score += 2;
+      if (profile.profile_stress_handling === 'calm') score += 2;
+    }
+    
+    // Structured demands → structured time management
+    if (clientProfile.question_3?.includes('estruturadas')) {
+      if (profile.profile_time_management === 'structured') score += 2;
+    }
+    
+    // Critical feedback client → calm, mediator members
+    if (clientProfile.question_10?.includes('Crítico')) {
+      if (profile.profile_stress_handling === 'calm') score += 2;
+      if (profile.profile_team_role === 'mediator') score += 2;
+    }
+    
+    return { profile, score };
+  });
+  
+  scored.sort((a, b) => b.score - a.score);
+  
+  return {
+    recommendedSize,
+    topMatches: scored.slice(0, Math.max(5, recommendedSize + 2)),
+  };
 }
 
 export function GTManagement() {
@@ -39,13 +123,16 @@ export function GTManagement() {
   } = useClients();
   
   const { cycles, currentCycle } = useCycles();
+  const { positions } = useLeadership();
+  
+  const leaderUserIds = useMemo(() => new Set(positions.map(p => p.user_id)), [positions]);
   
   const { data: profiles = [] } = useQuery({
     queryKey: ['all_profiles_for_gt'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('profiles')
-        .select('id, user_id, email, display_name, avatar_url');
+        .select('id, user_id, email, display_name, avatar_url, profile_skills, profile_work_style, profile_activities, profile_competencies, profile_communication_style, profile_problem_solving, profile_time_management, profile_team_role, profile_stress_handling');
       if (error) throw error;
       return data as Profile[];
     },
@@ -57,6 +144,7 @@ export function GTManagement() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
+  const [showSuggestion, setShowSuggestion] = useState<string | null>(null);
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [selectedRole, setSelectedRole] = useState<'director' | 'manager' | 'consultant'>('consultant');
   const [selectedCycleId, setSelectedCycleId] = useState(currentCycle?.id || '');
@@ -100,6 +188,16 @@ export function GTManagement() {
       ...profileAnswers,
     });
     setIsProfileDialogOpen(false);
+    setShowSuggestion(selectedClient.id);
+  };
+
+  const getTeamSuggestion = (clientId: string) => {
+    const cp = getClientProfile(clientId);
+    if (!cp) return null;
+    // Check if profile has meaningful answers
+    const answered = GT_PROFILE_QUESTIONS.filter(q => cp[q.key as keyof typeof cp]).length;
+    if (answered < 3) return null;
+    return computeTeamSuggestion(cp, profiles, leaderUserIds);
   };
 
   const handleAddMember = () => {
@@ -405,6 +503,57 @@ export function GTManagement() {
                       </div>
                     )}
                   </div>
+
+                  {/* Team Suggestion */}
+                  {(() => {
+                    const suggestion = getTeamSuggestion(client.id);
+                    if (!suggestion) return null;
+                    const isOpen = showSuggestion === client.id;
+                    return (
+                      <div className="space-y-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs gap-1 w-full justify-start"
+                          onClick={() => setShowSuggestion(isOpen ? null : client.id)}
+                        >
+                          <Sparkles className="h-3 w-3 text-amber-500" />
+                          Sugestão de Equipe
+                        </Button>
+                        {isOpen && (
+                          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-2">
+                            <div className="flex items-center gap-2">
+                              <Users className="h-4 w-4 text-amber-600" />
+                              <span className="text-sm font-medium">
+                                Consultores recomendados: {suggestion.recommendedSize}
+                              </span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Membros com melhor compatibilidade:
+                            </p>
+                            <div className="space-y-1">
+                              {suggestion.topMatches.map(({ profile: p, score }) => (
+                                <div key={p.user_id} className="flex items-center justify-between text-sm">
+                                  <div className="flex items-center gap-2">
+                                    <Avatar className="h-5 w-5">
+                                      <AvatarImage src={p.avatar_url || undefined} />
+                                      <AvatarFallback className="text-[10px]">
+                                        {getInitials(p.display_name, p.email)}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="truncate text-xs">{p.display_name || p.email}</span>
+                                  </div>
+                                  <Badge variant="outline" className="text-[10px] h-5">
+                                    {score > 0 ? `${score} pts` : '—'}
+                                  </Badge>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             );
