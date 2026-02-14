@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Users, Building2, User, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, Building2, User, Shield, Briefcase } from 'lucide-react';
 import { StatsOverview } from '@/components/StatsOverview';
 import { MemberProfileResults } from '@/components/MemberProfileResults';
 import { MembersSection } from '@/components/MembersSection';
 import { CompanyOverview } from '@/components/CompanyOverview';
+import { ClientsOverview } from '@/components/ClientsOverview';
 import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { WelcomeOnboarding } from '@/components/WelcomeOnboarding';
@@ -163,6 +164,10 @@ const Index = () => {
                 <Users className="w-4 h-4" />
                 <span className="hidden sm:inline">CONSEJ</span>
               </TabsTrigger>
+              <TabsTrigger value="clients" className="gap-2">
+                <Briefcase className="w-4 h-4" />
+                <span className="hidden sm:inline">Clientes</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
@@ -175,6 +180,10 @@ const Index = () => {
 
             <TabsContent value="consej" className="space-y-6">
               <MembersSection />
+            </TabsContent>
+
+            <TabsContent value="clients" className="space-y-6">
+              <ClientsOverview />
             </TabsContent>
           </Tabs>
         </motion.div>
