@@ -7,7 +7,7 @@ import { MemberProfileResults } from '@/components/MemberProfileResults';
 import { MembersSection } from '@/components/MembersSection';
 import { CompanyOverview } from '@/components/CompanyOverview';
 import { ClientsOverview } from '@/components/ClientsOverview';
-import { AddMemberDialog } from '@/components/AddMemberDialog';
+import { LeadershipDialog } from '@/components/LeadershipDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { WelcomeOnboarding } from '@/components/WelcomeOnboarding';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -101,7 +101,7 @@ const Index = () => {
               {isAdmin && (
                 <>
                   <ReallocationDialog />
-                  <AddMemberDialog />
+                  <LeadershipDialog />
                   <Button 
                     variant="outline" 
                     onClick={() => navigate('/admin')}
