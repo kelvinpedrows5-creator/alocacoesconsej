@@ -127,6 +127,63 @@ export type Database = {
         }
         Relationships: []
       }
+      gt_handoff_surveys: {
+        Row: {
+          client_id: string
+          communication_notes: string | null
+          created_at: string
+          cycle_id: string
+          difficulty_level: string | null
+          id: string
+          key_learnings: string | null
+          recommendations: string | null
+          updated_at: string
+          user_id: string
+          work_style: string | null
+        }
+        Insert: {
+          client_id: string
+          communication_notes?: string | null
+          created_at?: string
+          cycle_id: string
+          difficulty_level?: string | null
+          id?: string
+          key_learnings?: string | null
+          recommendations?: string | null
+          updated_at?: string
+          user_id: string
+          work_style?: string | null
+        }
+        Update: {
+          client_id?: string
+          communication_notes?: string | null
+          created_at?: string
+          cycle_id?: string
+          difficulty_level?: string | null
+          id?: string
+          key_learnings?: string | null
+          recommendations?: string | null
+          updated_at?: string
+          user_id?: string
+          work_style?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "gt_handoff_surveys_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "gt_handoff_surveys_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "allocation_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gt_members: {
         Row: {
           client_id: string

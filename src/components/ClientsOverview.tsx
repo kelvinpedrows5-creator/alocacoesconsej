@@ -1,13 +1,16 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, Users, FileText, Clock, BarChart3 } from 'lucide-react';
+import { Building, Users, FileText, ClipboardList } from 'lucide-react';
 import { useClients, GT_PROFILE_QUESTIONS } from '@/hooks/useClients';
 import { useCycles } from '@/hooks/useCycles';
+import { useAuthContext } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { GTHandoffSurvey, GTHandoffSurveyResults } from '@/components/GTHandoffSurvey';
 
 interface Profile {
   user_id: string;
@@ -18,7 +21,9 @@ interface Profile {
 
 export function ClientsOverview() {
   const { clients, clientProfiles, gtMembers, getClientProfile, getGTMembersByClient } = useClients();
-  const { currentCycle } = useCycles();
+  const { cycles, currentCycle } = useCycles();
+  const { profile } = useAuthContext();
+  const [surveyTarget, setSurveyTarget] = useState<{ clientId: string; clientName: string; cycleId: string; cycleLabel: string } | null>(null);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ['all_profiles_for_clients_view'],
@@ -56,9 +61,13 @@ export function ClientsOverview() {
     }
   };
 
-  const getQuestionLabel = (key: string) => {
-    const q = GT_PROFILE_QUESTIONS.find(q => q.key === key);
-    return q?.label || key;
+  // Find previous (non-current) visible cycles for handoff surveys
+  const previousVisibleCycles = cycles.filter(c => c.is_visible && !c.is_current);
+
+  // Check if user is a GT member for a given client in a given cycle
+  const isUserInGT = (clientId: string, cycleId: string) => {
+    if (!profile?.user_id) return false;
+    return gtMembers.some(m => m.client_id === clientId && m.cycle_id === cycleId && m.user_id === profile.user_id);
   };
 
   if (clients.length === 0) {
@@ -81,15 +90,14 @@ export function ClientsOverview() {
 
       <div className="grid gap-6 md:grid-cols-2">
         {clients.map((client) => {
-          const profile = getClientProfile(client.id);
+          const clientProfile = getClientProfile(client.id);
           const members = currentCycle ? getGTMembersByClient(client.id, currentCycle.id) : [];
           const director = members.find(m => m.role === 'director');
           const manager = members.find(m => m.role === 'manager');
           const consultants = members.filter(m => m.role === 'consultant');
 
-          // Count answered questions
-          const answeredCount = profile
-            ? GT_PROFILE_QUESTIONS.filter(q => profile[q.key as keyof typeof profile]).length
+          const answeredCount = clientProfile
+            ? GT_PROFILE_QUESTIONS.filter(q => clientProfile[q.key as keyof typeof clientProfile]).length
             : 0;
 
           return (
@@ -138,8 +146,30 @@ export function ClientsOverview() {
                   )}
                 </div>
 
+                {/* Handoff Survey Button - show for previous cycles where user was in GT */}
+                {previousVisibleCycles.map(cycle => {
+                  if (!isUserInGT(client.id, cycle.id)) return null;
+                  return (
+                    <Button
+                      key={cycle.id}
+                      variant="outline"
+                      size="sm"
+                      className="w-full gap-2 text-xs"
+                      onClick={() => setSurveyTarget({ clientId: client.id, clientName: client.name, cycleId: cycle.id, cycleLabel: cycle.label })}
+                    >
+                      <ClipboardList className="w-3 h-3" />
+                      Preencher Pesquisa de Passagem — {cycle.label}
+                    </Button>
+                  );
+                })}
+
+                {/* Show existing handoff survey results for previous cycles */}
+                {previousVisibleCycles.map(cycle => (
+                  <GTHandoffSurveyResults key={cycle.id} clientId={client.id} cycleId={cycle.id} />
+                ))}
+
                 {/* Client Profile Info */}
-                {profile && answeredCount > 0 && (
+                {clientProfile && answeredCount > 0 && (
                   <Accordion type="single" collapsible>
                     <AccordionItem value="profile" className="border-none">
                       <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">
@@ -151,7 +181,7 @@ export function ClientsOverview() {
                       <AccordionContent>
                         <div className="space-y-3 pl-6">
                           {GT_PROFILE_QUESTIONS.map((q) => {
-                            const answer = profile[q.key as keyof typeof profile];
+                            const answer = clientProfile[q.key as keyof typeof clientProfile];
                             if (!answer) return null;
                             return (
                               <div key={q.key} className="space-y-0.5">
@@ -166,7 +196,7 @@ export function ClientsOverview() {
                   </Accordion>
                 )}
 
-                {!profile || answeredCount === 0 ? (
+                {!clientProfile || answeredCount === 0 ? (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground pl-6">
                     <FileText className="w-3 h-3" />
                     Perfil do cliente ainda não preenchido
@@ -177,6 +207,18 @@ export function ClientsOverview() {
           );
         })}
       </div>
+
+      {/* Handoff Survey Dialog */}
+      {surveyTarget && (
+        <GTHandoffSurvey
+          clientId={surveyTarget.clientId}
+          clientName={surveyTarget.clientName}
+          cycleId={surveyTarget.cycleId}
+          cycleLabel={surveyTarget.cycleLabel}
+          open={!!surveyTarget}
+          onClose={() => setSurveyTarget(null)}
+        />
+      )}
     </div>
   );
 }
