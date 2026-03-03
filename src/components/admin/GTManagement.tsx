@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Plus, Trash2, FileText, UserPlus, Building, Sparkles, Users } from 'lucide-react';
+import { Plus, Trash2, FileText, UserPlus, Building, Sparkles, Users, X } from 'lucide-react';
 import { useClients, GT_PROFILE_QUESTIONS, Client, ClientProfile } from '@/hooks/useClients';
 import { useCycles } from '@/hooks/useCycles';
 import { useLeadership } from '@/hooks/useLeadership';
@@ -118,8 +118,12 @@ export function GTManagement() {
     upsertClientProfile,
     addGTMember,
     removeGTMember,
+    linkClientToCycle,
+    unlinkClientFromCycle,
     getClientProfile,
     getGTMembersByClient,
+    getClientsByCycle,
+    isClientInCycle,
   } = useClients();
   
   const { cycles, currentCycle } = useCycles();
@@ -151,9 +155,16 @@ export function GTManagement() {
   
   const [profileAnswers, setProfileAnswers] = useState<Record<string, string>>({});
 
+  // Filter clients by selected cycle
+  const cycleClients = selectedCycleId ? getClientsByCycle(selectedCycleId) : clients;
+
   const handleAddClient = () => {
     if (!newClientName.trim()) return;
-    addClient({ name: newClientName, description: newClientDescription || undefined });
+    addClient({ 
+      name: newClientName, 
+      description: newClientDescription || undefined,
+      cycleId: selectedCycleId || undefined,
+    });
     setNewClientName('');
     setNewClientDescription('');
     setIsAddClientOpen(false);
@@ -319,6 +330,7 @@ export function GTManagement() {
         </Select>
       </div>
 
+      {/* All clients with cycle toggle */}
       {clients.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
@@ -329,8 +341,34 @@ export function GTManagement() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {clients.map((client) => {
+        <>
+          {/* Clients NOT in this cycle */}
+          {selectedCycleId && clients.filter(c => !isClientInCycle(c.id, selectedCycleId)).length > 0 && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm text-muted-foreground">Clientes não vinculados a este ciclo</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  {clients.filter(c => !isClientInCycle(c.id, selectedCycleId)).map(client => (
+                    <Button
+                      key={client.id}
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => linkClientToCycle({ clientId: client.id, cycleId: selectedCycleId })}
+                    >
+                      <Plus className="h-3 w-3" />
+                      {client.name}
+                    </Button>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {cycleClients.map((client) => {
             const members = getGTMembersByClient(client.id, selectedCycleId);
             const profileCompleteness = getProfileCompleteness(client.id);
             const director = members.find(m => m.role === 'director');
@@ -347,14 +385,27 @@ export function GTManagement() {
                         <p className="text-xs text-muted-foreground mt-1">{client.description}</p>
                       )}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 text-destructive hover:text-destructive"
-                      onClick={() => deleteClient(client.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <div className="flex items-center gap-1">
+                      {selectedCycleId && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                          title="Remover do ciclo"
+                          onClick={() => unlinkClientFromCycle({ clientId: client.id, cycleId: selectedCycleId })}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
+                        onClick={() => deleteClient(client.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -558,7 +609,8 @@ export function GTManagement() {
               </Card>
             );
           })}
-        </div>
+          </div>
+        </>
       )}
 
       {/* Profile Dialog */}

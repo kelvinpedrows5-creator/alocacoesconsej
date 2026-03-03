@@ -44,6 +44,42 @@ export type Database = {
         }
         Relationships: []
       }
+      client_cycles: {
+        Row: {
+          client_id: string
+          created_at: string
+          cycle_id: string
+          id: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          cycle_id: string
+          id?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          cycle_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_cycles_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_cycles_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "allocation_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       client_profiles: {
         Row: {
           client_id: string

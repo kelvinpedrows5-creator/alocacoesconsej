@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   Check,
   Users,
+  Building2,
 } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -24,16 +25,144 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageCropper } from '@/components/ImageCropper';
 import { MembersSection } from '@/components/MembersSection';
 import { useToast } from '@/hooks/use-toast';
-import { profileQuestions, coordinationMatchingProfile, coordinations } from '@/data/mockData';
+import { profileQuestions, coordinationMatchingProfile, coordinations, directorates } from '@/data/mockData';
+import { useCycles } from '@/hooks/useCycles';
+import { supabase } from '@/integrations/supabase/client';
 
 interface CoordinationMatch {
   coordinationId: string;
   score: number;
   coordinationName: string;
   color: string;
+}
+
+function CoordinationSelector() {
+  const { profile } = useAuthContext();
+  const { currentCycle } = useCycles();
+  const { toast } = useToast();
+  const [selectedCoord, setSelectedCoord] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [currentAllocation, setCurrentAllocation] = useState<string | null>(null);
+
+  const groupedCoordinations = directorates.map((dir) => ({
+    ...dir,
+    coordinations: coordinations.filter((c) => c.directorateId === dir.id),
+  }));
+
+  // Load existing allocation
+  useEffect(() => {
+    const loadAllocation = async () => {
+      if (!profile?.user_id || !currentCycle) return;
+      const { data } = await supabase
+        .from('member_allocations')
+        .select('coordination_id')
+        .eq('user_id', profile.user_id)
+        .eq('cycle_id', currentCycle.id)
+        .maybeSingle();
+      if (data) {
+        setCurrentAllocation(data.coordination_id);
+        setSelectedCoord(data.coordination_id);
+      }
+    };
+    loadAllocation();
+  }, [profile?.user_id, currentCycle]);
+
+  const handleSave = async () => {
+    if (!selectedCoord || !profile?.user_id || !currentCycle) return;
+    setSaving(true);
+    try {
+      const { data: existing } = await supabase
+        .from('member_allocations')
+        .select('id')
+        .eq('user_id', profile.user_id)
+        .eq('cycle_id', currentCycle.id)
+        .maybeSingle();
+
+      if (existing) {
+        const { error } = await supabase
+          .from('member_allocations')
+          .update({ coordination_id: selectedCoord })
+          .eq('id', existing.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from('member_allocations')
+          .insert({
+            user_id: profile.user_id,
+            cycle_id: currentCycle.id,
+            coordination_id: selectedCoord,
+          });
+        if (error) throw error;
+      }
+
+      setCurrentAllocation(selectedCoord);
+      toast({ title: 'Coordenadoria atualizada!', description: 'Sua alocação foi salva com sucesso.' });
+    } catch (error: any) {
+      toast({ title: 'Erro ao salvar', description: error.message, variant: 'destructive' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const currentCoordName = coordinations.find(c => c.id === currentAllocation)?.name;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Building2 className="w-5 h-5 text-primary" />
+          Minha Coordenadoria
+        </CardTitle>
+        <CardDescription>
+          {currentCoordName
+            ? `Você está alocado(a) em: ${currentCoordName}`
+            : 'Informe em qual coordenadoria você está alocado(a) neste ciclo'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label>Coordenadoria ({currentCycle?.label || 'ciclo atual'})</Label>
+          <Select value={selectedCoord} onValueChange={setSelectedCoord}>
+            <SelectTrigger>
+              <SelectValue placeholder="Selecione sua coordenadoria" />
+            </SelectTrigger>
+            <SelectContent>
+              {groupedCoordinations.map((dir) => (
+                <div key={dir.id}>
+                  <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                    {dir.name}
+                  </div>
+                  {dir.coordinations.map((coord) => (
+                    <SelectItem key={coord.id} value={coord.id}>
+                      <div className="flex items-center gap-2">
+                        <div
+                          className="w-2 h-2 rounded-full shrink-0"
+                          style={{ backgroundColor: coord.color }}
+                        />
+                        <span>{coord.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </div>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button
+          onClick={handleSave}
+          disabled={saving || !selectedCoord}
+          className="w-full"
+        >
+          <Save className="w-4 h-4 mr-2" />
+          {currentAllocation ? 'Atualizar Coordenadoria' : 'Salvar Coordenadoria'}
+        </Button>
+      </CardContent>
+    </Card>
+  );
 }
 
 const Profile = () => {
@@ -347,6 +476,10 @@ const Profile = () => {
                 <Sparkles className="w-4 h-4" />
                 Perfil de Alocação
               </TabsTrigger>
+              <TabsTrigger value="coordination" className="gap-2">
+                <Building2 className="w-4 h-4" />
+                Minha Coordenadoria
+              </TabsTrigger>
               <TabsTrigger value="consej" className="gap-2">
                 <Users className="w-4 h-4" />
                 CONSEJ
@@ -563,6 +696,10 @@ const Profile = () => {
                   )}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="coordination">
+              <CoordinationSelector />
             </TabsContent>
 
             <TabsContent value="consej">
