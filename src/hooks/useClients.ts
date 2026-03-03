@@ -90,6 +90,13 @@ export const GT_PROFILE_QUESTIONS = [
   },
 ] as const;
 
+export interface ClientCycle {
+  id: string;
+  client_id: string;
+  cycle_id: string;
+  created_at: string;
+}
+
 export function useClients() {
   const queryClient = useQueryClient();
 
@@ -130,19 +137,42 @@ export function useClients() {
     },
   });
 
+  const { data: clientCycles = [], isLoading: clientCyclesLoading } = useQuery({
+    queryKey: ['client_cycles'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('client_cycles')
+        .select('*');
+      
+      if (error) throw error;
+      return data as ClientCycle[];
+    },
+  });
+
   const addClientMutation = useMutation({
-    mutationFn: async (client: { name: string; description?: string }) => {
+    mutationFn: async (client: { name: string; description?: string; cycleId?: string }) => {
+      const { cycleId, ...clientData } = client;
       const { data, error } = await supabase
         .from('clients')
-        .insert(client)
+        .insert(clientData)
         .select()
         .single();
       
       if (error) throw error;
+
+      // Link to cycle if provided
+      if (cycleId && data) {
+        await supabase.from('client_cycles').insert({
+          client_id: data.id,
+          cycle_id: cycleId,
+        });
+      }
+
       return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['client_cycles'] });
       toast.success('Cliente adicionado com sucesso!');
     },
     onError: (error: Error) => {
@@ -275,6 +305,40 @@ export function useClients() {
     },
   });
 
+  const linkClientToCycleMutation = useMutation({
+    mutationFn: async ({ clientId, cycleId }: { clientId: string; cycleId: string }) => {
+      const { error } = await supabase
+        .from('client_cycles')
+        .insert({ client_id: clientId, cycle_id: cycleId });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client_cycles'] });
+      toast.success('Cliente vinculado ao ciclo!');
+    },
+    onError: (error: Error) => {
+      toast.error('Erro ao vincular cliente: ' + error.message);
+    },
+  });
+
+  const unlinkClientFromCycleMutation = useMutation({
+    mutationFn: async ({ clientId, cycleId }: { clientId: string; cycleId: string }) => {
+      const { error } = await supabase
+        .from('client_cycles')
+        .delete()
+        .eq('client_id', clientId)
+        .eq('cycle_id', cycleId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['client_cycles'] });
+      toast.success('Cliente removido do ciclo!');
+    },
+    onError: (error: Error) => {
+      toast.error('Erro ao remover vínculo: ' + error.message);
+    },
+  });
+
   const getClientProfile = (clientId: string) => {
     return clientProfiles.find(p => p.client_id === clientId);
   };
@@ -286,18 +350,32 @@ export function useClients() {
     );
   };
 
+  const getClientsByCycle = (cycleId: string) => {
+    const linkedIds = clientCycles.filter(cc => cc.cycle_id === cycleId).map(cc => cc.client_id);
+    return clients.filter(c => linkedIds.includes(c.id));
+  };
+
+  const isClientInCycle = (clientId: string, cycleId: string) => {
+    return clientCycles.some(cc => cc.client_id === clientId && cc.cycle_id === cycleId);
+  };
+
   return {
     clients,
     clientProfiles,
     gtMembers,
-    isLoading: clientsLoading || profilesLoading || gtMembersLoading,
+    clientCycles,
+    isLoading: clientsLoading || profilesLoading || gtMembersLoading || clientCyclesLoading,
     addClient: addClientMutation.mutate,
     updateClient: updateClientMutation.mutate,
     deleteClient: deleteClientMutation.mutate,
     upsertClientProfile: upsertClientProfileMutation.mutate,
     addGTMember: addGTMemberMutation.mutate,
     removeGTMember: removeGTMemberMutation.mutate,
+    linkClientToCycle: linkClientToCycleMutation.mutate,
+    unlinkClientFromCycle: unlinkClientFromCycleMutation.mutate,
     getClientProfile,
     getGTMembersByClient,
+    getClientsByCycle,
+    isClientInCycle,
   };
 }

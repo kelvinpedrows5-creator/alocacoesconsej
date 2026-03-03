@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Building, Users, FileText, ClipboardList } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useClients, GT_PROFILE_QUESTIONS } from '@/hooks/useClients';
 import { useCycles } from '@/hooks/useCycles';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -20,9 +21,10 @@ interface Profile {
 }
 
 export function ClientsOverview() {
-  const { clients, clientProfiles, gtMembers, getClientProfile, getGTMembersByClient } = useClients();
+  const { clients, clientProfiles, gtMembers, getClientProfile, getGTMembersByClient, getClientsByCycle } = useClients();
   const { cycles, currentCycle } = useCycles();
   const { profile } = useAuthContext();
+  const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const [surveyTarget, setSurveyTarget] = useState<{ clientId: string; clientName: string; cycleId: string; cycleLabel: string } | null>(null);
 
   const { data: profiles = [] } = useQuery({
@@ -70,7 +72,18 @@ export function ClientsOverview() {
     return gtMembers.some(m => m.client_id === clientId && m.cycle_id === cycleId && m.user_id === profile.user_id);
   };
 
-  if (clients.length === 0) {
+  // Set initial cycle
+  useEffect(() => {
+    if (currentCycle && !selectedCycleId) {
+      setSelectedCycleId(currentCycle.id);
+    }
+  }, [currentCycle, selectedCycleId]);
+
+  const activeCycleId = selectedCycleId || currentCycle?.id || '';
+  const displayClients = activeCycleId ? getClientsByCycle(activeCycleId) : clients;
+  const activeCycleLabel = cycles.find(c => c.id === activeCycleId)?.label || '';
+
+  if (displayClients.length === 0 && clients.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <Building className="w-12 h-12 mx-auto mb-4 opacity-50" />
@@ -81,17 +94,37 @@ export function ClientsOverview() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-xl font-semibold text-foreground">Clientes & Grupos de Trabalho</h2>
-        <p className="text-sm text-muted-foreground">
-          Informações sobre cada cliente para auxiliar na passagem de bastão e alocação
-        </p>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div>
+          <h2 className="text-xl font-semibold text-foreground">Clientes & Grupos de Trabalho</h2>
+          <p className="text-sm text-muted-foreground">
+            Informações sobre cada cliente para auxiliar na passagem de bastão e alocação
+          </p>
+        </div>
+        <Select value={activeCycleId} onValueChange={setSelectedCycleId}>
+          <SelectTrigger className="w-[220px]">
+            <SelectValue placeholder="Selecione um ciclo" />
+          </SelectTrigger>
+          <SelectContent>
+            {cycles.filter(c => c.is_visible).map((cycle) => (
+              <SelectItem key={cycle.id} value={cycle.id}>
+                {cycle.label} {cycle.is_current && '(Atual)'}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
+      {displayClients.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <Building className="w-12 h-12 mx-auto mb-4 opacity-50" />
+          <p>Nenhum cliente vinculado a este ciclo.</p>
+        </div>
+      ) : (
       <div className="grid gap-6 md:grid-cols-2">
-        {clients.map((client) => {
+        {displayClients.map((client) => {
           const clientProfile = getClientProfile(client.id);
-          const members = currentCycle ? getGTMembersByClient(client.id, currentCycle.id) : [];
+          const members = activeCycleId ? getGTMembersByClient(client.id, activeCycleId) : [];
           const director = members.find(m => m.role === 'director');
           const manager = members.find(m => m.role === 'manager');
           const consultants = members.filter(m => m.role === 'consultant');
@@ -207,6 +240,7 @@ export function ClientsOverview() {
           );
         })}
       </div>
+      )}
 
       {/* Handoff Survey Dialog */}
       {surveyTarget && (
