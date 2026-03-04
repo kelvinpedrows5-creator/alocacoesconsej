@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -155,8 +155,17 @@ export function GTManagement() {
   
   const [profileAnswers, setProfileAnswers] = useState<Record<string, string>>({});
 
-  // Filter clients by selected cycle
-  const cycleClients = selectedCycleId ? getClientsByCycle(selectedCycleId) : clients;
+  // Sync selectedCycleId when currentCycle loads
+  useEffect(() => {
+    if (currentCycle && !selectedCycleId) {
+      setSelectedCycleId(currentCycle.id);
+    }
+  }, [currentCycle, selectedCycleId]);
+
+  // Filter clients by selected cycle - show all if no cycle selected
+  const activeCycleId = selectedCycleId || currentCycle?.id || '';
+  const cycleClients = activeCycleId ? getClientsByCycle(activeCycleId) : clients;
+  const unlinkedClients = activeCycleId ? clients.filter(c => !isClientInCycle(c.id, activeCycleId)) : [];
 
   const handleAddClient = () => {
     if (!newClientName.trim()) return;
