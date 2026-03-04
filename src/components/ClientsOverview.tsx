@@ -80,9 +80,7 @@ export function ClientsOverview() {
   }, [currentCycle, selectedCycleId]);
 
   const activeCycleId = selectedCycleId || currentCycle?.id || '';
-  const cycleClients = activeCycleId ? getClientsByCycle(activeCycleId) : [];
-  // If there are no client_cycles links for this cycle, show all clients as fallback
-  const displayClients = cycleClients.length > 0 ? cycleClients : clients;
+  const displayClients = activeCycleId ? getClientsByCycle(activeCycleId) : clients;
   const activeCycleLabel = cycles.find(c => c.id === activeCycleId)?.label || '';
 
   if (clients.length === 0) {
