@@ -80,10 +80,12 @@ export function ClientsOverview() {
   }, [currentCycle, selectedCycleId]);
 
   const activeCycleId = selectedCycleId || currentCycle?.id || '';
-  const displayClients = activeCycleId ? getClientsByCycle(activeCycleId) : clients;
+  const cycleClients = activeCycleId ? getClientsByCycle(activeCycleId) : [];
+  // If there are no client_cycles links for this cycle, show all clients as fallback
+  const displayClients = cycleClients.length > 0 ? cycleClients : clients;
   const activeCycleLabel = cycles.find(c => c.id === activeCycleId)?.label || '';
 
-  if (displayClients.length === 0 && clients.length === 0) {
+  if (clients.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <Building className="w-12 h-12 mx-auto mb-4 opacity-50" />
