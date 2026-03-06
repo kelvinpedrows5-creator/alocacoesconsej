@@ -1,5 +1,6 @@
-import { Building2, Users, User, Briefcase, Shield } from 'lucide-react';
+import { Building2, Users, User, Briefcase, Shield, ClipboardList } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { useLeadership } from '@/hooks/useLeadership';
 import {
   Sidebar,
   SidebarContent,
@@ -27,7 +28,17 @@ const menuItems = [
 export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
   const { state, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed';
-  const { isAdmin } = useAuthContext();
+  const { isAdmin, user } = useAuthContext();
+  const { positions } = useLeadership();
+
+  // Check if user is Gerente de Demandas (directorate_id = 'dir-1', position_type = 'manager')
+  const isDemandasManager = user
+    ? positions.some(
+        (p) => p.user_id === user.id && p.directorate_id === 'dir-1' && p.position_type === 'manager'
+      )
+    : false;
+
+  const showDemandsControl = isAdmin || isDemandasManager;
 
   const handleClick = (value: string) => {
     onTabChange(value);
@@ -56,6 +67,26 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {showDemandsControl && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Gestão</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => handleClick('demands')}
+                    isActive={activeTab === 'demands'}
+                    tooltip="Controle de Demandas"
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                    {!collapsed && <span>Controle de Demandas</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
 
         {isAdmin && (
           <SidebarGroup>
