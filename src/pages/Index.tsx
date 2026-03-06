@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Users, Building2, User, Shield, Briefcase } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { LayoutDashboard, Menu } from 'lucide-react';
 import { StatsOverview } from '@/components/StatsOverview';
 import { MemberProfileResults } from '@/components/MemberProfileResults';
 import { MembersSection } from '@/components/MembersSection';
@@ -10,11 +10,12 @@ import { ClientsOverview } from '@/components/ClientsOverview';
 import { LeadershipDialog } from '@/components/LeadershipDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { WelcomeOnboarding } from '@/components/WelcomeOnboarding';
+import { AppSidebar } from '@/components/AppSidebar';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useCycles } from '@/hooks/useCycles';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import {
   Select,
   SelectContent,
@@ -28,10 +29,10 @@ const Index = () => {
   const [showOnboarding, setShowOnboarding] = useState(false);
   const { profile, isAdmin, roleLoading, refreshProfile } = useAuthContext();
   const { cycles, currentCycle } = useCycles();
+  const [activeTab, setActiveTab] = useState('overview');
 
   const [selectedQuarter, setSelectedQuarter] = useState(currentCycle?.value || '2026-C1');
 
-  // Check if new user needs onboarding (no display_name set)
   const needsOnboarding = profile && !profile.display_name;
 
   const getInitials = () => {
@@ -54,6 +55,14 @@ const Index = () => {
     setShowOnboarding(false);
   };
 
+  const handleTabChange = (tab: string) => {
+    if (tab === 'admin') {
+      navigate('/admin');
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
   if (roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -66,129 +75,110 @@ const Index = () => {
     return <WelcomeOnboarding onComplete={handleOnboardingComplete} />;
   }
 
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'overview':
+        return <CompanyOverview />;
+      case 'my-profile':
+        return <MemberProfileResults />;
+      case 'consej':
+        return <MembersSection />;
+      case 'clients':
+        return <ClientsOverview />;
+      default:
+        return <CompanyOverview />;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-lg border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-2">
-            <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0">
-              <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-accent">
-                <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
-              </div>
-              <div className="hidden sm:block">
-                <h1 className="font-bold text-lg text-foreground">Alocações CONSEJ</h1>
-                <p className="text-xs text-muted-foreground">Sistema de Gestão de Membros</p>
-              </div>
-            </Link>
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AppSidebar activeTab={activeTab} onTabChange={handleTabChange} />
 
-            <div className="flex items-center gap-2 sm:gap-3 overflow-x-auto">
-              <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
-                <SelectTrigger className="w-32 sm:w-52 shrink-0">
-                  <SelectValue>
-                    <span className="truncate">{currentCycleLabel}</span>
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {cycleOptions.map((c) => (
-                    <SelectItem key={c.value} value={c.value}>
-                      {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              
-              {isAdmin && (
-                <>
-                  <ReallocationDialog />
-                  <LeadershipDialog />
-                  <Button 
-                    variant="outline" 
-                    onClick={() => navigate('/admin')}
-                    className="gap-2 hidden sm:flex"
-                  >
-                    <Shield className="w-4 h-4" />
-                    <span className="hidden md:inline">Admin</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
+        <div className="flex-1 flex flex-col min-h-screen">
+          {/* Header */}
+          <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-lg border-b border-border">
+            <div className="px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16 gap-2">
+                <div className="flex items-center gap-2">
+                  <SidebarTrigger />
+                  <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-accent">
+                      <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
+                    </div>
+                    <div className="hidden sm:block">
+                      <h1 className="font-bold text-lg text-foreground">Alocações CONSEJ</h1>
+                      <p className="text-xs text-muted-foreground">Sistema de Gestão de Membros</p>
+                    </div>
+                  </Link>
+                </div>
+
+                <div className="flex items-center gap-2 sm:gap-3">
+                  <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
+                    <SelectTrigger className="w-32 sm:w-52 shrink-0">
+                      <SelectValue>
+                        <span className="truncate">{currentCycleLabel}</span>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {cycleOptions.map((c) => (
+                        <SelectItem key={c.value} value={c.value}>
+                          {c.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {isAdmin && (
+                    <>
+                      <ReallocationDialog />
+                      <LeadershipDialog />
+                    </>
+                  )}
+
+                  <Button
+                    variant="ghost"
                     size="icon"
-                    onClick={() => navigate('/admin')}
-                    className="sm:hidden"
+                    className="rounded-full"
+                    onClick={() => navigate('/profile')}
                   >
-                    <Shield className="w-4 h-4" />
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={profile?.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                        {getInitials()}
+                      </AvatarFallback>
+                    </Avatar>
                   </Button>
-                </>
-              )}
-              
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="rounded-full"
-                onClick={() => navigate('/profile')}
-              >
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                    {getInitials()}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
+                </div>
+              </div>
             </div>
-          </div>
+          </header>
+
+          {/* Main Content */}
+          <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
+              <StatsOverview />
+              {renderContent()}
+            </motion.div>
+          </main>
+
+          {/* Footer */}
+          <footer className="border-t border-border py-4 px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-center">
+              <span className="text-xs text-muted-foreground tracking-wide">
+                Developed by Kelvin Watson — 2026
+              </span>
+            </div>
+          </footer>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
-        >
-          {/* Stats */}
-          <StatsOverview />
-
-          {/* Unified tabs for all users */}
-          <Tabs defaultValue="overview" className="space-y-6">
-            <TabsList className="bg-secondary/50 w-full sm:w-auto overflow-x-auto flex-wrap justify-start">
-              <TabsTrigger value="overview" className="gap-2">
-                <Building2 className="w-4 h-4" />
-                <span className="hidden sm:inline">Panorama</span>
-              </TabsTrigger>
-              <TabsTrigger value="my-profile" className="gap-2">
-                <User className="w-4 h-4" />
-                <span className="hidden sm:inline">Pesquisa de Perfil</span>
-              </TabsTrigger>
-              <TabsTrigger value="consej" className="gap-2">
-                <Users className="w-4 h-4" />
-                <span className="hidden sm:inline">CONSEJ</span>
-              </TabsTrigger>
-              <TabsTrigger value="clients" className="gap-2">
-                <Briefcase className="w-4 h-4" />
-                <span className="hidden sm:inline">Clientes</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="overview" className="space-y-6">
-              <CompanyOverview />
-            </TabsContent>
-
-            <TabsContent value="my-profile" className="space-y-6">
-              <MemberProfileResults />
-            </TabsContent>
-
-            <TabsContent value="consej" className="space-y-6">
-              <MembersSection />
-            </TabsContent>
-
-            <TabsContent value="clients" className="space-y-6">
-              <ClientsOverview />
-            </TabsContent>
-          </Tabs>
-        </motion.div>
-      </main>
-    </div>
+      </div>
+    </SidebarProvider>
   );
 };
 
