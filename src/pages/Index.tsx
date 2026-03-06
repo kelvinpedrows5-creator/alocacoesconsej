@@ -11,6 +11,7 @@ import { LeadershipDialog } from '@/components/LeadershipDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { WelcomeOnboarding } from '@/components/WelcomeOnboarding';
 import { AppSidebar } from '@/components/AppSidebar';
+import { DemandsControl } from '@/components/admin/DemandsControl';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useCycles } from '@/hooks/useCycles';
 import { Button } from '@/components/ui/button';
@@ -85,6 +86,8 @@ const Index = () => {
         return <MembersSection />;
       case 'clients':
         return <ClientsOverview />;
+      case 'demands':
+        return <DemandsControl />;
       default:
         return <CompanyOverview />;
     }
