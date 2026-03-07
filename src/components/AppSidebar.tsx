@@ -38,7 +38,8 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
       )
     : false;
 
-  const showDemandsControl = isAdmin || isDemandasManager;
+  const showDemandsControl = isDemandasManager;
+  const showMemberDemands = !isAdmin && !isDemandasManager;
 
   const handleClick = (value: string) => {
     onTabChange(value);
@@ -81,6 +82,26 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
                   >
                     <ClipboardList className="h-4 w-4" />
                     {!collapsed && <span>Controle de Demandas</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {showMemberDemands && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Minhas Atividades</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => handleClick('my-demands')}
+                    isActive={activeTab === 'my-demands'}
+                    tooltip="Minhas Demandas"
+                  >
+                    <ClipboardList className="h-4 w-4" />
+                    {!collapsed && <span>Minhas Demandas</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
