@@ -95,7 +95,7 @@ export const LeadershipManagement = () => {
   const canAddPosition = (directorateId: string, positionType: 'manager' | 'director') => {
     const { directors, managers } = getDirectorateLeaders(directorateId);
     if (positionType === 'director') return directors.length < 1;
-    return managers.length < 2;
+    return true; // No limit on managers
   };
 
   return (
@@ -168,7 +168,7 @@ export const LeadershipManagement = () => {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4 text-blue-500" />
-                          <h4 className="font-medium text-sm">Gerentes (máx. 2)</h4>
+                          <h4 className="font-medium text-sm">Gerentes</h4>
                         </div>
                         {managers.length === 0 ? (
                           <p className="text-sm text-muted-foreground pl-6">

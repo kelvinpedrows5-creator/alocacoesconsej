@@ -12,6 +12,7 @@ import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { WelcomeOnboarding } from '@/components/WelcomeOnboarding';
 import { AppSidebar } from '@/components/AppSidebar';
 import { DemandsControl } from '@/components/admin/DemandsControl';
+import { MemberDemandSubmission } from '@/components/MemberDemandSubmission';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useCycles } from '@/hooks/useCycles';
 import { Button } from '@/components/ui/button';
@@ -88,6 +89,8 @@ const Index = () => {
         return <ClientsOverview />;
       case 'demands':
         return <DemandsControl />;
+      case 'my-demands':
+        return <MemberDemandSubmission />;
       default:
         return <CompanyOverview />;
     }
