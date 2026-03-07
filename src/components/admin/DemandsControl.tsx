@@ -9,9 +9,8 @@ import {
   Search,
   ChevronDown,
   ChevronUp,
-  Edit2,
   Check,
-  X,
+  Inbox,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -39,6 +38,16 @@ interface ProfileData {
   display_name: string | null;
   email: string;
   avatar_url: string | null;
+}
+
+interface SubmissionData {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  status: string;
+  created_at: string;
+  helpers: string[];
 }
 
 const statusLabels: Record<string, string> = {
@@ -75,6 +84,11 @@ export function DemandsControl() {
   const [executionScore, setExecutionScore] = useState(5);
   const [qualityScore, setQualityScore] = useState(5);
   const [scoreNotes, setScoreNotes] = useState('');
+  const [submissions, setSubmissions] = useState<SubmissionData[]>([]);
+  const [evaluatingSubmission, setEvaluatingSubmission] = useState<SubmissionData | null>(null);
+  const [evalExecution, setEvalExecution] = useState(5);
+  const [evalQuality, setEvalQuality] = useState(5);
+  const [evalNotes, setEvalNotes] = useState('');
 
   useEffect(() => {
     const fetchProfiles = async () => {
@@ -84,12 +98,33 @@ export function DemandsControl() {
       setProfiles(data || []);
     };
     fetchProfiles();
+    fetchSubmissions();
   }, []);
+
+  const fetchSubmissions = async () => {
+    const [subsRes, helpersRes] = await Promise.all([
+      supabase.from('demand_submissions').select('*').order('created_at', { ascending: false }),
+      supabase.from('demand_submission_helpers').select('*'),
+    ]);
+    const allHelpers = helpersRes.data || [];
+    const subs: SubmissionData[] = (subsRes.data || []).map((s: any) => ({
+      id: s.id,
+      user_id: s.user_id,
+      title: s.title,
+      description: s.description,
+      status: s.status,
+      created_at: s.created_at,
+      helpers: allHelpers.filter((h: any) => h.submission_id === s.id).map((h: any) => h.helper_user_id),
+    }));
+    setSubmissions(subs);
+  };
 
   const getInitials = (name: string | null, email: string) => {
     if (name) return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
     return email.charAt(0).toUpperCase();
   };
+
+  const getProfile = (userId: string) => profiles.find((p) => p.user_id === userId);
 
   const handleAddActivity = async () => {
     if (!newActivityName.trim() || !user) return;
@@ -112,12 +147,35 @@ export function DemandsControl() {
     setScoringDialog(null);
   };
 
+  const handleOpenEvaluation = (sub: SubmissionData) => {
+    setEvaluatingSubmission(sub);
+    setEvalExecution(5);
+    setEvalQuality(5);
+    setEvalNotes('');
+  };
+
+  const handleEvaluateSubmission = async () => {
+    if (!evaluatingSubmission || !user) return;
+    const activity = await addActivity(evaluatingSubmission.title, evaluatingSubmission.description || '', user.id);
+    if (activity) {
+      await setScore(activity.id, evaluatingSubmission.user_id, evalExecution, evalQuality, evalNotes);
+      for (const helperId of evaluatingSubmission.helpers) {
+        await setScore(activity.id, helperId, evalExecution, evalQuality, evalNotes);
+      }
+      await supabase.from('demand_submissions').update({ status: 'evaluated' }).eq('id', evaluatingSubmission.id);
+      setSubmissions((prev) => prev.map((s) => s.id === evaluatingSubmission.id ? { ...s, status: 'evaluated' } : s));
+    }
+    setEvaluatingSubmission(null);
+  };
+
   const memberScores = getMemberScores(profiles);
   const filteredMembers = memberScores.filter(
     (m) =>
       m.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (m.display_name && m.display_name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  const pendingSubmissions = submissions.filter((s) => s.status === 'pending');
 
   if (loading) {
     return (
@@ -129,17 +187,106 @@ export function DemandsControl() {
 
   return (
     <div className="space-y-6">
-      <Tabs defaultValue="activities" className="space-y-6">
+      <Tabs defaultValue="submissions" className="space-y-6">
         <TabsList className="bg-secondary/50">
+          <TabsTrigger value="submissions" className="gap-2">
+            <Inbox className="w-4 h-4" />
+            Demandas Recebidas
+            {pendingSubmissions.length > 0 && (
+              <Badge className="bg-destructive/20 text-destructive ml-1 text-xs">{pendingSubmissions.length}</Badge>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="activities" className="gap-2">
             <ClipboardList className="w-4 h-4" />
             Atividades
           </TabsTrigger>
           <TabsTrigger value="ranking" className="gap-2">
             <Star className="w-4 h-4" />
-            Ranking de Membros
+            Ranking
           </TabsTrigger>
         </TabsList>
+
+        {/* Submissions Tab */}
+        <TabsContent value="submissions" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Inbox className="w-5 h-5 text-primary" />
+                Demandas Enviadas pelos Membros
+              </CardTitle>
+              <CardDescription>
+                Avalie as demandas registradas pelos membros. A avaliação gera pontuação no ranking.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ScrollArea className="h-[500px]">
+                <div className="space-y-3">
+                  {submissions.map((sub) => {
+                    const submitter = getProfile(sub.user_id);
+                    return (
+                      <motion.div
+                        key={sub.id}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="p-4 rounded-lg border border-border"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={submitter?.avatar_url || undefined} />
+                                <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                                  {submitter ? getInitials(submitter.display_name, submitter.email) : '?'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm font-medium">{submitter?.display_name || submitter?.email || 'Membro'}</span>
+                              <Badge className={sub.status === 'evaluated' ? 'bg-success/20 text-success' : 'bg-warning/20 text-warning'}>
+                                {sub.status === 'evaluated' ? 'Avaliada' : 'Pendente'}
+                              </Badge>
+                            </div>
+                            <h3 className="font-semibold text-foreground">{sub.title}</h3>
+                            {sub.description && <p className="text-sm text-muted-foreground">{sub.description}</p>}
+                            {sub.helpers.length > 0 && (
+                              <div className="flex items-center gap-2 mt-2">
+                                <Users className="w-3 h-3 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground">Ajudantes:</span>
+                                <div className="flex -space-x-1">
+                                  {sub.helpers.map((hId) => {
+                                    const hp = getProfile(hId);
+                                    return (
+                                      <Avatar key={hId} className="h-6 w-6 border-2 border-background">
+                                        <AvatarImage src={hp?.avatar_url || undefined} />
+                                        <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                                          {hp ? getInitials(hp.display_name, hp.email) : '?'}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {sub.status === 'pending' && (
+                            <Button size="sm" onClick={() => handleOpenEvaluation(sub)}>
+                              <Star className="w-3 h-3 mr-1" />
+                              Avaliar
+                            </Button>
+                          )}
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                  {submissions.length === 0 && (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Inbox className="w-12 h-12 mx-auto mb-3 opacity-50" />
+                      <p>Nenhuma demanda recebida ainda.</p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         {/* Activities Tab */}
         <TabsContent value="activities" className="space-y-4">
@@ -203,45 +350,28 @@ export function DemandsControl() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() =>
-                            setExpandedActivity(expandedActivity === activity.id ? null : activity.id)
-                          }
+                          onClick={() => setExpandedActivity(expandedActivity === activity.id ? null : activity.id)}
                         >
-                          {expandedActivity === activity.id ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
+                          {expandedActivity === activity.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="text-destructive"
-                          onClick={() => deleteActivity(activity.id)}
-                        >
+                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => deleteActivity(activity.id)}>
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
                     </div>
 
-                    {/* Expanded: show members to score */}
                     {expandedActivity === activity.id && (
                       <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
                         className="mt-4 border-t border-border pt-4"
                       >
-                        <p className="text-sm font-medium text-muted-foreground mb-3">
-                          Pontuar membros nesta atividade:
-                        </p>
+                        <p className="text-sm font-medium text-muted-foreground mb-3">Pontuar membros nesta atividade:</p>
                         <div className="grid gap-2">
                           {profiles.map((profile) => {
                             const score = getScoreForActivity(activity.id, profile.user_id);
                             return (
-                              <div
-                                key={profile.user_id}
-                                className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/50 transition-colors"
-                              >
+                              <div key={profile.user_id} className="flex items-center justify-between p-2 rounded-lg hover:bg-secondary/50 transition-colors">
                                 <div className="flex items-center gap-2">
                                   <Avatar className="h-8 w-8">
                                     <AvatarImage src={profile.avatar_url || undefined} />
@@ -249,9 +379,7 @@ export function DemandsControl() {
                                       {getInitials(profile.display_name, profile.email)}
                                     </AvatarFallback>
                                   </Avatar>
-                                  <span className="text-sm font-medium">
-                                    {profile.display_name || profile.email}
-                                  </span>
+                                  <span className="text-sm font-medium">{profile.display_name || profile.email}</span>
                                 </div>
                                 <div className="flex items-center gap-2">
                                   {score && (
@@ -262,13 +390,7 @@ export function DemandsControl() {
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() =>
-                                      handleOpenScoring(
-                                        activity.id,
-                                        profile.user_id,
-                                        profile.display_name || profile.email
-                                      )
-                                    }
+                                    onClick={() => handleOpenScoring(activity.id, profile.user_id, profile.display_name || profile.email)}
                                   >
                                     <Star className="w-3 h-3 mr-1" />
                                     Pontuar
@@ -309,12 +431,7 @@ export function DemandsControl() {
               <div className="mb-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Buscar membro..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9"
-                  />
+                  <Input placeholder="Buscar membro..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} className="pl-9" />
                 </div>
               </div>
               <ScrollArea className="h-[500px]">
@@ -332,14 +449,10 @@ export function DemandsControl() {
                         </div>
                         <Avatar className="h-10 w-10">
                           <AvatarImage src={member.avatar_url || undefined} />
-                          <AvatarFallback className="bg-primary/10 text-primary">
-                            {getInitials(member.display_name, member.email)}
-                          </AvatarFallback>
+                          <AvatarFallback className="bg-primary/10 text-primary">{getInitials(member.display_name, member.email)}</AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium text-foreground">
-                            {member.display_name || member.email}
-                          </p>
+                          <p className="font-medium text-foreground">{member.display_name || member.email}</p>
                           <p className="text-xs text-muted-foreground">
                             {member.activities_count} atividade{member.activities_count !== 1 ? 's' : ''} avaliada{member.activities_count !== 1 ? 's' : ''}
                           </p>
@@ -383,53 +496,76 @@ export function DemandsControl() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Pontuar: {scoringDialog?.userName}</DialogTitle>
-            <DialogDescription>
-              Defina a nota de execução e qualidade para esta atividade (0-10).
-            </DialogDescription>
+            <DialogDescription>Defina a nota de execução e qualidade (0-10).</DialogDescription>
           </DialogHeader>
           <div className="space-y-6 py-4">
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Execução: {executionScore}
-              </label>
-              <Slider
-                value={[executionScore]}
-                onValueChange={([val]) => setExecutionScore(val)}
-                max={10}
-                min={0}
-                step={1}
-              />
+              <label className="text-sm font-medium text-foreground mb-2 block">Execução: {executionScore}</label>
+              <Slider value={[executionScore]} onValueChange={([val]) => setExecutionScore(val)} max={10} min={0} step={1} />
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Qualidade: {qualityScore}
-              </label>
-              <Slider
-                value={[qualityScore]}
-                onValueChange={([val]) => setQualityScore(val)}
-                max={10}
-                min={0}
-                step={1}
-              />
+              <label className="text-sm font-medium text-foreground mb-2 block">Qualidade: {qualityScore}</label>
+              <Slider value={[qualityScore]} onValueChange={([val]) => setQualityScore(val)} max={10} min={0} step={1} />
             </div>
             <div>
-              <label className="text-sm font-medium text-foreground mb-2 block">
-                Observações (opcional)
-              </label>
-              <Textarea
-                value={scoreNotes}
-                onChange={(e) => setScoreNotes(e.target.value)}
-                placeholder="Comentários sobre o desempenho..."
-                rows={3}
-              />
+              <label className="text-sm font-medium text-foreground mb-2 block">Observações (opcional)</label>
+              <Textarea value={scoreNotes} onChange={(e) => setScoreNotes(e.target.value)} placeholder="Comentários..." rows={3} />
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setScoringDialog(null)}>
-                Cancelar
-              </Button>
+              <Button variant="outline" onClick={() => setScoringDialog(null)}>Cancelar</Button>
               <Button onClick={handleSaveScore}>
                 <Check className="w-4 h-4 mr-2" />
                 Salvar Pontuação
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Evaluation Dialog */}
+      <Dialog open={!!evaluatingSubmission} onOpenChange={() => setEvaluatingSubmission(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Avaliar Demanda</DialogTitle>
+            <DialogDescription>
+              {evaluatingSubmission?.title} — enviada por {getProfile(evaluatingSubmission?.user_id || '')?.display_name || 'membro'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-6 py-4">
+            {evaluatingSubmission?.description && (
+              <p className="text-sm text-muted-foreground bg-secondary/30 p-3 rounded-lg">{evaluatingSubmission.description}</p>
+            )}
+            {evaluatingSubmission && evaluatingSubmission.helpers.length > 0 && (
+              <div className="flex items-center gap-2 flex-wrap">
+                <Users className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Ajudantes:</span>
+                {evaluatingSubmission.helpers.map((hId) => {
+                  const hp = getProfile(hId);
+                  return (
+                    <Badge key={hId} variant="outline" className="text-xs">
+                      {hp?.display_name || hp?.email || hId}
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Execução: {evalExecution}</label>
+              <Slider value={[evalExecution]} onValueChange={([val]) => setEvalExecution(val)} max={10} min={0} step={1} />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Qualidade: {evalQuality}</label>
+              <Slider value={[evalQuality]} onValueChange={([val]) => setEvalQuality(val)} max={10} min={0} step={1} />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-2 block">Observações (opcional)</label>
+              <Textarea value={evalNotes} onChange={(e) => setEvalNotes(e.target.value)} placeholder="Comentários..." rows={3} />
+            </div>
+            <div className="flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setEvaluatingSubmission(null)}>Cancelar</Button>
+              <Button onClick={handleEvaluateSubmission}>
+                <Check className="w-4 h-4 mr-2" />
+                Avaliar e Pontuar
               </Button>
             </div>
           </div>
