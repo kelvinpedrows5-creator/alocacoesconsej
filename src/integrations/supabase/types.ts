@@ -234,6 +234,65 @@ export type Database = {
         }
         Relationships: []
       }
+      demand_submission_helpers: {
+        Row: {
+          created_at: string
+          helper_user_id: string
+          id: string
+          submission_id: string
+        }
+        Insert: {
+          created_at?: string
+          helper_user_id: string
+          id?: string
+          submission_id: string
+        }
+        Update: {
+          created_at?: string
+          helper_user_id?: string
+          id?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_submission_helpers_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "demand_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      demand_submissions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          status: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       gt_handoff_surveys: {
         Row: {
           client_id: string
