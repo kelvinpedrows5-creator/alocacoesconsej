@@ -149,11 +149,8 @@ export function BusinessOpportunitiesManagement() {
                       <p className="text-sm text-muted-foreground">{opp.service_description}</p>
                       {opp.status === 'pending' && (
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="gap-1 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" onClick={() => updateStatus(opp.id, 'approved')}>
-                            <Check className="h-3 w-3" /> Aprovar
-                          </Button>
-                          <Button size="sm" variant="outline" className="gap-1 text-destructive border-destructive/30 hover:bg-destructive/10" onClick={() => updateStatus(opp.id, 'rejected')}>
-                            <X className="h-3 w-3" /> Rejeitar
+                          <Button size="sm" variant="outline" className="gap-1 text-emerald-500 border-emerald-500/30 hover:bg-emerald-500/10" onClick={() => updateStatus(opp.id, 'acknowledged')}>
+                            <Check className="h-3 w-3" /> Ciente
                           </Button>
                         </div>
                       )}
