@@ -86,19 +86,10 @@ export const useLeadership = () => {
     positionType: 'manager' | 'director'
   ) => {
     try {
-      // Check constraints: max 2 managers per directorate, max 1 director per directorate
+      // Check constraints: max 1 director per directorate (no limit on managers)
       const existingPositions = positions.filter(
         (p) => p.directorate_id === directorateId && p.position_type === positionType
       );
-
-      if (positionType === 'manager' && existingPositions.length >= 2) {
-        toast({
-          title: 'Limite atingido',
-          description: 'Já existem 2 gerentes nesta diretoria.',
-          variant: 'destructive',
-        });
-        return null;
-      }
 
       if (positionType === 'director' && existingPositions.length >= 1) {
         toast({
