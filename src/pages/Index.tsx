@@ -93,6 +93,10 @@ const Index = () => {
         return <DemandsControl />;
       case 'my-demands':
         return <MemberDemandSubmission />;
+      case 'my-opportunities':
+        return <MemberBusinessOpportunity />;
+      case 'opportunities-management':
+        return <BusinessOpportunitiesManagement />;
       default:
         return <CompanyOverview />;
     }

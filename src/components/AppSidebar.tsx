@@ -98,19 +98,53 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
           </SidebarGroup>
         )}
 
-        {showMemberDemands && (
+        {(showMemberDemands || showMemberOpportunities) && (
           <SidebarGroup>
             <SidebarGroupLabel>Minhas Atividades</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
+                {showMemberDemands && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => handleClick('my-demands')}
+                      isActive={activeTab === 'my-demands'}
+                      tooltip="Minhas Demandas"
+                    >
+                      <ClipboardList className="h-4 w-4" />
+                      {!collapsed && <span>Minhas Demandas</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {showMemberOpportunities && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => handleClick('my-opportunities')}
+                      isActive={activeTab === 'my-opportunities'}
+                      tooltip="Oportunidades de Negócio"
+                    >
+                      <Lightbulb className="h-4 w-4" />
+                      {!collapsed && <span>Oportunidades</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {showOpportunitiesManagement && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Negócios</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={() => handleClick('my-demands')}
-                    isActive={activeTab === 'my-demands'}
-                    tooltip="Minhas Demandas"
+                    onClick={() => handleClick('opportunities-management')}
+                    isActive={activeTab === 'opportunities-management'}
+                    tooltip="Gestão de Oportunidades"
                   >
-                    <ClipboardList className="h-4 w-4" />
-                    {!collapsed && <span>Minhas Demandas</span>}
+                    <Lightbulb className="h-4 w-4" />
+                    {!collapsed && <span>Gestão de Oportunidades</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
