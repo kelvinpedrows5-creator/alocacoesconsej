@@ -171,7 +171,18 @@ export function DemandsControl() {
     setEvaluatingSubmission(null);
   };
 
-  const memberScores = getMemberScores(profiles);
+  // Exclude directors and demandas managers from ranking
+  const rankingProfiles = profiles.filter((p) => {
+    const isDirector = leadershipPositions.some(
+      (lp) => lp.user_id === p.user_id && lp.position_type === 'director'
+    );
+    const isDemandasManager = leadershipPositions.some(
+      (lp) => lp.user_id === p.user_id && lp.directorate_id === 'dir-1' && lp.position_type === 'manager'
+    );
+    return !isDirector && !isDemandasManager;
+  });
+
+  const memberScores = getMemberScores(rankingProfiles, submissions);
   const filteredMembers = memberScores.filter(
     (m) =>
       m.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
