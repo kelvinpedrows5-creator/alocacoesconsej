@@ -333,10 +333,10 @@ export const CompanyOverview = () => {
 
                           <div className="space-y-2">
                             {director && (
-                              <div className="flex items-center gap-2 p-2 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                              <div className="flex items-center gap-2 p-2 bg-purple-900/20 rounded-lg">
                                 <Avatar className="h-6 w-6">
                                   <AvatarImage src={getProfileByUserId(director.user_id)?.avatar_url || undefined} />
-                                  <AvatarFallback className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-200">
+                                  <AvatarFallback className="text-xs bg-purple-800 text-purple-200">
                                     {getInitials(
                                       getProfileByUserId(director.user_id)?.display_name || null,
                                       getProfileByUserId(director.user_id)?.email || ''
@@ -356,10 +356,10 @@ export const CompanyOverview = () => {
                             )}
 
                             {manager && (
-                              <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                              <div className="flex items-center gap-2 p-2 bg-blue-900/20 rounded-lg">
                                 <Avatar className="h-6 w-6">
                                   <AvatarImage src={getProfileByUserId(manager.user_id)?.avatar_url || undefined} />
-                                  <AvatarFallback className="text-xs bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-200">
+                                  <AvatarFallback className="text-xs bg-blue-800 text-blue-200">
                                     {getInitials(
                                       getProfileByUserId(manager.user_id)?.display_name || null,
                                       getProfileByUserId(manager.user_id)?.email || ''
@@ -383,11 +383,11 @@ export const CompanyOverview = () => {
                                 {consultants.map(consultant => (
                                   <div 
                                     key={consultant.id}
-                                    className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 rounded-full pl-0.5 pr-2 py-0.5"
+                                    className="flex items-center gap-1.5 bg-green-900/20 rounded-full pl-0.5 pr-2 py-0.5"
                                   >
                                     <Avatar className="h-5 w-5">
                                       <AvatarImage src={getProfileByUserId(consultant.user_id)?.avatar_url || undefined} />
-                                      <AvatarFallback className="text-[10px] bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200">
+                                      <AvatarFallback className="text-[10px] bg-green-800 text-green-200">
                                         {getInitials(
                                           getProfileByUserId(consultant.user_id)?.display_name || null,
                                           getProfileByUserId(consultant.user_id)?.email || ''
