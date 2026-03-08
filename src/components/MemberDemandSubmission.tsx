@@ -419,6 +419,12 @@ export function MemberDemandSubmission() {
                       </div>
                     </div>
                   )}
+                  {sub.status === 'evaluated' && sub.evaluation_notes && (
+                    <div className="mt-2 p-2.5 rounded-md bg-primary/5 border border-primary/10">
+                      <p className="text-xs font-medium text-primary mb-0.5">Comentário do avaliador:</p>
+                      <p className="text-sm text-foreground">{sub.evaluation_notes}</p>
+                    </div>
+                  )}
                   <p className="text-xs text-muted-foreground mt-2">
                     Registrado em {new Date(sub.created_at).toLocaleDateString('pt-BR')}
                   </p>
