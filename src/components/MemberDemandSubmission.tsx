@@ -64,6 +64,7 @@ export function MemberDemandSubmission() {
   const [selectedGtClientId, setSelectedGtClientId] = useState<string>('');
   const [selectedHelpers, setSelectedHelpers] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [filterMonth, setFilterMonth] = useState<string>('all');
 
   useEffect(() => {
     if (user) fetchData();
