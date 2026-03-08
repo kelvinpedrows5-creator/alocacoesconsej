@@ -67,9 +67,9 @@ export const LeadershipDialog = () => {
   };
 
   const canAddPosition = (directorateId: string, positionType: 'manager' | 'director') => {
-    const { directors, managers } = getDirectorateLeaders(directorateId);
+    const { directors } = getDirectorateLeaders(directorateId);
     if (positionType === 'director') return directors.length < 1;
-    return managers.length < 2;
+    return true;
   };
 
   const getPositionTitle = (positionType: string, directorateId: string) => {
