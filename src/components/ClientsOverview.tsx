@@ -56,9 +56,9 @@ export function ClientsOverview() {
 
   const getRoleBadgeVariant = (role: string) => {
     switch (role) {
-      case 'director': return 'text-purple-700 bg-purple-100 border-purple-200';
-      case 'manager': return 'text-blue-700 bg-blue-100 border-blue-200';
-      case 'consultant': return 'text-emerald-700 bg-emerald-100 border-emerald-200';
+      case 'director': return 'text-purple-700 bg-purple-100 border-purple-200 dark:text-purple-300 dark:bg-purple-900/30 dark:border-purple-700';
+      case 'manager': return 'text-blue-700 bg-blue-100 border-blue-200 dark:text-blue-300 dark:bg-blue-900/30 dark:border-blue-700';
+      case 'consultant': return 'text-emerald-700 bg-emerald-100 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-900/30 dark:border-emerald-700';
       default: return '';
     }
   };
