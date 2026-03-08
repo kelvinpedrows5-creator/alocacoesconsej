@@ -20,7 +20,7 @@ interface AppSidebarProps {
 
 const menuItems = [
   { title: 'Panorama', value: 'overview', icon: Building2 },
-  { title: 'Pesquisa de Perfil', value: 'my-profile', icon: User },
+  { title: 'Meu Perfil', value: 'my-profile', icon: User },
   { title: 'CONSEJ', value: 'consej', icon: Users },
   { title: 'Clientes', value: 'clients', icon: Briefcase },
 ];
