@@ -54,7 +54,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
 
   const showDemandsControl = isDemandasManager;
   const showMemberDemands = !isAdmin && !isDemandasManager && !isDirector;
-  const showMemberOpportunities = !isAdmin && !isNegociosLeadership;
+  const showMemberOpportunities = !isAdmin && !isNegociosLeadership && !isDirector && !isDemandasManager;
   const showOpportunitiesManagement = isNegociosLeadership;
 
   const handleClick = (value: string) => {
