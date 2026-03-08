@@ -160,7 +160,7 @@ export const LeadershipDialog = () => {
                       <div className="space-y-2">
                         <div className="flex items-center gap-2">
                           <Users className="w-4 h-4 text-blue-500" />
-                          <h4 className="font-medium text-sm">Gerentes (máx. 2)</h4>
+                          <h4 className="font-medium text-sm">Gerentes</h4>
                         </div>
                         {managers.length === 0 ? (
                           <p className="text-sm text-muted-foreground pl-6">Nenhum gerente</p>
