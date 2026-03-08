@@ -323,7 +323,7 @@ export const AllocationManagement = () => {
                           </Badge>
                         )}
                         {status === 'partial' && (
-                          <Badge variant="secondary" className="bg-amber-100 text-amber-800">
+                          <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
                             <AlertCircle className="w-3 h-3 mr-1" />
                             Parcial
                           </Badge>
