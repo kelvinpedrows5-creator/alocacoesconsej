@@ -122,6 +122,7 @@ export function MemberDemandSubmission() {
         performed_at: s.performed_at || null,
         gt_client_id: s.gt_client_id || null,
         helpers: allHelpers.filter((h: any) => h.submission_id === s.id).map((h: any) => h.helper_user_id),
+        evaluation_notes: s.evaluation_notes || null,
       }));
       setSubmissions(subs);
     } catch (error: any) {
