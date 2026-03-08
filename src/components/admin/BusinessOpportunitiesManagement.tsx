@@ -83,10 +83,8 @@ export function BusinessOpportunitiesManagement() {
     switch (status) {
       case 'pending':
         return <Badge variant="outline" className="gap-1"><Clock className="h-3 w-3" /> Pendente</Badge>;
-      case 'approved':
-        return <Badge className="gap-1 bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><Check className="h-3 w-3" /> Aprovada</Badge>;
-      case 'rejected':
-        return <Badge variant="destructive" className="gap-1">Rejeitada</Badge>;
+      case 'acknowledged':
+        return <Badge className="gap-1 bg-emerald-500/20 text-emerald-400 border-emerald-500/30"><Check className="h-3 w-3" /> Ciente</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }
