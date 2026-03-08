@@ -46,6 +46,7 @@ interface Submission {
   performed_at: string | null;
   gt_client_id: string | null;
   helpers: string[];
+  evaluation_notes: string | null;
 }
 
 export function MemberDemandSubmission() {
@@ -121,6 +122,7 @@ export function MemberDemandSubmission() {
         performed_at: s.performed_at || null,
         gt_client_id: s.gt_client_id || null,
         helpers: allHelpers.filter((h: any) => h.submission_id === s.id).map((h: any) => h.helper_user_id),
+        evaluation_notes: s.evaluation_notes || null,
       }));
       setSubmissions(subs);
     } catch (error: any) {
@@ -175,6 +177,7 @@ export function MemberDemandSubmission() {
           performed_at: (data as any).performed_at || null,
           gt_client_id: (data as any).gt_client_id || null,
           helpers: selectedHelpers,
+          evaluation_notes: null,
         },
         ...prev,
       ]);
@@ -414,6 +417,12 @@ export function MemberDemandSubmission() {
                           );
                         })}
                       </div>
+                    </div>
+                  )}
+                  {sub.status === 'evaluated' && sub.evaluation_notes && (
+                    <div className="mt-2 p-2.5 rounded-md bg-primary/5 border border-primary/10">
+                      <p className="text-xs font-medium text-primary mb-0.5">Comentário do avaliador:</p>
+                      <p className="text-sm text-foreground">{sub.evaluation_notes}</p>
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground mt-2">
