@@ -122,8 +122,7 @@ export function BusinessOpportunitiesManagement() {
                 <SelectContent>
                   <SelectItem value="all">Todas</SelectItem>
                   <SelectItem value="pending">Pendentes</SelectItem>
-                  <SelectItem value="approved">Aprovadas</SelectItem>
-                  <SelectItem value="rejected">Rejeitadas</SelectItem>
+                  <SelectItem value="acknowledged">Cientes</SelectItem>
                 </SelectContent>
               </Select>
             </div>
