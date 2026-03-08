@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, ClipboardList, Users, Check, Clock, CalendarIcon } from 'lucide-react';
+import { Plus, ClipboardList, Users, Check, Clock, CalendarIcon, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -197,6 +197,18 @@ export function MemberDemandSubmission() {
     );
   };
 
+  const handleDelete = async (submissionId: string) => {
+    try {
+      await supabase.from('demand_submission_helpers').delete().eq('submission_id', submissionId);
+      const { error } = await supabase.from('demand_submissions').delete().eq('id', submissionId);
+      if (error) throw error;
+      setSubmissions((prev) => prev.filter((s) => s.id !== submissionId));
+      toast({ title: 'Demanda excluída' });
+    } catch (error: any) {
+      toast({ title: 'Erro ao excluir', description: error.message, variant: 'destructive' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -343,20 +355,32 @@ export function MemberDemandSubmission() {
                   className="p-4 rounded-lg border border-border"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-foreground">{sub.title}</h3>
-                    <Badge
-                      className={
-                        sub.status === 'evaluated'
-                          ? 'bg-success/20 text-success'
-                          : 'bg-warning/20 text-warning'
-                      }
-                    >
-                      {sub.status === 'evaluated' ? (
-                        <><Check className="w-3 h-3 mr-1" /> Avaliada</>
-                      ) : (
-                        <><Clock className="w-3 h-3 mr-1" /> Pendente</>
+                    <h3 className="font-semibold text-foreground flex-1">{sub.title}</h3>
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        className={
+                          sub.status === 'evaluated'
+                            ? 'bg-success/20 text-success'
+                            : 'bg-warning/20 text-warning'
+                        }
+                      >
+                        {sub.status === 'evaluated' ? (
+                          <><Check className="w-3 h-3 mr-1" /> Avaliada</>
+                        ) : (
+                          <><Clock className="w-3 h-3 mr-1" /> Pendente</>
+                        )}
+                      </Badge>
+                      {sub.status !== 'evaluated' && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          onClick={() => handleDelete(sub.id)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       )}
-                    </Badge>
+                    </div>
                   </div>
                   {sub.description && (
                     <p className="text-sm text-muted-foreground mb-2">{sub.description}</p>
