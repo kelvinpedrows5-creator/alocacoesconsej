@@ -343,15 +343,43 @@ export function MemberDemandSubmission() {
       {/* Submissions list */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ClipboardList className="w-5 h-5 text-primary" />
-            Minhas Demandas Registradas
-          </CardTitle>
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <CardTitle className="flex items-center gap-2">
+              <ClipboardList className="w-5 h-5 text-primary" />
+              Minhas Demandas Registradas
+            </CardTitle>
+            <Select value={filterMonth} onValueChange={setFilterMonth}>
+              <SelectTrigger className="w-44">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os meses</SelectItem>
+                <SelectItem value="0">Janeiro</SelectItem>
+                <SelectItem value="1">Fevereiro</SelectItem>
+                <SelectItem value="2">Março</SelectItem>
+                <SelectItem value="3">Abril</SelectItem>
+                <SelectItem value="4">Maio</SelectItem>
+                <SelectItem value="5">Junho</SelectItem>
+                <SelectItem value="6">Julho</SelectItem>
+                <SelectItem value="7">Agosto</SelectItem>
+                <SelectItem value="8">Setembro</SelectItem>
+                <SelectItem value="9">Outubro</SelectItem>
+                <SelectItem value="10">Novembro</SelectItem>
+                <SelectItem value="11">Dezembro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[400px]">
             <div className="space-y-3">
-              {submissions.map((sub) => (
+              {submissions
+                .filter((sub) => {
+                  if (filterMonth === 'all') return true;
+                  const date = sub.performed_at ? new Date(sub.performed_at) : new Date(sub.created_at);
+                  return date.getMonth() === parseInt(filterMonth);
+                })
+                .map((sub) => (
                 <motion.div
                   key={sub.id}
                   initial={{ opacity: 0 }}
