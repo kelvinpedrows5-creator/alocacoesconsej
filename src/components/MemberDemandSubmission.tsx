@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, ClipboardList, Users, Check, Clock, CalendarIcon } from 'lucide-react';
+import { Plus, ClipboardList, Users, Check, Clock, CalendarIcon, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
