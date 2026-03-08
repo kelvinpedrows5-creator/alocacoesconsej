@@ -177,6 +177,7 @@ export function MemberDemandSubmission() {
           performed_at: (data as any).performed_at || null,
           gt_client_id: (data as any).gt_client_id || null,
           helpers: selectedHelpers,
+          evaluation_notes: null,
         },
         ...prev,
       ]);
