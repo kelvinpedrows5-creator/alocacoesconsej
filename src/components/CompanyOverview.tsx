@@ -394,7 +394,7 @@ export const CompanyOverview = () => {
                                         )}
                                       </AvatarFallback>
                                     </Avatar>
-                                    <span className="text-xs text-foreground truncate max-w-[60px]">
+                                    <span className="text-xs text-foreground truncate max-w-[80px]">
                                       {getProfileByUserId(consultant.user_id)?.display_name?.split(' ')[0] || 
                                        getProfileByUserId(consultant.user_id)?.email?.split('@')[0]}
                                     </span>
