@@ -267,7 +267,9 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          gt_client_id: string | null
           id: string
+          performed_at: string | null
           status: string
           title: string
           updated_at: string
@@ -276,7 +278,9 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          gt_client_id?: string | null
           id?: string
+          performed_at?: string | null
           status?: string
           title: string
           updated_at?: string
@@ -285,13 +289,23 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          gt_client_id?: string | null
           id?: string
+          performed_at?: string | null
           status?: string
           title?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "demand_submissions_gt_client_id_fkey"
+            columns: ["gt_client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gt_handoff_surveys: {
         Row: {
