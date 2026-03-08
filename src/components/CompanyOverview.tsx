@@ -387,7 +387,7 @@ export const CompanyOverview = () => {
                                   >
                                     <Avatar className="h-5 w-5">
                                       <AvatarImage src={getProfileByUserId(consultant.user_id)?.avatar_url || undefined} />
-                                      <AvatarFallback className="text-[10px] bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-200">
+                                      <AvatarFallback className="text-[10px] bg-green-800 text-green-200">
                                         {getInitials(
                                           getProfileByUserId(consultant.user_id)?.display_name || null,
                                           getProfileByUserId(consultant.user_id)?.email || ''
