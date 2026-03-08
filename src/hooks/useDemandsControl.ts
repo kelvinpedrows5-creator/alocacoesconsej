@@ -31,7 +31,10 @@ export interface MemberWithScore {
   avatar_url: string | null;
   total_execution: number;
   total_quality: number;
+  avg_execution: number;
+  avg_quality: number;
   activities_count: number;
+  demands_count: number;
   average_score: number;
 }
 
@@ -136,13 +139,19 @@ export const useDemandsControl = () => {
     }
   };
 
-  const getMemberScores = (profiles: { user_id: string; display_name: string | null; email: string; avatar_url: string | null }[]): MemberWithScore[] => {
+  const getMemberScores = (
+    profiles: { user_id: string; display_name: string | null; email: string; avatar_url: string | null }[],
+    submissions?: { user_id: string }[],
+  ): MemberWithScore[] => {
     return profiles.map((p) => {
       const memberScores = scores.filter((s) => s.user_id === p.user_id);
       const totalExecution = memberScores.reduce((sum, s) => sum + s.execution_score, 0);
       const totalQuality = memberScores.reduce((sum, s) => sum + s.quality_score, 0);
       const count = memberScores.length;
+      const avgExecution = count > 0 ? totalExecution / count : 0;
+      const avgQuality = count > 0 ? totalQuality / count : 0;
       const average = count > 0 ? (totalExecution + totalQuality) / (count * 2) : 0;
+      const demandsCount = submissions ? submissions.filter((s) => s.user_id === p.user_id).length : 0;
 
       return {
         user_id: p.user_id,
@@ -151,10 +160,17 @@ export const useDemandsControl = () => {
         avatar_url: p.avatar_url,
         total_execution: totalExecution,
         total_quality: totalQuality,
+        avg_execution: Math.round(avgExecution * 10) / 10,
+        avg_quality: Math.round(avgQuality * 10) / 10,
         activities_count: count,
+        demands_count: demandsCount,
         average_score: Math.round(average * 10) / 10,
       };
-    }).sort((a, b) => b.average_score - a.average_score);
+    }).sort((a, b) => {
+      // Sort by average score, tiebreak by total sum
+      if (b.average_score !== a.average_score) return b.average_score - a.average_score;
+      return (b.total_execution + b.total_quality) - (a.total_execution + a.total_quality);
+    });
   };
 
   const getScoreForActivity = (activityId: string, userId: string) => {
