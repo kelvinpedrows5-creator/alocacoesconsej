@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
-import { Plus, ClipboardList, Users, Check, Clock } from 'lucide-react';
+import { Plus, ClipboardList, Users, Check, Clock, CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +12,9 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -20,12 +26,25 @@ interface ProfileData {
   avatar_url: string | null;
 }
 
+interface GtEntry {
+  user_id: string;
+  client_id: string;
+  cycle_id: string;
+}
+
+interface ClientData {
+  id: string;
+  name: string;
+}
+
 interface Submission {
   id: string;
   title: string;
   description: string | null;
   status: string;
   created_at: string;
+  performed_at: string | null;
+  gt_client_id: string | null;
   helpers: string[];
 }
 
@@ -34,11 +53,14 @@ export function MemberDemandSubmission() {
   const { toast } = useToast();
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [profiles, setProfiles] = useState<ProfileData[]>([]);
-  const [gtMembers, setGtMembers] = useState<string[]>([]);
+  const [gtEntries, setGtEntries] = useState<GtEntry[]>([]);
+  const [clients, setClients] = useState<ClientData[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [performedAt, setPerformedAt] = useState<Date | undefined>(undefined);
+  const [selectedGtClientId, setSelectedGtClientId] = useState<string>('');
   const [selectedHelpers, setSelectedHelpers] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
 
@@ -46,28 +68,48 @@ export function MemberDemandSubmission() {
     if (user) fetchData();
   }, [user]);
 
+  // User's GTs (unique client_ids)
+  const userGtClientIds = useMemo(() => {
+    const ids = gtEntries.filter((g) => g.user_id === user?.id).map((g) => g.client_id);
+    return [...new Set(ids)];
+  }, [gtEntries, user]);
+
+  const userGtClients = useMemo(() => {
+    return clients.filter((c) => userGtClientIds.includes(c.id));
+  }, [clients, userGtClientIds]);
+
+  // Members of the selected GT (excluding current user)
+  const gtMembersForSelectedClient = useMemo(() => {
+    if (!selectedGtClientId || !user) return [];
+    const memberIds = gtEntries
+      .filter((g) => g.client_id === selectedGtClientId && g.user_id !== user.id)
+      .map((g) => g.user_id);
+    return [...new Set(memberIds)];
+  }, [gtEntries, selectedGtClientId, user]);
+
+  const gtProfiles = useMemo(() => {
+    return profiles.filter((p) => gtMembersForSelectedClient.includes(p.user_id));
+  }, [profiles, gtMembersForSelectedClient]);
+
+  // Reset helpers when GT changes
+  useEffect(() => {
+    setSelectedHelpers([]);
+  }, [selectedGtClientId]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
-      const [submissionsRes, profilesRes, helpersRes, gtRes] = await Promise.all([
+      const [submissionsRes, profilesRes, helpersRes, gtRes, clientsRes] = await Promise.all([
         supabase.from('demand_submissions').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }),
         supabase.from('profiles').select('user_id, display_name, email, avatar_url'),
         supabase.from('demand_submission_helpers').select('*'),
         supabase.from('gt_members').select('user_id, client_id, cycle_id'),
+        supabase.from('clients').select('id, name'),
       ]);
 
-      const allProfiles = profilesRes.data || [];
-      setProfiles(allProfiles);
-
-      // Find which GT the current user belongs to (current cycle)
-      const userGtEntries = (gtRes.data || []).filter((g) => g.user_id === user!.id);
-      const userClientIds = userGtEntries.map((g) => g.client_id);
-      const userCycleIds = userGtEntries.map((g) => g.cycle_id);
-      // Get all members from the same GTs
-      const sameGtMembers = (gtRes.data || [])
-        .filter((g) => userClientIds.includes(g.client_id) && userCycleIds.includes(g.cycle_id) && g.user_id !== user!.id)
-        .map((g) => g.user_id);
-      setGtMembers([...new Set(sameGtMembers)]);
+      setProfiles(profilesRes.data || []);
+      setGtEntries(gtRes.data || []);
+      setClients(clientsRes.data || []);
 
       const allHelpers = helpersRes.data || [];
       const subs: Submission[] = (submissionsRes.data || []).map((s: any) => ({
@@ -76,6 +118,8 @@ export function MemberDemandSubmission() {
         description: s.description,
         status: s.status,
         created_at: s.created_at,
+        performed_at: s.performed_at || null,
+        gt_client_id: s.gt_client_id || null,
         helpers: allHelpers.filter((h: any) => h.submission_id === s.id).map((h: any) => h.helper_user_id),
       }));
       setSubmissions(subs);
@@ -92,19 +136,29 @@ export function MemberDemandSubmission() {
   };
 
   const getProfile = (userId: string) => profiles.find((p) => p.user_id === userId);
+  const getClientName = (clientId: string | null) => clients.find((c) => c.id === clientId)?.name || '';
 
   const handleSubmit = async () => {
-    if (!title.trim() || !user) return;
+    if (!title.trim() || !user || !selectedGtClientId) return;
     setSubmitting(true);
     try {
+      const insertData: any = {
+        user_id: user.id,
+        title: title.trim(),
+        description: description.trim() || null,
+        gt_client_id: selectedGtClientId,
+      };
+      if (performedAt) {
+        insertData.performed_at = performedAt.toISOString();
+      }
+
       const { data, error } = await supabase
         .from('demand_submissions')
-        .insert({ user_id: user.id, title: title.trim(), description: description.trim() || null })
+        .insert(insertData)
         .select()
         .single();
       if (error) throw error;
 
-      // Insert helpers
       if (selectedHelpers.length > 0) {
         const helperRows = selectedHelpers.map((h) => ({ submission_id: data.id, helper_user_id: h }));
         const { error: hError } = await supabase.from('demand_submission_helpers').insert(helperRows);
@@ -112,11 +166,22 @@ export function MemberDemandSubmission() {
       }
 
       setSubmissions((prev) => [
-        { id: data.id, title: data.title, description: data.description, status: data.status, created_at: data.created_at, helpers: selectedHelpers },
+        {
+          id: data.id,
+          title: data.title,
+          description: data.description,
+          status: data.status,
+          created_at: data.created_at,
+          performed_at: (data as any).performed_at || null,
+          gt_client_id: (data as any).gt_client_id || null,
+          helpers: selectedHelpers,
+        },
         ...prev,
       ]);
       setTitle('');
       setDescription('');
+      setPerformedAt(undefined);
+      setSelectedGtClientId('');
       setSelectedHelpers([]);
       toast({ title: 'Demanda registrada', description: 'Sua demanda foi enviada para avaliação.' });
     } catch (error: any) {
@@ -132,8 +197,6 @@ export function MemberDemandSubmission() {
     );
   };
 
-  const gtProfiles = profiles.filter((p) => gtMembers.includes(p.user_id));
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -144,7 +207,6 @@ export function MemberDemandSubmission() {
 
   return (
     <div className="space-y-6">
-      {/* Submit new demand */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -152,7 +214,7 @@ export function MemberDemandSubmission() {
             Registrar Demanda Realizada
           </CardTitle>
           <CardDescription>
-            Informe a atividade que você realizou e quem ajudou no processo.
+            Informe a atividade que você realizou, a data, o GT e quem ajudou no processo.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -168,10 +230,63 @@ export function MemberDemandSubmission() {
             rows={3}
           />
 
-          {gtProfiles.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Date picker */}
+            <div>
+              <p className="text-sm font-medium text-foreground mb-2">Data da realização</p>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'w-full justify-start text-left font-normal',
+                      !performedAt && 'text-muted-foreground'
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {performedAt ? format(performedAt, "dd/MM/yyyy", { locale: ptBR }) : 'Selecione a data'}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={performedAt}
+                    onSelect={setPerformedAt}
+                    disabled={(date) => date > new Date()}
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* GT selector */}
+            <div>
+              <p className="text-sm font-medium text-foreground mb-2">Grupo de Trabalho (GT)</p>
+              {userGtClients.length > 0 ? (
+                <Select value={selectedGtClientId} onValueChange={setSelectedGtClientId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione o GT" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {userGtClients.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                <p className="text-sm text-muted-foreground">Você não está alocado em nenhum GT.</p>
+              )}
+            </div>
+          </div>
+
+          {/* Helpers - only shown after GT selected */}
+          {selectedGtClientId && gtProfiles.length > 0 && (
             <div>
               <p className="text-sm font-medium text-foreground mb-2">
-                Quem ajudou nesta demanda? (membros do seu GT)
+                Quem ajudou nesta demanda?
               </p>
               <div className="grid gap-2">
                 {gtProfiles.map((p) => (
@@ -196,13 +311,13 @@ export function MemberDemandSubmission() {
             </div>
           )}
 
-          {gtProfiles.length === 0 && (
+          {selectedGtClientId && gtProfiles.length === 0 && (
             <p className="text-sm text-muted-foreground">
-              Você não está alocado em nenhum GT no momento. Não é possível selecionar ajudantes.
+              Nenhum outro membro encontrado neste GT.
             </p>
           )}
 
-          <Button onClick={handleSubmit} disabled={!title.trim() || submitting}>
+          <Button onClick={handleSubmit} disabled={!title.trim() || !selectedGtClientId || submitting}>
             <ClipboardList className="w-4 h-4 mr-2" />
             {submitting ? 'Enviando...' : 'Registrar Demanda'}
           </Button>
@@ -246,6 +361,18 @@ export function MemberDemandSubmission() {
                   {sub.description && (
                     <p className="text-sm text-muted-foreground mb-2">{sub.description}</p>
                   )}
+                  <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mb-2">
+                    {sub.gt_client_id && (
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3 h-3" /> GT: {getClientName(sub.gt_client_id)}
+                      </span>
+                    )}
+                    {sub.performed_at && (
+                      <span className="flex items-center gap-1">
+                        <CalendarIcon className="w-3 h-3" /> {new Date(sub.performed_at).toLocaleDateString('pt-BR')}
+                      </span>
+                    )}
+                  </div>
                   {sub.helpers.length > 0 && (
                     <div className="flex items-center gap-2 mt-2">
                       <Users className="w-3 h-3 text-muted-foreground" />
@@ -266,7 +393,7 @@ export function MemberDemandSubmission() {
                     </div>
                   )}
                   <p className="text-xs text-muted-foreground mt-2">
-                    {new Date(sub.created_at).toLocaleDateString('pt-BR')}
+                    Registrado em {new Date(sub.created_at).toLocaleDateString('pt-BR')}
                   </p>
                 </motion.div>
               ))}
