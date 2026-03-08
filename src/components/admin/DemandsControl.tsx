@@ -93,10 +93,12 @@ export function DemandsControl() {
 
   useEffect(() => {
     const fetchProfiles = async () => {
-      const { data } = await supabase
-        .from('profiles')
-        .select('user_id, display_name, email, avatar_url');
-      setProfiles(data || []);
+      const [profilesRes, leadershipRes] = await Promise.all([
+        supabase.from('profiles').select('user_id, display_name, email, avatar_url'),
+        supabase.from('leadership_positions').select('user_id, directorate_id, position_type'),
+      ]);
+      setProfiles(profilesRes.data || []);
+      setLeadershipPositions(leadershipRes.data || []);
     };
     fetchProfiles();
     fetchSubmissions();
