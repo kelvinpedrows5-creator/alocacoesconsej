@@ -383,7 +383,7 @@ export const CompanyOverview = () => {
                                 {consultants.map(consultant => (
                                   <div 
                                     key={consultant.id}
-                                    className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/20 rounded-full pl-0.5 pr-2 py-0.5"
+                                    className="flex items-center gap-1.5 bg-green-900/20 rounded-full pl-0.5 pr-2 py-0.5"
                                   >
                                     <Avatar className="h-5 w-5">
                                       <AvatarImage src={getProfileByUserId(consultant.user_id)?.avatar_url || undefined} />
