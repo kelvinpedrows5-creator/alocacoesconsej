@@ -46,6 +46,7 @@ interface Submission {
   performed_at: string | null;
   gt_client_id: string | null;
   helpers: string[];
+  evaluation_notes: string | null;
 }
 
 export function MemberDemandSubmission() {

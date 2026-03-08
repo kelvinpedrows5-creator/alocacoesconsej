@@ -165,7 +165,7 @@ export function DemandsControl() {
       for (const helperId of evaluatingSubmission.helpers) {
         await setScore(activity.id, helperId, evalExecution, evalQuality, evalNotes);
       }
-      await supabase.from('demand_submissions').update({ status: 'evaluated' }).eq('id', evaluatingSubmission.id);
+      await supabase.from('demand_submissions').update({ status: 'evaluated', evaluation_notes: evalNotes.trim() || null }).eq('id', evaluatingSubmission.id);
       setSubmissions((prev) => prev.map((s) => s.id === evaluatingSubmission.id ? { ...s, status: 'evaluated' } : s));
     }
     setEvaluatingSubmission(null);
