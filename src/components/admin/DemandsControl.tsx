@@ -76,6 +76,7 @@ export function DemandsControl() {
   } = useDemandsControl();
 
   const [profiles, setProfiles] = useState<ProfileData[]>([]);
+  const [leadershipPositions, setLeadershipPositions] = useState<{ user_id: string; directorate_id: string; position_type: string }[]>([]);
   const [newActivityName, setNewActivityName] = useState('');
   const [newActivityDesc, setNewActivityDesc] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
