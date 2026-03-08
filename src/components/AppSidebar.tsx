@@ -38,8 +38,17 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
       )
     : false;
 
+  // Check if user is Negócios manager or director (directorate_id = 'dir-2')
+  const isNegociosLeadership = user
+    ? positions.some(
+        (p) => p.user_id === user.id && p.directorate_id === 'dir-2' && (p.position_type === 'manager' || p.position_type === 'director')
+      )
+    : false;
+
   const showDemandsControl = isDemandasManager;
   const showMemberDemands = !isAdmin && !isDemandasManager;
+  const showMemberOpportunities = !isAdmin && !isNegociosLeadership;
+  const showOpportunitiesManagement = isNegociosLeadership;
 
   const handleClick = (value: string) => {
     onTabChange(value);
