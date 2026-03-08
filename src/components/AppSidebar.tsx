@@ -1,4 +1,4 @@
-import { Building2, Users, User, Briefcase, Shield, ClipboardList } from 'lucide-react';
+import { Building2, Users, User, Briefcase, Shield, ClipboardList, Lightbulb } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useLeadership } from '@/hooks/useLeadership';
 import {
@@ -38,8 +38,17 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
       )
     : false;
 
+  // Check if user is Negócios manager or director (directorate_id = 'dir-2')
+  const isNegociosLeadership = user
+    ? positions.some(
+        (p) => p.user_id === user.id && p.directorate_id === 'dir-2' && (p.position_type === 'manager' || p.position_type === 'director')
+      )
+    : false;
+
   const showDemandsControl = isDemandasManager;
   const showMemberDemands = !isAdmin && !isDemandasManager;
+  const showMemberOpportunities = !isAdmin && !isNegociosLeadership;
+  const showOpportunitiesManagement = isNegociosLeadership;
 
   const handleClick = (value: string) => {
     onTabChange(value);
@@ -89,19 +98,53 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
           </SidebarGroup>
         )}
 
-        {showMemberDemands && (
+        {(showMemberDemands || showMemberOpportunities) && (
           <SidebarGroup>
             <SidebarGroupLabel>Minhas Atividades</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
+                {showMemberDemands && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => handleClick('my-demands')}
+                      isActive={activeTab === 'my-demands'}
+                      tooltip="Minhas Demandas"
+                    >
+                      <ClipboardList className="h-4 w-4" />
+                      {!collapsed && <span>Minhas Demandas</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+                {showMemberOpportunities && (
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      onClick={() => handleClick('my-opportunities')}
+                      isActive={activeTab === 'my-opportunities'}
+                      tooltip="Oportunidades de Negócio"
+                    >
+                      <Lightbulb className="h-4 w-4" />
+                      {!collapsed && <span>Oportunidades</span>}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                )}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {showOpportunitiesManagement && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Negócios</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
                 <SidebarMenuItem>
                   <SidebarMenuButton
-                    onClick={() => handleClick('my-demands')}
-                    isActive={activeTab === 'my-demands'}
-                    tooltip="Minhas Demandas"
+                    onClick={() => handleClick('opportunities-management')}
+                    isActive={activeTab === 'opportunities-management'}
+                    tooltip="Gestão de Oportunidades"
                   >
-                    <ClipboardList className="h-4 w-4" />
-                    {!collapsed && <span>Minhas Demandas</span>}
+                    <Lightbulb className="h-4 w-4" />
+                    {!collapsed && <span>Gestão de Oportunidades</span>}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
