@@ -209,7 +209,7 @@ export const CompanyOverview = () => {
                             )}
                           </div>
                           <Badge variant="secondary" className="text-xs shrink-0 ml-2">
-                            {coordMembers.length}/{coord.maxMembers}
+                            {coordMembers.length} {coordMembers.length === 1 ? 'membro' : 'membros'}
                           </Badge>
                         </div>
 

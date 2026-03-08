@@ -54,7 +54,7 @@ export const CoordinationGrid = () => {
                   )}
                 </div>
                 <Badge variant="secondary" className="text-xs">
-                  {coordMembers.length}/{coord.maxMembers}
+                  {coordMembers.length} {coordMembers.length === 1 ? 'membro' : 'membros'}
                 </Badge>
               </div>
 
