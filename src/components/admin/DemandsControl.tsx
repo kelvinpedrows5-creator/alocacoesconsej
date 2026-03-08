@@ -196,10 +196,6 @@ export function DemandsControl() {
               <Badge className="bg-destructive/20 text-destructive ml-1 text-xs">{pendingSubmissions.length}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="activities" className="gap-2">
-            <ClipboardList className="w-4 h-4" />
-            Atividades
-          </TabsTrigger>
           <TabsTrigger value="ranking" className="gap-2">
             <Star className="w-4 h-4" />
             Ranking
