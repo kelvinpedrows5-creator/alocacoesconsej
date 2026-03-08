@@ -45,8 +45,15 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
       )
     : false;
 
+  // Check if user is any director
+  const isDirector = user
+    ? positions.some(
+        (p) => p.user_id === user.id && p.position_type === 'director'
+      )
+    : false;
+
   const showDemandsControl = isDemandasManager;
-  const showMemberDemands = !isAdmin && !isDemandasManager;
+  const showMemberDemands = !isAdmin && !isDemandasManager && !isDirector;
   const showMemberOpportunities = !isAdmin && !isNegociosLeadership;
   const showOpportunitiesManagement = isNegociosLeadership;
 
