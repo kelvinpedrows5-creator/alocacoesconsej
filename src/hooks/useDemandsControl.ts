@@ -31,7 +31,10 @@ export interface MemberWithScore {
   avatar_url: string | null;
   total_execution: number;
   total_quality: number;
+  avg_execution: number;
+  avg_quality: number;
   activities_count: number;
+  demands_count: number;
   average_score: number;
 }
 
