@@ -339,18 +339,18 @@ export function DemandsControl() {
                         <div>
                           <p className="font-medium text-foreground">{member.display_name || member.email}</p>
                           <p className="text-xs text-muted-foreground">
-                            {member.activities_count} atividade{member.activities_count !== 1 ? 's' : ''} avaliada{member.activities_count !== 1 ? 's' : ''}
+                            {member.demands_count} demanda{member.demands_count !== 1 ? 's' : ''} realizada{member.demands_count !== 1 ? 's' : ''}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-4 text-sm">
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Execução</p>
-                          <p className="font-bold text-foreground">{member.total_execution}</p>
+                          <p className="font-bold text-foreground">{member.avg_execution.toFixed(1)}</p>
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Qualidade</p>
-                          <p className="font-bold text-foreground">{member.total_quality}</p>
+                          <p className="font-bold text-foreground">{member.avg_quality.toFixed(1)}</p>
                         </div>
                         <div className="text-center">
                           <p className="text-xs text-muted-foreground">Média</p>
