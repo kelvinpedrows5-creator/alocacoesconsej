@@ -336,7 +336,7 @@ export const CompanyOverview = () => {
                               <div className="flex items-center gap-2 p-2 bg-purple-900/20 rounded-lg">
                                 <Avatar className="h-6 w-6">
                                   <AvatarImage src={getProfileByUserId(director.user_id)?.avatar_url || undefined} />
-                                  <AvatarFallback className="text-xs bg-purple-100 text-purple-800 dark:bg-purple-800 dark:text-purple-200">
+                                  <AvatarFallback className="text-xs bg-purple-800 text-purple-200">
                                     {getInitials(
                                       getProfileByUserId(director.user_id)?.display_name || null,
                                       getProfileByUserId(director.user_id)?.email || ''
