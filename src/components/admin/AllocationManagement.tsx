@@ -317,7 +317,7 @@ export const AllocationManagement = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         {status === 'complete' && (
-                          <Badge variant="default" className="bg-green-100 text-green-800">
+                          <Badge variant="default" className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
                             <CheckCircle2 className="w-3 h-3 mr-1" />
                             Completo
                           </Badge>
