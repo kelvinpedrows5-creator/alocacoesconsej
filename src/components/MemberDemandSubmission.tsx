@@ -197,6 +197,18 @@ export function MemberDemandSubmission() {
     );
   };
 
+  const handleDelete = async (submissionId: string) => {
+    try {
+      await supabase.from('demand_submission_helpers').delete().eq('submission_id', submissionId);
+      const { error } = await supabase.from('demand_submissions').delete().eq('id', submissionId);
+      if (error) throw error;
+      setSubmissions((prev) => prev.filter((s) => s.id !== submissionId));
+      toast({ title: 'Demanda excluída' });
+    } catch (error: any) {
+      toast({ title: 'Erro ao excluir', description: error.message, variant: 'destructive' });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
