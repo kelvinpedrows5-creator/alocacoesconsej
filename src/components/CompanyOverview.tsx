@@ -367,7 +367,7 @@ export const CompanyOverview = () => {
                                   </AvatarFallback>
                                 </Avatar>
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-medium truncate">
+                                  <p className="text-sm font-medium truncate text-foreground">
                                     {getProfileByUserId(manager.user_id)?.display_name || 
                                      getProfileByUserId(manager.user_id)?.email}
                                   </p>
