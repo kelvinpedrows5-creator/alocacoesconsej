@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, Send, CheckCircle, Inbox, MessageSquare, MessageCircle, CheckCheck, FileText } from 'lucide-react';
+import { Heart, Send, CheckCircle, Inbox, MessageSquare, MessageCircle, CheckCheck, FileText, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
