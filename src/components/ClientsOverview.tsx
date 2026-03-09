@@ -25,11 +25,16 @@ interface Profile {
 }
 
 export function ClientsOverview() {
-  const { clients, clientProfiles, gtMembers, getClientProfile, getGTMembersByClient, getClientsByCycle } = useClients();
+  const { clients, clientProfiles, gtMembers, getClientProfile, getGTMembersByClient, getClientsByCycle, updateClient } = useClients();
   const { cycles, currentCycle } = useCycles();
-  const { profile } = useAuthContext();
+  const { profile, isAdmin } = useAuthContext();
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const [surveyTarget, setSurveyTarget] = useState<{ clientId: string; clientName: string; cycleId: string; cycleLabel: string } | null>(null);
+  const [contractDialog, setContractDialog] = useState<{ clientId: string; clientName: string } | null>(null);
+  const [contractType, setContractType] = useState<'link' | 'pdf'>('link');
+  const [contractLink, setContractLink] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ['all_profiles_for_clients_view'],
