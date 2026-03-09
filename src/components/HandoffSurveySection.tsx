@@ -340,7 +340,7 @@ export function HandoffSurveySection() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary" />
-              Pesquisas Concluídas ({completedSurveyClients.length})
+              {canAnswerSurveys ? "Pesquisas Concluídas" : "Clientes com Pesquisas Respondidas"} ({completedSurveyClients.length})
             </h3>
             <div className="grid gap-4">
               {completedSurveyClients.map(client => {
