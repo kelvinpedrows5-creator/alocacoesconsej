@@ -241,6 +241,8 @@ const Admin = () => {
         return <CoordinationGridFiltered />;
       case 'gts':
         return <GTManagement />;
+      case 'handoff':
+        return <HandoffManagement />;
       case 'profiles':
         return (
           <Card>
