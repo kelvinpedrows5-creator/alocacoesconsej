@@ -130,6 +130,16 @@ export function HelpCenter() {
     if (isLeader) fetchReports();
   }, [isLeader, user?.id]);
 
+  const markReportsAsRead = async () => {
+    if (!user) return;
+    const unreadIds = reports.filter((r) => !(r as any).is_read).map((r) => r.id);
+    if (unreadIds.length === 0) return;
+    await supabase
+      .from('help_reports')
+      .update({ is_read: true })
+      .in('id', unreadIds);
+  };
+
   const handleSubmit = async () => {
     if (!message.trim() || !selectedLeader || !user) return;
 
