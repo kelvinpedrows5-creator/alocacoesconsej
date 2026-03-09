@@ -158,7 +158,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
     return () => { supabase.removeChannel(channel); };
   }, [showMemberDemands, user?.id]);
 
-  // Pending handoff surveys for consultants only
+  // Pending handoff surveys for consultants only (only count when surveys can be answered)
   useEffect(() => {
     if (!user) return;
     
@@ -179,7 +179,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
         .select('id, value')
         .eq('is_current', true)
         .single();
-      if (!currentCycleData) return;
+      if (!currentCycleData) { setPendingHandoffCount(0); return; }
 
       // Get previous cycle
       const { data: prevCycleData } = await supabase
@@ -191,6 +191,15 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
         .limit(1)
         .single();
       if (!prevCycleData) { setPendingHandoffCount(0); return; }
+
+      // Only count if there's actually a new current cycle (surveys can be answered)
+      // This means currentCycle exists and there's a previous cycle
+      const canAnswerSurveys = true; // We already have both cycles at this point
+
+      if (!canAnswerSurveys) {
+        setPendingHandoffCount(0);
+        return;
+      }
 
       // Get user's GT memberships in previous cycle as CONSULTANT
       const { data: gtMemberships } = await supabase
@@ -220,6 +229,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
     const channel = supabase
       .channel('handoff-surveys-updates')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'gt_handoff_surveys' }, () => fetchPendingHandoff())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'allocation_cycles' }, () => fetchPendingHandoff())
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user?.id, positions]);

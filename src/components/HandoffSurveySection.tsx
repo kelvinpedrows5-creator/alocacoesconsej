@@ -583,7 +583,9 @@ export function HandoffSurveySection() {
           <p className="text-muted-foreground text-sm mt-1">
             {isDemandasLeadership 
               ? 'Visualize todas as pesquisas de passagem de bastão respondidas'
-              : 'Responda as pesquisas de passagem de bastão dos seus clientes do ciclo anterior'
+              : canAnswerSurveys 
+                ? 'Responda as pesquisas de passagem de bastão dos seus clientes do ciclo anterior'
+                : 'Visualize seus clientes do ciclo anterior - pesquisas serão liberadas quando um novo ciclo for definido como atual'
             }
           </p>
           {activeCycle && (
