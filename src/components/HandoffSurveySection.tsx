@@ -25,9 +25,9 @@ interface Profile {
 export function HandoffSurveySection() {
   const { clients, gtMembers, getGTMembersByClient, getClientsByCycle } = useClients();
   const { cycles, currentCycle } = useCycles();
-  const { profile } = useAuthContext();
+  const { profile, user } = useAuthContext();
+  const { positions } = useLeadership();
   const queryClient = useQueryClient();
-  const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const [surveyDialog, setSurveyDialog] = useState<{ clientId: string; clientName: string; cycleId: string; cycleLabel: string } | null>(null);
 
   const { data: profiles = [] } = useQuery({
