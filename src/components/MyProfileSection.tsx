@@ -164,7 +164,167 @@ function CoordinationSelector() {
   );
 }
 
-export function MyProfileSection() {
+function MyHistorySection() {
+  const { profile } = useAuthContext();
+  const [stats, setStats] = useState({
+    totalDemands: 0,
+    totalClients: 0,
+    coordinations: [] as { id: string; name: string; color: string; cycle: string }[],
+    directorates: [] as { id: string; name: string }[],
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (!profile?.user_id) return;
+      setLoading(true);
+
+      // Fetch demand count (own submissions)
+      const { count: demandCount } = await supabase
+        .from('demand_submissions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', profile.user_id);
+
+      // Fetch GT memberships (unique clients)
+      const { data: gtData } = await supabase
+        .from('gt_members')
+        .select('client_id, cycle_id')
+        .eq('user_id', profile.user_id);
+
+      const uniqueClientIds = [...new Set((gtData || []).map(g => g.client_id))];
+
+      // Fetch allocations for coordination/directorate history
+      const { data: allocData } = await supabase
+        .from('member_allocations')
+        .select('coordination_id, cycle_id')
+        .eq('user_id', profile.user_id);
+
+      // Fetch cycles for labels
+      const { data: cyclesData } = await supabase
+        .from('allocation_cycles')
+        .select('id, label');
+
+      const cycleMap: Record<string, string> = {};
+      (cyclesData || []).forEach(c => { cycleMap[c.id] = c.label; });
+
+      // Map coordination_ids to names/directorates
+      const coordHistory: { id: string; name: string; color: string; cycle: string }[] = [];
+      const dirSet = new Set<string>();
+
+      (allocData || []).forEach(a => {
+        const coord = coordinations.find(c => c.id === a.coordination_id);
+        if (coord) {
+          coordHistory.push({
+            id: coord.id,
+            name: coord.name,
+            color: coord.color,
+            cycle: cycleMap[a.cycle_id] || a.cycle_id,
+          });
+          const dir = directorates.find(d => d.id === coord.directorateId);
+          if (dir) dirSet.add(dir.id);
+        }
+      });
+
+      const dirHistory = [...dirSet].map(id => {
+        const dir = directorates.find(d => d.id === id);
+        return { id, name: dir?.name || id };
+      });
+
+      setStats({
+        totalDemands: demandCount || 0,
+        totalClients: uniqueClientIds.length,
+        coordinations: coordHistory,
+        directorates: dirHistory,
+      });
+      setLoading(false);
+    };
+
+    loadHistory();
+  }, [profile?.user_id]);
+
+  if (loading) {
+    return (
+      <Card>
+        <CardContent className="py-12 text-center text-muted-foreground">
+          Carregando histórico...
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <History className="w-5 h-5 text-primary" />
+          Meu Histórico na CONSEJ
+        </CardTitle>
+        <CardDescription>Resumo da sua trajetória na empresa</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="p-4 rounded-lg border bg-muted/30 space-y-1">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <ClipboardCheck className="w-4 h-4" />
+              Demandas Realizadas
+            </div>
+            <p className="text-3xl font-bold text-foreground">{stats.totalDemands}</p>
+          </div>
+          <div className="p-4 rounded-lg border bg-muted/30 space-y-1">
+            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+              <Briefcase className="w-4 h-4" />
+              Clientes Atendidos
+            </div>
+            <p className="text-3xl font-bold text-foreground">{stats.totalClients}</p>
+          </div>
+        </div>
+
+        {/* Directorates */}
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <Building2 className="w-4 h-4" />
+            Diretorias por onde passei ({stats.directorates.length})
+          </h4>
+          {stats.directorates.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic pl-6">Nenhuma diretoria registrada.</p>
+          ) : (
+            <div className="flex flex-wrap gap-2 pl-6">
+              {stats.directorates.map(dir => (
+                <Badge key={dir.id} variant="secondary" className="text-sm">{dir.name}</Badge>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Coordinations Timeline */}
+        <div className="space-y-2">
+          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Coordenadorias por onde passei ({stats.coordinations.length})
+          </h4>
+          {stats.coordinations.length === 0 ? (
+            <p className="text-xs text-muted-foreground italic pl-6">Nenhuma coordenadoria registrada.</p>
+          ) : (
+            <div className="space-y-2 pl-6">
+              {stats.coordinations.map((coord, idx) => (
+                <div key={`${coord.id}-${idx}`} className="flex items-center gap-3 p-2.5 rounded-lg border bg-card">
+                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: coord.color }} />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium">{coord.name}</p>
+                    <p className="text-xs text-muted-foreground">{coord.cycle}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+
   const navigate = useNavigate();
   const { profile, updateProfile, uploadAvatar, signOut, loading } = useAuthContext();
   const { toast } = useToast();
