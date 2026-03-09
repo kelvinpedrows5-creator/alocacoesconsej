@@ -44,6 +44,7 @@ export function MyClientsOverview() {
   const [contractType, setContractType] = useState<'link' | 'pdf'>('link');
   const [contractLink, setContractLink] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [surveyDialog, setSurveyDialog] = useState<{ clientId: string; clientName: string; cycleId: string; cycleLabel: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profiles = [] } = useQuery({
