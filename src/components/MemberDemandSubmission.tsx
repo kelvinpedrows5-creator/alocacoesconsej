@@ -65,6 +65,7 @@ export function MemberDemandSubmission() {
   const [selectedHelpers, setSelectedHelpers] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [filterMonth, setFilterMonth] = useState<string>('all');
+  const [filterYear, setFilterYear] = useState<string>('all');
 
   useEffect(() => {
     if (user) fetchData();
