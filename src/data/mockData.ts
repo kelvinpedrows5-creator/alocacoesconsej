@@ -374,7 +374,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q5',
     question: 'Em qual diretoria você tem mais interesse em atuar?',
-    category: 'coordenador',
+    category: 'consultor',
     type: 'radio',
     options: [
       { value: 'dir-1', label: 'Demandas - Procedimentos e Clientes' },
