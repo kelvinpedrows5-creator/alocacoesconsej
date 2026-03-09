@@ -287,10 +287,12 @@ export function HelpCenter() {
                     {reports.map((report, idx) => (
                       <div key={report.id}>
                         {idx > 0 && <Separator className="mb-4" />}
-                        <div className="space-y-2">
+                        <div className={`space-y-2 ${!report.is_read ? 'pl-3 border-l-2 border-destructive' : ''}`}>
                           <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm text-foreground">
+                            <span className="font-medium text-sm text-foreground flex items-center gap-2">
                               {report.sender_name}
+                              {!report.is_read && <Badge variant="destructive" className="text-xs px-1.5 py-0">Novo</Badge>}
+                            </span>
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {format(new Date(report.created_at), "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR })}
