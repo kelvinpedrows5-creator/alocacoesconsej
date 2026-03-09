@@ -285,7 +285,7 @@ export function MyClientsOverview() {
                       </div>
                     ) : (
                       <div className="pl-6">
-                        {isAdmin ? (
+                        {(isAdmin || isUserInGT(client.id, activeCycleId)) ? (
                           <Button
                             variant="outline"
                             size="sm"
