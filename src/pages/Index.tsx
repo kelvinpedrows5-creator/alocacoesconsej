@@ -17,6 +17,7 @@ import { MemberDemandSubmission } from '@/components/MemberDemandSubmission';
 import { MemberBusinessOpportunity } from '@/components/MemberBusinessOpportunity';
 import { BusinessOpportunitiesManagement } from '@/components/admin/BusinessOpportunitiesManagement';
 import { MyClientsOverview } from '@/components/MyClientsOverview';
+import { HelpCenter } from '@/components/HelpCenter';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useCycles } from '@/hooks/useCycles';
 import { Button } from '@/components/ui/button';
@@ -103,6 +104,8 @@ const Index = () => {
         return <MemberBusinessOpportunity />;
       case 'opportunities-management':
         return <BusinessOpportunitiesManagement />;
+      case 'help-center':
+        return <HelpCenter />;
       default:
         return <CompanyOverview />;
     }
