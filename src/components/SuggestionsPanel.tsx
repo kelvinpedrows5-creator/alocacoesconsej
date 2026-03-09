@@ -157,9 +157,9 @@ export const SuggestionsPanel = () => {
   };
 
   const priorityConfig = {
-    high: { icon: AlertCircle, color: '#EF4444', label: 'Alta' },
-    medium: { icon: Clock, color: '#F59E0B', label: 'Média' },
-    low: { icon: CheckCircle2, color: '#10B981', label: 'Baixa' },
+    high: { icon: AlertCircle, color: 'text-destructive', bgColor: 'bg-destructive/10 border-destructive/30', label: 'Alta' },
+    medium: { icon: Clock, color: 'text-amber-400', bgColor: 'bg-amber-500/10 border-amber-500/30', label: 'Média' },
+    low: { icon: CheckCircle2, color: 'text-emerald-400', bgColor: 'bg-emerald-500/10 border-emerald-500/30', label: 'Baixa' },
   };
 
   return (
