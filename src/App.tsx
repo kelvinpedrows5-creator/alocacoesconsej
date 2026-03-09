@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuthContext } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Profile from "./pages/Profile";
+// Profile page removed - content moved to MyProfileSection in sidebar
 import Admin from "./pages/Admin";
 import NotFound from "./pages/NotFound";
 
