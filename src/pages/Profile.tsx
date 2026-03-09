@@ -442,9 +442,7 @@ const Profile = () => {
               <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-accent">
-                <LayoutDashboard className="w-5 h-5 text-primary-foreground" />
-              </div>
+              <img src={logo} alt="CONSEJ Logo" className="w-9 h-9 object-contain" />
               <div>
                 <h1 className="font-bold text-lg text-foreground">Meu Perfil</h1>
                 <p className="text-xs text-muted-foreground">Alocações CONSEJ</p>
