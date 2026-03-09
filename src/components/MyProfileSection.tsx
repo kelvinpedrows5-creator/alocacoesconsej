@@ -385,6 +385,10 @@ export function MyProfileSection() {
             <Building2 className="w-4 h-4" />
             Minha Coordenadoria
           </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="w-4 h-4" />
+            Meu Histórico
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
