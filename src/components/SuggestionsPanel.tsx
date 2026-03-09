@@ -157,9 +157,9 @@ export const SuggestionsPanel = () => {
   };
 
   const priorityConfig = {
-    high: { icon: AlertCircle, color: '#EF4444', label: 'Alta' },
-    medium: { icon: Clock, color: '#F59E0B', label: 'Média' },
-    low: { icon: CheckCircle2, color: '#10B981', label: 'Baixa' },
+    high: { icon: AlertCircle, color: 'text-destructive', bgColor: 'bg-destructive/10 border-destructive/30', label: 'Alta' },
+    medium: { icon: Clock, color: 'text-amber-400', bgColor: 'bg-amber-500/10 border-amber-500/30', label: 'Média' },
+    low: { icon: CheckCircle2, color: 'text-emerald-400', bgColor: 'bg-emerald-500/10 border-emerald-500/30', label: 'Baixa' },
   };
 
   return (
@@ -240,8 +240,7 @@ export const SuggestionsPanel = () => {
                           <span className="font-medium text-foreground truncate">{suggestion.userName}</span>
                           <Badge
                             variant="outline"
-                            className="text-xs shrink-0"
-                            style={{ borderColor: priority.color, color: priority.color }}
+                            className={`text-xs shrink-0 ${priority.bgColor} ${priority.color}`}
                           >
                             <PriorityIcon className="w-3 h-3 mr-1" />
                             Prioridade {priority.label}
@@ -250,12 +249,11 @@ export const SuggestionsPanel = () => {
 
                         <div className="flex items-center gap-2 text-sm mb-2 flex-wrap">
                           {currentCoord ? (
-                            <Badge
-                              style={{
-                                backgroundColor: `${currentCoord.color}20`,
-                                color: currentCoord.color,
-                              }}
-                            >
+                            <Badge variant="secondary" className="text-foreground">
+                              <div
+                                className="w-2 h-2 rounded-full mr-1.5 shrink-0"
+                                style={{ backgroundColor: currentCoord.color }}
+                              />
                               {currentCoord.name}
                             </Badge>
                           ) : (
@@ -263,12 +261,11 @@ export const SuggestionsPanel = () => {
                           )}
                           <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
                           {suggestedCoord && (
-                            <Badge
-                              style={{
-                                backgroundColor: `${suggestedCoord.color}20`,
-                                color: suggestedCoord.color,
-                              }}
-                            >
+                            <Badge variant="default" className="gap-1">
+                              <div
+                                className="w-2 h-2 rounded-full shrink-0"
+                                style={{ backgroundColor: suggestedCoord.color }}
+                              />
                               {suggestedCoord.name}
                             </Badge>
                           )}
