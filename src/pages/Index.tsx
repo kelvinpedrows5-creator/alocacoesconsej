@@ -116,9 +116,7 @@ const Index = () => {
                 <div className="flex items-center gap-2">
                   <SidebarTrigger />
                   <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0">
-                    <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-accent">
-                      <LayoutDashboard className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
-                    </div>
+                    <img src={logo} alt="CONSEJ Logo" className="w-9 h-9 sm:w-10 sm:h-10 object-contain" />
                     <div className="hidden sm:block">
                       <h1 className="font-bold text-lg text-foreground">Alocações CONSEJ</h1>
                       <p className="text-xs text-muted-foreground">Sistema de Gestão de Membros</p>
