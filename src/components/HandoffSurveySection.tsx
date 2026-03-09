@@ -95,6 +95,9 @@ export function HandoffSurveySection() {
     ? visibleCycles[currentCycleIndex + 1] 
     : null;
 
+  // Check if surveys can be answered (only when there's a new current cycle)
+  const canAnswerSurveys = !!currentCycle && !!previousCycle;
+  
   const activeCycleId = previousCycle?.id || '';
   const activeCycle = previousCycle;
 
@@ -211,14 +214,24 @@ export function HandoffSurveySection() {
         <Card>
           <CardContent className="py-12 text-center">
             <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-            <p className="text-muted-foreground">Você não estava alocado como consultor em nenhum Grupo de Trabalho no ciclo anterior.</p>
+            <p className="text-muted-foreground">Você não estava alocado como consultor em nenhum Grupo de Trabalho no ciclo {activeCycle.label}.</p>
           </CardContent>
         </Card>
       );
     }
 
     return (
-      <div className="space-y-6">{pendingSurveyClients.length > 0 && (
+      <div className="space-y-6">
+        {!canAnswerSurveys && (
+          <Alert>
+            <ClipboardList className="h-4 w-4" />
+            <AlertDescription>
+              Os clientes do ciclo <strong>{activeCycle.label}</strong> estão sendo exibidos, mas as pesquisas de passagem de bastão só poderão ser respondidas quando um novo ciclo for definido como atual.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {canAnswerSurveys && pendingSurveyClients.length > 0 && (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
@@ -230,8 +243,17 @@ export function HandoffSurveySection() {
         {pendingSurveyClients.length > 0 && (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              Pesquisas Pendentes ({pendingSurveyClients.length})
+              {canAnswerSurveys ? (
+                <>
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                  Pesquisas Pendentes ({pendingSurveyClients.length})
+                </>
+              ) : (
+                <>
+                  <ClipboardList className="h-5 w-5 text-muted-foreground" />
+                  Meus Clientes - {activeCycle.label} ({pendingSurveyClients.length})
+                </>
+              )}
             </h3>
             <div className="grid gap-4">
               {pendingSurveyClients.map(client => {
@@ -239,30 +261,34 @@ export function HandoffSurveySection() {
                 const consultants = clientGTMembers.filter(m => m.role === 'consultant');
                 
                 return (
-                  <Card key={client.id} className="border-destructive/50">
+                  <Card key={client.id} className={canAnswerSurveys ? "border-destructive/50" : "border-muted"}>
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-                            <Building className="h-5 w-5 text-destructive" />
+                          <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                            canAnswerSurveys ? "bg-destructive/10" : "bg-muted"
+                          }`}>
+                            <Building className={`h-5 w-5 ${canAnswerSurveys ? "text-destructive" : "text-muted-foreground"}`} />
                           </div>
                           <div>
                             <CardTitle className="text-lg">{client.name}</CardTitle>
                             <p className="text-sm text-muted-foreground">{activeCycle.label}</p>
                           </div>
                         </div>
-                        <Button 
-                          size="sm"
-                          onClick={() => setSurveyDialog({ 
-                            clientId: client.id, 
-                            clientName: client.name,
-                            cycleId: activeCycleId,
-                            cycleLabel: activeCycle?.label || ''
-                          })}
-                        >
-                          <ClipboardList className="h-4 w-4 mr-1" />
-                          Responder
-                        </Button>
+                        {canAnswerSurveys && (
+                          <Button 
+                            size="sm"
+                            onClick={() => setSurveyDialog({ 
+                              clientId: client.id, 
+                              clientName: client.name,
+                              cycleId: activeCycleId,
+                              cycleLabel: activeCycle?.label || ''
+                            })}
+                          >
+                            <ClipboardList className="h-4 w-4 mr-1" />
+                            Responder
+                          </Button>
+                        )}
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -292,7 +318,10 @@ export function HandoffSurveySection() {
                               })}
                             </div>
                             <p className="text-xs text-muted-foreground mt-2">
-                              Qualquer consultor pode responder a pesquisa. Após a primeira resposta, ela será marcada como concluída para todos.
+                              {canAnswerSurveys 
+                                ? "Qualquer consultor pode responder a pesquisa. Após a primeira resposta, ela será marcada como concluída para todos."
+                                : "A pesquisa de passagem de bastão ficará disponível quando um novo ciclo for definido como atual."
+                              }
                             </p>
                           </AccordionContent>
                         </AccordionItem>
@@ -311,7 +340,7 @@ export function HandoffSurveySection() {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary" />
-              Pesquisas Concluídas ({completedSurveyClients.length})
+              {canAnswerSurveys ? "Pesquisas Concluídas" : "Clientes com Pesquisas Respondidas"} ({completedSurveyClients.length})
             </h3>
             <div className="grid gap-4">
               {completedSurveyClients.map(client => {
@@ -336,7 +365,7 @@ export function HandoffSurveySection() {
                             <p className="text-sm text-muted-foreground">{activeCycle.label}</p>
                           </div>
                         </div>
-                        {currentUserResponded && (
+                        {canAnswerSurveys && currentUserResponded && (
                           <Button 
                             size="sm"
                             variant="outline"
@@ -554,7 +583,9 @@ export function HandoffSurveySection() {
           <p className="text-muted-foreground text-sm mt-1">
             {isDemandasLeadership 
               ? 'Visualize todas as pesquisas de passagem de bastão respondidas'
-              : 'Responda as pesquisas de passagem de bastão dos seus clientes do ciclo anterior'
+              : canAnswerSurveys 
+                ? 'Responda as pesquisas de passagem de bastão dos seus clientes do ciclo anterior'
+                : 'Visualize seus clientes do ciclo anterior - pesquisas serão liberadas quando um novo ciclo for definido como atual'
             }
           </p>
           {activeCycle && (
