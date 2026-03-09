@@ -88,7 +88,7 @@ function AppRoutes() {
         path="/profile"
         element={
           <ProtectedRoute>
-            <Profile />
+            <Navigate to="/" replace />
           </ProtectedRoute>
         }
       />
