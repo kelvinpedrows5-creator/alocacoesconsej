@@ -250,6 +250,7 @@ export function MyClientsOverview() {
 
       {surveyTarget && (
         <GTHandoffSurvey
+          open={!!surveyTarget}
           clientId={surveyTarget.clientId}
           clientName={surveyTarget.clientName}
           cycleId={surveyTarget.cycleId}
