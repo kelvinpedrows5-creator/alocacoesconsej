@@ -647,15 +647,22 @@ export type Database = {
           email: string
           id: string
           profile_activities: string | null
+          profile_availability_shift: string | null
+          profile_availability_times: string | null
           profile_collaboration_tools: string | null
           profile_communication_style: string | null
           profile_competencies: string | null
+          profile_coworker_issue: string | null
+          profile_coworker_issue_details: string | null
+          profile_demand_style: string | null
           profile_feedback_preference: string | null
           profile_leadership_style: string | null
           profile_learning_style: string | null
           profile_preferred_directorate: string | null
           profile_problem_solving: string | null
           profile_project_type: string | null
+          profile_scope_affinity: string | null
+          profile_scope_dislikes: string | null
           profile_skills: string | null
           profile_stress_handling: string | null
           profile_team_role: string | null
@@ -671,15 +678,22 @@ export type Database = {
           email: string
           id?: string
           profile_activities?: string | null
+          profile_availability_shift?: string | null
+          profile_availability_times?: string | null
           profile_collaboration_tools?: string | null
           profile_communication_style?: string | null
           profile_competencies?: string | null
+          profile_coworker_issue?: string | null
+          profile_coworker_issue_details?: string | null
+          profile_demand_style?: string | null
           profile_feedback_preference?: string | null
           profile_leadership_style?: string | null
           profile_learning_style?: string | null
           profile_preferred_directorate?: string | null
           profile_problem_solving?: string | null
           profile_project_type?: string | null
+          profile_scope_affinity?: string | null
+          profile_scope_dislikes?: string | null
           profile_skills?: string | null
           profile_stress_handling?: string | null
           profile_team_role?: string | null
@@ -695,15 +709,22 @@ export type Database = {
           email?: string
           id?: string
           profile_activities?: string | null
+          profile_availability_shift?: string | null
+          profile_availability_times?: string | null
           profile_collaboration_tools?: string | null
           profile_communication_style?: string | null
           profile_competencies?: string | null
+          profile_coworker_issue?: string | null
+          profile_coworker_issue_details?: string | null
+          profile_demand_style?: string | null
           profile_feedback_preference?: string | null
           profile_leadership_style?: string | null
           profile_learning_style?: string | null
           profile_preferred_directorate?: string | null
           profile_problem_solving?: string | null
           profile_project_type?: string | null
+          profile_scope_affinity?: string | null
+          profile_scope_dislikes?: string | null
           profile_skills?: string | null
           profile_stress_handling?: string | null
           profile_team_role?: string | null
