@@ -249,12 +249,11 @@ export const SuggestionsPanel = () => {
 
                         <div className="flex items-center gap-2 text-sm mb-2 flex-wrap">
                           {currentCoord ? (
-                            <Badge
-                              style={{
-                                backgroundColor: `${currentCoord.color}20`,
-                                color: currentCoord.color,
-                              }}
-                            >
+                            <Badge variant="secondary" className="text-foreground">
+                              <div
+                                className="w-2 h-2 rounded-full mr-1.5 shrink-0"
+                                style={{ backgroundColor: currentCoord.color }}
+                              />
                               {currentCoord.name}
                             </Badge>
                           ) : (
@@ -262,12 +261,11 @@ export const SuggestionsPanel = () => {
                           )}
                           <ArrowRight className="w-4 h-4 text-muted-foreground shrink-0" />
                           {suggestedCoord && (
-                            <Badge
-                              style={{
-                                backgroundColor: `${suggestedCoord.color}20`,
-                                color: suggestedCoord.color,
-                              }}
-                            >
+                            <Badge variant="default" className="gap-1">
+                              <div
+                                className="w-2 h-2 rounded-full shrink-0"
+                                style={{ backgroundColor: suggestedCoord.color }}
+                              />
                               {suggestedCoord.name}
                             </Badge>
                           )}
