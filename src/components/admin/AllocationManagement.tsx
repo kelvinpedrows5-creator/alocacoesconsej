@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Search, Building2, ArrowRight, Briefcase, AlertCircle, CheckCircle2, Plus, X } from 'lucide-react';
 import { useAllocations } from '@/hooks/useAllocations';
+import { useLeadership } from '@/hooks/useLeadership';
 import { useCycles } from '@/hooks/useCycles';
 import { useClients } from '@/hooks/useClients';
 import { supabase } from '@/integrations/supabase/client';
