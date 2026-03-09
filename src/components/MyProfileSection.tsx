@@ -29,7 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageCropper } from '@/components/ImageCropper';
 import { useToast } from '@/hooks/use-toast';
-import { profileQuestions, coordinationMatchingProfile, coordinations, directorates } from '@/data/mockData';
+import { profileQuestions, coordinationMatchingProfile, coordinations, directorates, type ProfileQuestion } from '@/data/mockData';
 import { useCycles } from '@/hooks/useCycles';
 import { supabase } from '@/integrations/supabase/client';
 
