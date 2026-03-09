@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, Users, FileText, ExternalLink, ClipboardCheck, Upload, Link as LinkIcon, Trash2 } from 'lucide-react';
+import { Building, Users, FileText, ExternalLink, ClipboardCheck, Upload, Link as LinkIcon, Trash2, Download } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -278,6 +278,17 @@ export function MyClientsOverview() {
                           <ExternalLink className="w-3 h-3 shrink-0" />
                           {client.contract_scope_type === 'pdf' ? 'Ver PDF do contrato' : 'Acessar escopo'}
                         </a>
+                        {client.contract_scope_type === 'pdf' && (
+                          <a
+                            href={client.contract_scope_url}
+                            download
+                            className="inline-flex"
+                          >
+                            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" title="Baixar PDF">
+                              <Download className="w-3 h-3 text-primary" />
+                            </Button>
+                          </a>
+                        )}
                         {(isAdmin || isUserInGT(client.id, activeCycleId)) && (
                           <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleRemoveContract(client.id)}>
                             <Trash2 className="w-3 h-3 text-destructive" />
