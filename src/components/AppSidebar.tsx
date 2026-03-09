@@ -1,4 +1,4 @@
-import { Building2, Users, User, Briefcase, Shield, ClipboardList, Lightbulb } from 'lucide-react';
+import { Building2, Users, User, Briefcase, Shield, ClipboardList, Lightbulb, UserCheck } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useLeadership } from '@/hooks/useLeadership';
 import {
@@ -22,7 +22,8 @@ const menuItems = [
   { title: 'Panorama', value: 'overview', icon: Building2 },
   { title: 'Meu Perfil', value: 'my-profile', icon: User },
   { title: 'CONSEJ', value: 'consej', icon: Users },
-  { title: 'Clientes', value: 'clients', icon: Briefcase },
+  { title: 'Portfólio de Clientes', value: 'clients', icon: Briefcase },
+  { title: 'Meus Clientes', value: 'my-clients', icon: UserCheck },
 ];
 
 export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {

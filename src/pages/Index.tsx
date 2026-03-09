@@ -16,6 +16,7 @@ import { DemandsControl } from '@/components/admin/DemandsControl';
 import { MemberDemandSubmission } from '@/components/MemberDemandSubmission';
 import { MemberBusinessOpportunity } from '@/components/MemberBusinessOpportunity';
 import { BusinessOpportunitiesManagement } from '@/components/admin/BusinessOpportunitiesManagement';
+import { MyClientsOverview } from '@/components/MyClientsOverview';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useCycles } from '@/hooks/useCycles';
 import { Button } from '@/components/ui/button';
@@ -94,6 +95,8 @@ const Index = () => {
         return <DemandsControl />;
       case 'my-demands':
         return <MemberDemandSubmission />;
+      case 'my-clients':
+        return <MyClientsOverview />;
       case 'my-opportunities':
         return <MemberBusinessOpportunity />;
       case 'opportunities-management':
