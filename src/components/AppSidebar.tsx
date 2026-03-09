@@ -4,6 +4,7 @@ import { useLeadership } from '@/hooks/useLeadership';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
