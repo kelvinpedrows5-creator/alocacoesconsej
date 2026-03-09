@@ -86,7 +86,7 @@ const Index = () => {
       case 'overview':
         return <CompanyOverview />;
       case 'my-profile':
-        return <MemberProfileResults />;
+        return <MyProfileSection />;
       case 'consej':
         return <MembersSection />;
       case 'clients':
