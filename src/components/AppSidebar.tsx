@@ -226,8 +226,22 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
               isActive={activeTab === 'help-center'}
               tooltip="Central de Ajuda"
             >
-              <Heart className="h-4 w-4" />
-              {!collapsed && <span>Central de Ajuda</span>}
+              <div className="relative">
+                <Heart className="h-4 w-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1.5 -right-1.5 h-3 w-3 rounded-full bg-destructive" />
+                )}
+              </div>
+              {!collapsed && (
+                <span className="flex items-center gap-2">
+                  Central de Ajuda
+                  {unreadCount > 0 && (
+                    <Badge variant="destructive" className="text-xs px-1.5 py-0 h-5 min-w-5 flex items-center justify-center">
+                      {unreadCount}
+                    </Badge>
+                  )}
+                </span>
+              )}
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
