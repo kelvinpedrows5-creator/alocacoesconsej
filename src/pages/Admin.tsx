@@ -452,21 +452,41 @@ const Admin = () => {
                 <p className="text-sm font-normal text-muted-foreground">{selectedProfile?.email}</p>
               </div>
             </DialogTitle>
-            <DialogDescription>Respostas do questionário de alocação (15 perguntas)</DialogDescription>
+            <DialogDescription>Respostas do questionário de alocação ({profileQuestions.length} perguntas)</DialogDescription>
           </DialogHeader>
           {selectedProfile && (
             <ScrollArea className="max-h-[50vh]">
               <div className="space-y-3 pr-4">
-                {getProfileAnswers(selectedProfile).map((answer) => (
-                  <div key={answer.id} className="p-3 rounded-lg bg-secondary/50">
-                    <p className="text-xs text-muted-foreground mb-1">{answer.label}</p>
-                    <p className="font-medium">
-                      {answer.isDirectorate
-                        ? getDirectorateName(answer.value)
-                        : getAnswerLabel(answer.id, answer.value)
-                      }
-                    </p>
-                  </div>
+                {(() => {
+                  const answers = getProfileAnswers(selectedProfile);
+                  let lastCategory = '';
+                  return answers.map((answer) => {
+                    const showHeader = answer.category !== lastCategory;
+                    lastCategory = answer.category;
+                    return (
+                      <div key={answer.id}>
+                        {showHeader && (
+                          <div className="flex items-center gap-2 py-2 mt-2 first:mt-0">
+                            <Badge variant={answer.category === 'coordenadoria' ? 'default' : 'secondary'}>
+                              {answer.category === 'coordenadoria' ? '📋 Coordenadoria' : '🧑‍💼 Estilo do Consultor'}
+                            </Badge>
+                          </div>
+                        )}
+                        <div className="p-3 rounded-lg bg-secondary/50">
+                          <p className="text-xs text-muted-foreground mb-1">{answer.label}</p>
+                          <p className="font-medium">
+                            {answer.isDirectorate
+                              ? getDirectorateName(answer.value)
+                              : (answer as any).isText
+                                ? (answer.value || 'Não respondido')
+                                : getAnswerLabel(answer.id, answer.value)
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  });
+                })()}
                 ))}
               </div>
             </ScrollArea>
