@@ -226,16 +226,17 @@ export function HandoffSurveySection() {
             </AlertDescription>
           </Alert>
         )}
-          {/* Pending surveys */}
-          {pendingSurveyClients.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-destructive" />
-                Pesquisas Pendentes ({pendingSurveyClients.length})
-              </h3>
-              <div className="grid gap-4">
-                {pendingSurveyClients.map(client => {
-                  const clientGTMembers = getGTMembersByClient(client.id, activeCycleId);
+        {/* Pending surveys */}
+        {pendingSurveyClients.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-destructive" />
+              Pesquisas Pendentes ({pendingSurveyClients.length})
+            </h3>
+            <div className="grid gap-4">
+              {pendingSurveyClients.map(client => {
+                const clientGTMembers = getGTMembersByClient(client.id, activeCycleId);
+                const consultants = clientGTMembers.filter(m => m.role === 'consultant');
                   
                   return (
                     <Card key={client.id} className="border-destructive/50">
