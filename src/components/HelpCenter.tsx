@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, Send, CheckCircle, Inbox, MessageSquare, MessageCircle, CheckCheck } from 'lucide-react';
+import { Heart, Send, CheckCircle, Inbox, MessageSquare, MessageCircle, CheckCheck, FileText } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -32,6 +32,16 @@ interface Report {
   leader_comment: string | null;
 }
 
+interface SentReport {
+  id: string;
+  message: string;
+  created_at: string;
+  status: string;
+  leader_comment: string | null;
+  target_name: string;
+  member_seen: boolean;
+}
+
 const directorateNames: Record<string, string> = {
   'dir-1': 'Demandas',
   'dir-2': 'Negócios',
@@ -54,6 +64,8 @@ export function HelpCenter() {
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyComment, setReplyComment] = useState('');
   const [replyLoading, setReplyLoading] = useState(false);
+  const [sentReports, setSentReports] = useState<SentReport[]>([]);
+  const [sentReportsLoading, setSentReportsLoading] = useState(false);
 
   const isLeader = user
     ? positions.some((p) => p.user_id === user.id)
@@ -96,6 +108,7 @@ export function HelpCenter() {
     fetchLeaders();
   }, [user?.id]);
 
+  // Fetch reports received (for leaders)
   const fetchReports = async () => {
     if (!user || !isLeader) return;
     setReportsLoading(true);
@@ -135,8 +148,49 @@ export function HelpCenter() {
     setReportsLoading(false);
   };
 
+  // Fetch reports sent by this member
+  const fetchSentReports = async () => {
+    if (!user) return;
+    setSentReportsLoading(true);
+
+    const { data, error } = await supabase
+      .from('help_reports')
+      .select('id, message, created_at, status, leader_comment, target_leader_id, member_seen')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+
+    if (error || !data) {
+      setSentReportsLoading(false);
+      return;
+    }
+
+    const leaderIds = [...new Set(data.map((r) => r.target_leader_id))];
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('user_id, display_name')
+      .in('user_id', leaderIds);
+
+    const profileMap = Object.fromEntries(
+      (profiles || []).map((p) => [p.user_id, p.display_name || 'Liderança'])
+    );
+
+    setSentReports(
+      data.map((r) => ({
+        id: r.id,
+        message: r.message,
+        created_at: r.created_at,
+        status: r.status,
+        leader_comment: r.leader_comment,
+        target_name: profileMap[r.target_leader_id] || 'Liderança',
+        member_seen: r.member_seen,
+      }))
+    );
+    setSentReportsLoading(false);
+  };
+
   useEffect(() => {
     if (isLeader) fetchReports();
+    fetchSentReports();
   }, [isLeader, user?.id]);
 
   const markReportsAsRead = async () => {
@@ -147,6 +201,17 @@ export function HelpCenter() {
       .from('help_reports')
       .update({ is_read: true })
       .in('id', unreadIds);
+  };
+
+  const markSentReportsAsSeen = async () => {
+    if (!user) return;
+    const unseenIds = sentReports.filter((r) => !r.member_seen).map((r) => r.id);
+    if (unseenIds.length === 0) return;
+    await supabase
+      .from('help_reports')
+      .update({ member_seen: true })
+      .in('id', unseenIds);
+    setSentReports((prev) => prev.map((r) => ({ ...r, member_seen: true })));
   };
 
   const handleSubmit = async () => {
@@ -169,6 +234,7 @@ export function HelpCenter() {
     setMessage('');
     setSelectedLeader('');
     toast.success('Seu relato foi enviado com sucesso.');
+    fetchSentReports();
     setTimeout(() => setSent(false), 4000);
   };
 
@@ -213,6 +279,17 @@ export function HelpCenter() {
     type === 'director' ? 'Diretor(a)' : 'Gerente';
 
   const unresolvedCount = reports.filter((r) => r.status !== 'resolved').length;
+  const unseenSentCount = sentReports.filter((r) => !r.member_seen).length;
+
+  const statusBadge = (status: string) => {
+    switch (status) {
+      case 'resolved':
+        return <Badge variant="outline" className="text-xs border-primary text-primary">Resolvido</Badge>;
+      case 'pending':
+      default:
+        return <Badge variant="secondary" className="text-xs">Pendente</Badge>;
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -230,6 +307,19 @@ export function HelpCenter() {
             <MessageSquare className="h-4 w-4" />
             Enviar Relato
           </TabsTrigger>
+          <TabsTrigger
+            value="my-reports"
+            className="flex-1 gap-2"
+            onClick={() => { fetchSentReports(); }}
+          >
+            <FileText className="h-4 w-4" />
+            Meus Relatos
+            {unseenSentCount > 0 && (
+              <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0">
+                {unseenSentCount}
+              </Badge>
+            )}
+          </TabsTrigger>
           {isLeader && (
             <TabsTrigger value="reports" className="flex-1 gap-2" onClick={() => { fetchReports(); markReportsAsRead(); }}>
               <Inbox className="h-4 w-4" />
@@ -243,6 +333,7 @@ export function HelpCenter() {
           )}
         </TabsList>
 
+        {/* Tab: Enviar Relato */}
         <TabsContent value="submit">
           <Card>
             <CardHeader>
@@ -262,9 +353,9 @@ export function HelpCenter() {
               ) : (
                 <>
                   <div className="space-y-2">
-                    <Label htmlFor="message">O que você gostaria de compartilhar?</Label>
+                    <Label htmlFor="help-message">O que você gostaria de compartilhar?</Label>
                     <Textarea
-                      id="message"
+                      id="help-message"
                       placeholder="Escreva aqui o que está sentindo..."
                       value={message}
                       onChange={(e) => setMessage(e.target.value)}
@@ -306,6 +397,85 @@ export function HelpCenter() {
           </Card>
         </TabsContent>
 
+        {/* Tab: Meus Relatos */}
+        <TabsContent value="my-reports">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Meus Relatos Enviados
+              </CardTitle>
+              <CardDescription>
+                Acompanhe o status dos relatos que você enviou.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {sentReportsLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+                </div>
+              ) : sentReports.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  <FileText className="h-10 w-10 mx-auto mb-2 opacity-40" />
+                  <p>Você ainda não enviou nenhum relato.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {sentReports.map((report, idx) => (
+                    <div key={report.id}>
+                      {idx > 0 && <Separator className="mb-4" />}
+                      <div className={`space-y-3 pl-3 border-l-2 ${!report.member_seen ? 'border-destructive' : report.status === 'resolved' ? 'border-primary' : 'border-muted'}`}>
+                        <div className="flex items-center justify-between flex-wrap gap-1">
+                          <span className="font-medium text-sm text-foreground flex items-center gap-2">
+                            Para: {report.target_name}
+                            {statusBadge(report.status)}
+                            {!report.member_seen && (
+                              <Badge variant="destructive" className="text-xs px-1.5 py-0">Novidade</Badge>
+                            )}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            {format(new Date(report.created_at), "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                          {report.message}
+                        </p>
+
+                        {report.leader_comment && (
+                          <div className="bg-muted/50 rounded-md p-3 space-y-1">
+                            <span className="text-xs font-medium text-foreground flex items-center gap-1">
+                              <MessageCircle className="h-3 w-3" /> Resposta da liderança
+                            </span>
+                            <p className="text-sm text-muted-foreground">{report.leader_comment}</p>
+                          </div>
+                        )}
+
+                        {report.status === 'resolved' && (
+                          <div className="flex items-center gap-1 text-xs text-primary">
+                            <CheckCheck className="h-3.5 w-3.5" />
+                            Situação marcada como resolvida pela liderança
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                  {unseenSentCount > 0 && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full"
+                      onClick={markSentReportsAsSeen}
+                    >
+                      Marcar todas as novidades como vistas
+                    </Button>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Tab: Reportes Recebidos (leaders only) */}
         {isLeader && (
           <TabsContent value="reports">
             <Card>
