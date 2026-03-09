@@ -434,7 +434,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q20',
     question: 'Existe alguma pessoa que você não gostou de trabalhar junto?',
-    category: 'coordenador',
+    category: 'consultor',
     type: 'compound',
     subQuestions: [
       {
