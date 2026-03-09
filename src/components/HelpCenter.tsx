@@ -293,7 +293,6 @@ export function HelpCenter() {
                               {report.sender_name}
                               {!report.is_read && <Badge variant="destructive" className="text-xs px-1.5 py-0">Novo</Badge>}
                             </span>
-                            </span>
                             <span className="text-xs text-muted-foreground">
                               {format(new Date(report.created_at), "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR })}
                             </span>
