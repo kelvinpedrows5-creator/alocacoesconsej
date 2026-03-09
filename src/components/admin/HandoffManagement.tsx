@@ -285,8 +285,8 @@ export function HandoffManagement() {
         </p>
       </div>
 
-      <Tabs defaultValue="surveys">
-        <TabsList>
+      <Tabs defaultValue="surveys" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="surveys" className="gap-2">
             <ClipboardList className="h-4 w-4" />
             A Responder
