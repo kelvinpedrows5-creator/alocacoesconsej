@@ -487,7 +487,6 @@ const Admin = () => {
                     );
                   });
                 })()}
-                ))}
               </div>
             </ScrollArea>
           )}
