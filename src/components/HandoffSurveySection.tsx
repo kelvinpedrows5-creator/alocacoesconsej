@@ -829,17 +829,40 @@ export function HandoffSurveySection() {
         <Tabs defaultValue="all" className="w-full">
           <TabsList>
             <TabsTrigger value="all">Todas as Pesquisas</TabsTrigger>
+            <TabsTrigger value="futuro-gt">Futuro GT</TabsTrigger>
             <TabsTrigger value="my-gts">Meus GTs</TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-6">
             <LeadershipView />
+          </TabsContent>
+          <TabsContent value="futuro-gt" className="mt-6">
+            <FuturoGTView />
           </TabsContent>
           <TabsContent value="my-gts" className="mt-6">
             <ConsultantView />
           </TabsContent>
         </Tabs>
       ) : (
-        <ConsultantView />
+        <Tabs defaultValue="futuro-gt" className="w-full">
+          <TabsList>
+            <TabsTrigger value="futuro-gt">
+              Futuro GT
+              {currentCycleClients.some(c => {
+                const conf = getReadConfirmation(c.id);
+                return !conf?.confirmed_top || !conf?.confirmed_bottom;
+              }) && (
+                <span className="ml-1.5 h-2 w-2 rounded-full bg-destructive inline-block" />
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="responder">Responder Passagem</TabsTrigger>
+          </TabsList>
+          <TabsContent value="futuro-gt" className="mt-6">
+            <FuturoGTView />
+          </TabsContent>
+          <TabsContent value="responder" className="mt-6">
+            <ConsultantView />
+          </TabsContent>
+        </Tabs>
       )}
 
       {surveyDialog && (
