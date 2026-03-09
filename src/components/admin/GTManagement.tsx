@@ -581,10 +581,10 @@ export function GTManagement() {
                           Sugestão de Equipe
                         </Button>
                         {isOpen && (
-                          <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3 space-y-2">
+                          <div className="bg-accent/10 border border-accent/30 rounded-lg p-3 space-y-2">
                             <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-amber-600" />
-                              <span className="text-sm font-medium">
+                              <Users className="h-4 w-4 text-accent" />
+                              <span className="text-sm font-medium text-foreground">
                                 Consultores recomendados: {suggestion.recommendedSize}
                               </span>
                             </div>
@@ -601,9 +601,9 @@ export function GTManagement() {
                                         {getInitials(p.display_name, p.email)}
                                       </AvatarFallback>
                                     </Avatar>
-                                    <span className="truncate text-xs">{p.display_name || p.email}</span>
+                                    <span className="truncate text-xs text-foreground">{p.display_name || p.email}</span>
                                   </div>
-                                  <Badge variant="outline" className="text-[10px] h-5">
+                                  <Badge variant="secondary" className="text-[10px] h-5">
                                     {score > 0 ? `${score} pts` : '—'}
                                   </Badge>
                                 </div>
