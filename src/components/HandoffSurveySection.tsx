@@ -318,7 +318,10 @@ export function HandoffSurveySection() {
                               })}
                             </div>
                             <p className="text-xs text-muted-foreground mt-2">
-                              Qualquer consultor pode responder a pesquisa. Após a primeira resposta, ela será marcada como concluída para todos.
+                              {canAnswerSurveys 
+                                ? "Qualquer consultor pode responder a pesquisa. Após a primeira resposta, ela será marcada como concluída para todos."
+                                : "A pesquisa de passagem de bastão ficará disponível quando um novo ciclo for definido como atual."
+                              }
                             </p>
                           </AccordionContent>
                         </AccordionItem>
