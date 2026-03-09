@@ -216,22 +216,22 @@ const Admin = () => {
 
   const getProfileAnswers = (profileData: ProfileData) => {
     return [
-      // Consultor
-      { id: 'q1', label: 'Habilidades de Interesse', value: profileData.profile_skills, category: 'consultor' },
-      { id: 'q2', label: 'Estilo de Trabalho', value: profileData.profile_work_style, category: 'consultor' },
-      { id: 'q3', label: 'Atividade que Motiva', value: profileData.profile_activities, category: 'consultor' },
-      { id: 'q4', label: 'Competência a Desenvolver', value: profileData.profile_competencies, category: 'consultor' },
-      { id: 'q6', label: 'Estilo de Comunicação', value: profileData.profile_communication_style, category: 'consultor' },
-      { id: 'q7', label: 'Resolução de Problemas', value: profileData.profile_problem_solving, category: 'consultor' },
       // Coordenador
-      { id: 'q5', label: 'Diretoria de Preferência', value: profileData.profile_preferred_directorate, isDirectorate: true, category: 'coordenador' },
-      { id: 'q16', label: 'Estilo de Demandas', value: (profileData as any).profile_demand_style, category: 'coordenador' },
-      { id: 'q17', label: 'Disponibilidade por Dia', value: (profileData as any).profile_availability_times, category: 'coordenador' },
-      { id: 'q18a', label: 'Escopos com Afinidade', value: (profileData as any).profile_scope_affinity, category: 'coordenador', isText: true },
-      { id: 'q18b', label: 'Escopos que Não Gosta', value: (profileData as any).profile_scope_dislikes, category: 'coordenador', isText: true },
-      { id: 'q19', label: 'Turno de Disponibilidade', value: (profileData as any).profile_availability_shift, category: 'coordenador' },
-      { id: 'q20', label: 'Pessoa que Não Gostou de Trabalhar', value: (profileData as any).profile_coworker_issue, category: 'coordenador' },
-      { id: 'q20d', label: 'Detalhes (Quem/Por quê)', value: (profileData as any).profile_coworker_issue_details, category: 'coordenador', isText: true },
+      { id: 'q1', label: 'Habilidades de Interesse', value: profileData.profile_skills, category: 'coordenador' },
+      { id: 'q2', label: 'Estilo de Trabalho', value: profileData.profile_work_style, category: 'coordenador' },
+      { id: 'q3', label: 'Atividade que Motiva', value: profileData.profile_activities, category: 'coordenador' },
+      { id: 'q4', label: 'Competência a Desenvolver', value: profileData.profile_competencies, category: 'coordenador' },
+      { id: 'q6', label: 'Estilo de Comunicação', value: profileData.profile_communication_style, category: 'coordenador' },
+      { id: 'q7', label: 'Resolução de Problemas', value: profileData.profile_problem_solving, category: 'coordenador' },
+      // Consultor
+      { id: 'q5', label: 'Diretoria de Preferência', value: profileData.profile_preferred_directorate, isDirectorate: true, category: 'consultor' },
+      { id: 'q16', label: 'Estilo de Demandas', value: (profileData as any).profile_demand_style, category: 'consultor' },
+      { id: 'q17', label: 'Disponibilidade por Dia', value: (profileData as any).profile_availability_times, category: 'consultor' },
+      { id: 'q18a', label: 'Escopos com Afinidade', value: (profileData as any).profile_scope_affinity, category: 'consultor', isText: true },
+      { id: 'q18b', label: 'Escopos que Não Gosta', value: (profileData as any).profile_scope_dislikes, category: 'consultor', isText: true },
+      { id: 'q19', label: 'Turno de Disponibilidade', value: (profileData as any).profile_availability_shift, category: 'consultor' },
+      { id: 'q20', label: 'Pessoa que Não Gostou de Trabalhar', value: (profileData as any).profile_coworker_issue, category: 'consultor' },
+      { id: 'q20d', label: 'Detalhes (Quem/Por quê)', value: (profileData as any).profile_coworker_issue_details, category: 'consultor', isText: true },
     ];
   };
 

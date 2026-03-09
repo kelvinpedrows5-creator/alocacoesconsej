@@ -294,11 +294,11 @@ export interface ProfileQuestion {
 }
 
 export const profileQuestions: ProfileQuestion[] = [
-  // === CONSULTOR (6 perguntas) ===
+  // === COORDENADOR (6 perguntas) ===
   {
     id: 'q1',
     question: 'Qual área você tem mais interesse em desenvolver habilidades?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'analytical', label: 'Análise de dados e pesquisas' },
@@ -311,7 +311,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q2',
     question: 'Como você prefere trabalhar?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'autonomous', label: 'De forma autônoma e independente' },
@@ -323,7 +323,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q3',
     question: 'Qual tipo de atividade mais te motiva?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'client', label: 'Contato direto com clientes' },
@@ -336,7 +336,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q4',
     question: 'Qual competência você mais deseja desenvolver?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'negotiation', label: 'Negociação e fechamento de negócios' },
@@ -349,7 +349,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q6',
     question: 'Qual é o seu estilo de comunicação preferido?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'direct', label: 'Direto e objetivo' },
@@ -361,7 +361,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q7',
     question: 'Como você costuma resolver problemas?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'analytical_approach', label: 'Analisando dados e informações' },
@@ -370,11 +370,11 @@ export const profileQuestions: ProfileQuestion[] = [
       { value: 'experimental', label: 'Testando diferentes soluções rapidamente' },
     ],
   },
-  // === COORDENADOR (6 perguntas) ===
+  // === CONSULTOR (6 perguntas) ===
   {
     id: 'q5',
     question: 'Em qual diretoria você tem mais interesse em atuar?',
-    category: 'coordenador',
+    category: 'consultor',
     type: 'radio',
     options: [
       { value: 'dir-1', label: 'Demandas - Procedimentos e Clientes' },
@@ -388,7 +388,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q16',
     question: 'Quais desses estilos de demandas mais se alinham com a sua preferência?',
-    category: 'coordenador',
+    category: 'consultor',
     type: 'radio',
     options: [
       { value: 'contratual', label: 'Contratual' },
@@ -400,7 +400,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q17',
     question: 'Quantos momentos por dia você conseguirá estar disponível para a CONSEJ?',
-    category: 'coordenador',
+    category: 'consultor',
     type: 'radio',
     options: [
       { value: '1', label: '1 momento por dia' },
@@ -412,7 +412,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q18',
     question: 'Quais escopos você mais executou, tem mais afinidades ou não gosta de executar?',
-    category: 'coordenador',
+    category: 'consultor',
     type: 'compound',
     subQuestions: [
       { id: 'q18_affinity', label: 'Escopos que mais executou / tem afinidade', type: 'text' },
@@ -422,7 +422,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q19',
     question: 'Qual seu turno com maior disponibilidade?',
-    category: 'coordenador',
+    category: 'consultor',
     type: 'radio',
     options: [
       { value: 'manha', label: 'Manhã' },
@@ -434,7 +434,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q20',
     question: 'Existe alguma pessoa que você não gostou de trabalhar junto?',
-    category: 'coordenador',
+    category: 'consultor',
     type: 'compound',
     subQuestions: [
       {
