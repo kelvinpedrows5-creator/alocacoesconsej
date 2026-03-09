@@ -96,7 +96,7 @@ export function HelpCenter() {
 
     const { data, error } = await supabase
       .from('help_reports')
-      .select('id, message, created_at, user_id')
+      .select('id, message, created_at, user_id, is_read')
       .eq('target_leader_id', user.id)
       .order('created_at', { ascending: false });
 
