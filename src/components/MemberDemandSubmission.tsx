@@ -65,6 +65,7 @@ export function MemberDemandSubmission() {
   const [selectedHelpers, setSelectedHelpers] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [filterMonth, setFilterMonth] = useState<string>('all');
+  const [filterYear, setFilterYear] = useState<string>('all');
 
   useEffect(() => {
     if (user) fetchData();
@@ -348,26 +349,42 @@ export function MemberDemandSubmission() {
               <ClipboardList className="w-5 h-5 text-primary" />
               Minhas Demandas Registradas
             </CardTitle>
-            <Select value={filterMonth} onValueChange={setFilterMonth}>
-              <SelectTrigger className="w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os meses</SelectItem>
-                <SelectItem value="0">Janeiro</SelectItem>
-                <SelectItem value="1">Fevereiro</SelectItem>
-                <SelectItem value="2">Março</SelectItem>
-                <SelectItem value="3">Abril</SelectItem>
-                <SelectItem value="4">Maio</SelectItem>
-                <SelectItem value="5">Junho</SelectItem>
-                <SelectItem value="6">Julho</SelectItem>
-                <SelectItem value="7">Agosto</SelectItem>
-                <SelectItem value="8">Setembro</SelectItem>
-                <SelectItem value="9">Outubro</SelectItem>
-                <SelectItem value="10">Novembro</SelectItem>
-                <SelectItem value="11">Dezembro</SelectItem>
-              </SelectContent>
-            </Select>
+            <div className="flex items-center gap-2">
+              <Select value={filterYear} onValueChange={setFilterYear}>
+                <SelectTrigger className="w-28">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {Array.from({ length: 5 }, (_, i) => {
+                    const year = new Date().getFullYear() - i;
+                    return (
+                      <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+                    );
+                  })}
+                </SelectContent>
+              </Select>
+              <Select value={filterMonth} onValueChange={setFilterMonth}>
+                <SelectTrigger className="w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os meses</SelectItem>
+                  <SelectItem value="0">Janeiro</SelectItem>
+                  <SelectItem value="1">Fevereiro</SelectItem>
+                  <SelectItem value="2">Março</SelectItem>
+                  <SelectItem value="3">Abril</SelectItem>
+                  <SelectItem value="4">Maio</SelectItem>
+                  <SelectItem value="5">Junho</SelectItem>
+                  <SelectItem value="6">Julho</SelectItem>
+                  <SelectItem value="7">Agosto</SelectItem>
+                  <SelectItem value="8">Setembro</SelectItem>
+                  <SelectItem value="9">Outubro</SelectItem>
+                  <SelectItem value="10">Novembro</SelectItem>
+                  <SelectItem value="11">Dezembro</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -375,9 +392,10 @@ export function MemberDemandSubmission() {
             <div className="space-y-3">
               {submissions
                 .filter((sub) => {
-                  if (filterMonth === 'all') return true;
                   const date = sub.performed_at ? new Date(sub.performed_at) : new Date(sub.created_at);
-                  return date.getMonth() === parseInt(filterMonth);
+                  if (filterYear !== 'all' && date.getFullYear() !== parseInt(filterYear)) return false;
+                  if (filterMonth !== 'all' && date.getMonth() !== parseInt(filterMonth)) return false;
+                  return true;
                 })
                 .map((sub) => (
                 <motion.div
