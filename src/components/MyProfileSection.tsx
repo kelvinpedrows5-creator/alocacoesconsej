@@ -375,7 +375,7 @@ export function MyProfileSection() {
           </TabsTrigger>
           <TabsTrigger value="allocation" className="gap-2">
             <Sparkles className="w-4 h-4" />
-            Perfil de Alocação
+            Pesquisa de Perfil
           </TabsTrigger>
           <TabsTrigger value="coordination" className="gap-2">
             <Building2 className="w-4 h-4" />
