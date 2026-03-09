@@ -311,7 +311,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q2',
     question: 'Como você prefere trabalhar?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'autonomous', label: 'De forma autônoma e independente' },
