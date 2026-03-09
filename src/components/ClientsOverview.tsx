@@ -341,6 +341,71 @@ export function ClientsOverview() {
           onClose={() => setSurveyTarget(null)}
         />
       )}
+
+      {/* Contract Scope Dialog */}
+      <Dialog open={!!contractDialog} onOpenChange={(open) => !open && setContractDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Escopo do Contrato — {contractDialog?.clientName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Button
+                variant={contractType === 'link' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setContractType('link')}
+                className="gap-1"
+              >
+                <LinkIcon className="w-3 h-3" />
+                Link
+              </Button>
+              <Button
+                variant={contractType === 'pdf' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setContractType('pdf')}
+                className="gap-1"
+              >
+                <Upload className="w-3 h-3" />
+                PDF
+              </Button>
+            </div>
+
+            {contractType === 'link' ? (
+              <div className="space-y-2">
+                <Label>URL do escopo</Label>
+                <Input
+                  placeholder="https://..."
+                  value={contractLink}
+                  onChange={(e) => setContractLink(e.target.value)}
+                />
+                <Button
+                  className="w-full"
+                  disabled={!contractLink.trim()}
+                  onClick={() => contractDialog && handleSaveLink(contractDialog.clientId)}
+                >
+                  Salvar link
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Arquivo PDF</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && contractDialog) handleUploadPdf(contractDialog.clientId, file);
+                  }}
+                  disabled={uploading}
+                />
+                {uploading && <p className="text-xs text-muted-foreground">Enviando...</p>}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
