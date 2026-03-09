@@ -261,30 +261,34 @@ export function HandoffSurveySection() {
                 const consultants = clientGTMembers.filter(m => m.role === 'consultant');
                 
                 return (
-                  <Card key={client.id} className="border-destructive/50">
+                  <Card key={client.id} className={canAnswerSurveys ? "border-destructive/50" : "border-muted"}>
                     <CardHeader className="pb-3">
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-                            <Building className="h-5 w-5 text-destructive" />
+                          <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${
+                            canAnswerSurveys ? "bg-destructive/10" : "bg-muted"
+                          }`}>
+                            <Building className={`h-5 w-5 ${canAnswerSurveys ? "text-destructive" : "text-muted-foreground"}`} />
                           </div>
                           <div>
                             <CardTitle className="text-lg">{client.name}</CardTitle>
                             <p className="text-sm text-muted-foreground">{activeCycle.label}</p>
                           </div>
                         </div>
-                        <Button 
-                          size="sm"
-                          onClick={() => setSurveyDialog({ 
-                            clientId: client.id, 
-                            clientName: client.name,
-                            cycleId: activeCycleId,
-                            cycleLabel: activeCycle?.label || ''
-                          })}
-                        >
-                          <ClipboardList className="h-4 w-4 mr-1" />
-                          Responder
-                        </Button>
+                        {canAnswerSurveys && (
+                          <Button 
+                            size="sm"
+                            onClick={() => setSurveyDialog({ 
+                              clientId: client.id, 
+                              clientName: client.name,
+                              cycleId: activeCycleId,
+                              cycleLabel: activeCycle?.label || ''
+                            })}
+                          >
+                            <ClipboardList className="h-4 w-4 mr-1" />
+                            Responder
+                          </Button>
+                        )}
                       </div>
                     </CardHeader>
                     <CardContent>
