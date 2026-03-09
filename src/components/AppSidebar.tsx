@@ -79,6 +79,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
   const [unreadHelpCount, setUnreadHelpCount] = useState(0);
   const [unseenMemberCount, setUnseenMemberCount] = useState(0);
   const [pendingDemandsCount, setPendingDemandsCount] = useState(0);
+  const [pendingHandoffCount, setPendingHandoffCount] = useState(0);
   const [returnedDemandsCount, setReturnedDemandsCount] = useState(0);
   const [pendingOpportunitiesCount, setPendingOpportunitiesCount] = useState(0);
 
