@@ -707,9 +707,6 @@ export function MyProfileSection() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="coordination">
-          <CoordinationSelector />
-        </TabsContent>
 
         <TabsContent value="history">
           <MyHistorySection />
