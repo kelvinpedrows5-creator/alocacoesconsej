@@ -277,7 +277,7 @@ export function MyClientsOverview() {
                           <ExternalLink className="w-3 h-3 shrink-0" />
                           {client.contract_scope_type === 'pdf' ? 'Ver PDF do contrato' : 'Acessar escopo'}
                         </a>
-                        {isAdmin && (
+                        {(isAdmin || isUserInGT(client.id, activeCycleId)) && (
                           <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleRemoveContract(client.id)}>
                             <Trash2 className="w-3 h-3 text-destructive" />
                           </Button>
@@ -285,7 +285,7 @@ export function MyClientsOverview() {
                       </div>
                     ) : (
                       <div className="pl-6">
-                        {isAdmin ? (
+                        {(isAdmin || isUserInGT(client.id, activeCycleId)) ? (
                           <Button
                             variant="outline"
                             size="sm"
