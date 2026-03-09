@@ -462,6 +462,7 @@ export type Database = {
           id: string
           is_read: boolean
           leader_comment: string | null
+          member_seen: boolean
           message: string
           status: string
           target_leader_id: string
@@ -472,6 +473,7 @@ export type Database = {
           id?: string
           is_read?: boolean
           leader_comment?: string | null
+          member_seen?: boolean
           message: string
           status?: string
           target_leader_id: string
@@ -482,6 +484,7 @@ export type Database = {
           id?: string
           is_read?: boolean
           leader_comment?: string | null
+          member_seen?: boolean
           message?: string
           status?: string
           target_leader_id?: string
