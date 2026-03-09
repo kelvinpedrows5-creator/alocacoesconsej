@@ -325,6 +325,7 @@ function MyHistorySection() {
 }
 
 
+export function MyProfileSection() {
   const navigate = useNavigate();
   const { profile, updateProfile, uploadAvatar, signOut, loading } = useAuthContext();
   const { toast } = useToast();
