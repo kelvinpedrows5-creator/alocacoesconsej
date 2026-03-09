@@ -287,7 +287,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
           </SidebarGroup>
         )}
 
-        {(showMemberDemands || showMemberOpportunities) && (
+        {(showMemberDemands || showMemberOpportunities || true) && (
           <SidebarGroup>
             <SidebarGroupLabel>Minhas Atividades</SidebarGroupLabel>
             <SidebarGroupContent>
