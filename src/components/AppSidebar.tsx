@@ -158,9 +158,20 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
     return () => { supabase.removeChannel(channel); };
   }, [showMemberDemands, user?.id]);
 
-  // Pending handoff surveys for "Meus Clientes"
+  // Pending handoff surveys for consultants only
   useEffect(() => {
     if (!user) return;
+    
+    // Check if user is demandas leadership (they don't need to respond)
+    const isDemandasLeadership = positions.some(
+      (p) => p.user_id === user.id && p.directorate_id === 'dir-1' && (p.position_type === 'manager' || p.position_type === 'director')
+    );
+    
+    if (isDemandasLeadership) {
+      setPendingHandoffCount(0);
+      return;
+    }
+
     const fetchPendingHandoff = async () => {
       // Get current cycle
       const { data: currentCycleData } = await supabase
@@ -181,27 +192,37 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
         .single();
       if (!prevCycleData) { setPendingHandoffCount(0); return; }
 
-      // Get user's GT memberships in previous cycle
+      // Get user's GT memberships in previous cycle as CONSULTANT
       const { data: gtMemberships } = await supabase
         .from('gt_members')
         .select('client_id')
         .eq('user_id', user.id)
-        .eq('cycle_id', prevCycleData.id);
+        .eq('cycle_id', prevCycleData.id)
+        .eq('role', 'consultant');
       if (!gtMemberships || gtMemberships.length === 0) { setPendingHandoffCount(0); return; }
 
-      // Get completed surveys
+      // Get all surveys for these clients (not just user's surveys)
+      const clientIds = gtMemberships.map(m => m.client_id);
       const { data: completedSurveys } = await supabase
         .from('gt_handoff_surveys')
         .select('client_id')
-        .eq('user_id', user.id)
-        .eq('cycle_id', prevCycleData.id);
+        .eq('cycle_id', prevCycleData.id)
+        .in('client_id', clientIds);
 
-      const completedClientIds = (completedSurveys || []).map(s => s.client_id);
+      // Remove clients that already have at least one survey
+      const completedClientIds = [...new Set((completedSurveys || []).map(s => s.client_id))];
       const pending = gtMemberships.filter(m => !completedClientIds.includes(m.client_id));
       setPendingHandoffCount(pending.length);
     };
     fetchPendingHandoff();
-  }, [user?.id]);
+    
+    // Subscribe to changes
+    const channel = supabase
+      .channel('handoff-surveys-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'gt_handoff_surveys' }, () => fetchPendingHandoff())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, positions]);
 
   // Pending opportunities notifications (Negócios leadership)
   useEffect(() => {

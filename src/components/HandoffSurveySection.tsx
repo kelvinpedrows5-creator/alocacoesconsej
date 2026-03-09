@@ -591,7 +591,10 @@ export function HandoffSurveySection() {
           open={!!surveyDialog}
           onClose={() => {
             setSurveyDialog(null);
-            queryClient.invalidateQueries({ queryKey: ['completed_handoff_surveys_section'] });
+            queryClient.invalidateQueries({ queryKey: ['handoff_surveys_by_client'] });
+            queryClient.invalidateQueries({ queryKey: ['user_completed_handoff_surveys'] });
+            queryClient.invalidateQueries({ queryKey: ['all_clients_with_handoff_surveys'] });
+            queryClient.invalidateQueries({ queryKey: ['pending_handoff_surveys'] });
           }}
         />
       )}
