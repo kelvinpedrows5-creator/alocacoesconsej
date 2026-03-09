@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Menu } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { StatsOverview } from '@/components/StatsOverview';
-import { MyProfileSection } from '@/components/MyProfileSection';
+import { MyProfileSection, CoordinationSelector } from '@/components/MyProfileSection';
 import { MembersSection } from '@/components/MembersSection';
 import { CompanyOverview } from '@/components/CompanyOverview';
 import { ClientsOverview } from '@/components/ClientsOverview';
