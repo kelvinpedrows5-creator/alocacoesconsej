@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Shuffle, Sparkles, Users, Check, ArrowRight, Building2, Briefcase, AlertCircle, RefreshCw, Loader2 } from 'lucide-react';
+import { Shuffle, Sparkles, Users, Check, ArrowRight, Building2, Briefcase, AlertCircle, RefreshCw, Loader2, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -39,11 +39,15 @@ interface Profile {
   avatar_url: string | null;
 }
 
+interface GTEntry {
+  client_id: string;
+  role: string;
+}
+
 interface PendingAllocation {
   userId: string;
   coordinationId: string | null;
-  gtClientId: string | null;
-  gtRole: string | null;
+  gts: GTEntry[];
 }
 
 interface AutoSuggestion {
@@ -86,47 +90,101 @@ export const ReallocationDialog = () => {
     return email.charAt(0).toUpperCase();
   };
 
+  const getClientName = (clientId: string) => {
+    return clients.find((c) => c.id === clientId)?.name || clientId;
+  };
+
+  const getRoleLabel = (role: string) => {
+    switch (role) {
+      case 'director': return 'Diretor';
+      case 'manager': return 'Gerente';
+      case 'consultant': return 'Consultor';
+      default: return role;
+    }
+  };
+
   const isLeader = (userId: string) => {
     return positions.some(p => p.user_id === userId);
   };
 
-  // Only show coordinators (non-leaders) in manual allocation
   const coordinatorProfiles = profiles.filter(p => !isLeader(p.user_id));
 
   const getCurrentAllocation = (userId: string) => {
     return allocations.find(a => a.user_id === userId);
   };
 
-  const getCurrentGT = (userId: string) => {
-    if (!currentCycle) return null;
-    return gtMembers.find(m => m.user_id === userId && m.cycle_id === currentCycle.id);
-  };
-
-  const handleAllocationChange = (userId: string, field: 'coordinationId' | 'gtClientId' | 'gtRole', value: string | null) => {
-    setPendingAllocations(prev => {
-      const existingIndex = prev.findIndex(p => p.userId === userId);
-      const currentAllocation = getCurrentAllocation(userId);
-      const currentGT = getCurrentGT(userId);
-      
-      const baseAlloc: PendingAllocation = {
-        userId,
-        coordinationId: currentAllocation?.coordination_id || null,
-        gtClientId: currentGT?.client_id || null,
-        gtRole: currentGT?.role || null,
-      };
-
-      if (existingIndex >= 0) {
-        const updated = [...prev];
-        updated[existingIndex] = { ...updated[existingIndex], [field]: value === '__none__' ? null : value };
-        return updated;
-      }
-
-      return [...prev, { ...baseAlloc, [field]: value === '__none__' ? null : value }];
-    });
+  const getCurrentGTs = (userId: string): GTEntry[] => {
+    if (!currentCycle) return [];
+    return gtMembers
+      .filter(m => m.user_id === userId && m.cycle_id === currentCycle.id)
+      .map(m => ({ client_id: m.client_id, role: m.role }));
   };
 
   const getPendingAllocation = (userId: string) => {
     return pendingAllocations.find(p => p.userId === userId);
+  };
+
+  const getDisplayCoordId = (userId: string) => {
+    const pending = getPendingAllocation(userId);
+    if (pending) return pending.coordinationId;
+    return getCurrentAllocation(userId)?.coordination_id || null;
+  };
+
+  const getDisplayGTs = (userId: string): GTEntry[] => {
+    const pending = getPendingAllocation(userId);
+    if (pending) return pending.gts;
+    return getCurrentGTs(userId);
+  };
+
+  const ensurePending = (userId: string): PendingAllocation => {
+    const existing = getPendingAllocation(userId);
+    if (existing) return existing;
+    const currentAlloc = getCurrentAllocation(userId);
+    return {
+      userId,
+      coordinationId: currentAlloc?.coordination_id || null,
+      gts: getCurrentGTs(userId),
+    };
+  };
+
+  const updatePending = (userId: string, update: Partial<PendingAllocation>) => {
+    setPendingAllocations(prev => {
+      const base = ensurePending(userId);
+      const existingIndex = prev.findIndex(p => p.userId === userId);
+      const updated = { ...base, ...update };
+      if (existingIndex >= 0) {
+        const newList = [...prev];
+        newList[existingIndex] = updated;
+        return newList;
+      }
+      return [...prev, updated];
+    });
+  };
+
+  const handleCoordChange = (userId: string, value: string) => {
+    updatePending(userId, { coordinationId: value === '__none__' ? null : value });
+  };
+
+  const handleAddGT = (userId: string) => {
+    const currentGTs = getDisplayGTs(userId);
+    updatePending(userId, { gts: [...currentGTs, { client_id: '', role: 'consultant' }] });
+  };
+
+  const handleRemoveGT = (userId: string, index: number) => {
+    const currentGTs = getDisplayGTs(userId);
+    updatePending(userId, { gts: currentGTs.filter((_, i) => i !== index) });
+  };
+
+  const handleGTClientChange = (userId: string, index: number, clientId: string) => {
+    const currentGTs = [...getDisplayGTs(userId)];
+    currentGTs[index] = { ...currentGTs[index], client_id: clientId };
+    updatePending(userId, { gts: currentGTs });
+  };
+
+  const handleGTRoleChange = (userId: string, index: number, role: string) => {
+    const currentGTs = [...getDisplayGTs(userId)];
+    currentGTs[index] = { ...currentGTs[index], role };
+    updatePending(userId, { gts: currentGTs });
   };
 
   const hasChanges = (userId: string) => {
@@ -134,25 +192,20 @@ export const ReallocationDialog = () => {
     if (!pending) return false;
     
     const currentAlloc = getCurrentAllocation(userId);
-    const currentGT = getCurrentGT(userId);
+    const currentGTs = getCurrentGTs(userId);
     
-    return (
-      pending.coordinationId !== (currentAlloc?.coordination_id || null) ||
-      pending.gtClientId !== (currentGT?.client_id || null) ||
-      pending.gtRole !== (currentGT?.role || null)
-    );
+    const coordChanged = pending.coordinationId !== (currentAlloc?.coordination_id || null);
+    const gtsChanged = JSON.stringify(pending.gts) !== JSON.stringify(currentGTs);
+    
+    return coordChanged || gtsChanged;
   };
 
   const getAllocationStatus = (userId: string) => {
-    const pending = getPendingAllocation(userId);
-    const currentAlloc = getCurrentAllocation(userId);
-    const currentGT = getCurrentGT(userId);
+    const coordId = getDisplayCoordId(userId);
+    const gts = getDisplayGTs(userId);
     
-    const coordId = pending?.coordinationId ?? currentAlloc?.coordination_id;
-    const gtId = pending?.gtClientId ?? currentGT?.client_id;
-    
-    if (coordId && gtId) return 'complete';
-    if (coordId || gtId) return 'partial';
+    if (coordId && gts.length > 0) return 'complete';
+    if (coordId || gts.length > 0) return 'partial';
     return 'none';
   };
 
@@ -165,27 +218,28 @@ export const ReallocationDialog = () => {
     const changedAllocations = pendingAllocations.filter(p => hasChanges(p.userId));
 
     for (const alloc of changedAllocations) {
+      // Save coordination
       if (alloc.coordinationId) {
-        await saveAllocation(
-          alloc.userId,
-          currentCycle.id,
-          alloc.coordinationId,
-          alloc.gtClientId || undefined,
-          alloc.gtRole || undefined
-        );
+        await saveAllocation(alloc.userId, currentCycle.id, alloc.coordinationId);
       }
 
-      if (alloc.gtClientId && alloc.gtRole) {
-        const existingGT = getCurrentGT(alloc.userId);
-        if (existingGT) {
-          await supabase.from('gt_members').delete().eq('id', existingGT.id);
-        }
-        await supabase.from('gt_members').insert({
-          user_id: alloc.userId,
-          client_id: alloc.gtClientId,
-          role: alloc.gtRole,
-          cycle_id: currentCycle.id,
-        });
+      // Save GTs - delete all existing for this user/cycle and re-insert
+      await supabase
+        .from('gt_members')
+        .delete()
+        .eq('user_id', alloc.userId)
+        .eq('cycle_id', currentCycle.id);
+
+      const validGTs = alloc.gts.filter(gt => gt.client_id && gt.role);
+      if (validGTs.length > 0) {
+        await supabase.from('gt_members').insert(
+          validGTs.map(gt => ({
+            user_id: alloc.userId,
+            client_id: gt.client_id,
+            role: gt.role,
+            cycle_id: currentCycle.id,
+          }))
+        );
       }
     }
 
@@ -202,25 +256,21 @@ export const ReallocationDialog = () => {
     const newIteration = autoIteration + 1;
     setAutoIteration(newIteration);
 
-    // Fetch all historical allocations
     const { data: allAllocationsData } = await supabase
       .from('member_allocations')
       .select('user_id, coordination_id, cycle_id');
 
     const allAllocsList = allAllocationsData || [];
 
-    // Build history map
     const historyMap = new Map<string, Set<string>>();
     allAllocsList.forEach(a => {
       if (!historyMap.has(a.user_id)) historyMap.set(a.user_id, new Set());
       historyMap.get(a.user_id)!.add(a.coordination_id);
     });
 
-    // Current allocation map
     const currentMap = new Map<string, string>();
     allocations.forEach(a => { currentMap.set(a.user_id, a.coordination_id); });
 
-    // Count members per coordination
     const coordCounts = new Map<string, number>();
     allCoordinations.forEach(c => coordCounts.set(c.id, 0));
     allocations.forEach(a => {
@@ -228,8 +278,6 @@ export const ReallocationDialog = () => {
     });
 
     const newSuggestions: AutoSuggestion[] = [];
-
-    // Only suggest for coordinators (non-leaders)
     const coordProfiles = profiles.filter(p => !isLeader(p.user_id));
 
     coordProfiles.forEach(profile => {
@@ -237,10 +285,7 @@ export const ReallocationDialog = () => {
       const unvisited = allCoordinations.filter(c => !visited.has(c.id));
       const pool = unvisited.length > 0 ? unvisited : allCoordinations;
 
-      // Shuffle with iteration-based randomness
       const shuffled = [...pool].sort(() => Math.random() - 0.5);
-
-      // Sort by member count (less crowded first)
       shuffled.sort((a, b) => {
         const countA = coordCounts.get(a.id) || 0;
         const countB = coordCounts.get(b.id) || 0;
@@ -335,7 +380,7 @@ export const ReallocationDialog = () => {
             </TabsTrigger>
           </TabsList>
 
-          {/* Auto suggestions tab - now using real data */}
+          {/* Auto suggestions tab */}
           <TabsContent value="auto" className="flex-1 flex flex-col mt-4 min-h-0 data-[state=inactive]:hidden">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4 flex-shrink-0">
               <p className="text-sm text-muted-foreground">
@@ -437,21 +482,16 @@ export const ReallocationDialog = () => {
           {/* Manual allocation tab */}
           <TabsContent value="manual" className="flex-1 flex flex-col mt-4 min-h-0 data-[state=inactive]:hidden overflow-hidden">
             <p className="text-sm text-muted-foreground mb-4 flex-shrink-0">
-              Selecione a coordenadoria e/ou grupo de trabalho para cada coordenador.
+              Selecione a coordenadoria e/ou grupos de trabalho para cada coordenador.
             </p>
 
             <div className="flex-1 overflow-y-auto min-h-0 max-h-[400px]">
               <div className="space-y-3 pr-4">
                 {coordinatorProfiles.map((profile, index) => {
-                  const currentAlloc = getCurrentAllocation(profile.user_id);
-                  const currentGT = getCurrentGT(profile.user_id);
-                  const pending = getPendingAllocation(profile.user_id);
+                  const displayCoordId = getDisplayCoordId(profile.user_id);
+                  const displayGTs = getDisplayGTs(profile.user_id);
                   const status = getAllocationStatus(profile.user_id);
                   const changed = hasChanges(profile.user_id);
-
-                  const displayCoordId = pending?.coordinationId ?? currentAlloc?.coordination_id ?? '';
-                  const displayGtClientId = pending?.gtClientId ?? currentGT?.client_id ?? '';
-                  const displayGtRole = pending?.gtRole ?? currentGT?.role ?? '';
 
                   return (
                     <motion.div
@@ -487,71 +527,94 @@ export const ReallocationDialog = () => {
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                          <div className="space-y-1">
-                            <label className="text-xs text-muted-foreground flex items-center gap-1">
-                              <Building2 className="w-3 h-3" />
-                              Coordenadoria
-                            </label>
-                            <Select
-                              value={displayCoordId || '__none__'}
-                              onValueChange={(value) => handleAllocationChange(profile.user_id, 'coordinationId', value)}
-                            >
-                              <SelectTrigger className="h-9 text-sm">
-                                <SelectValue placeholder="Selecionar..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__none__">Nenhuma</SelectItem>
-                                {allCoordinations.map((coord) => (
-                                  <SelectItem key={coord.id} value={coord.id}>
-                                    <span className="truncate">{coord.name}</span>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+                        {/* Coordination */}
+                        <div className="space-y-1">
+                          <label className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Building2 className="w-3 h-3" />
+                            Coordenadoria
+                          </label>
+                          <Select
+                            value={displayCoordId || '__none__'}
+                            onValueChange={(value) => handleCoordChange(profile.user_id, value)}
+                          >
+                            <SelectTrigger className="h-9 text-sm">
+                              <SelectValue placeholder="Selecionar..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">Nenhuma</SelectItem>
+                              {allCoordinations.map((coord) => (
+                                <SelectItem key={coord.id} value={coord.id}>
+                                  <span className="truncate">{coord.name}</span>
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                          <div className="space-y-1">
+                        {/* Multi-GT */}
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between">
                             <label className="text-xs text-muted-foreground flex items-center gap-1">
                               <Briefcase className="w-3 h-3" />
-                              Grupo de Trabalho
+                              Grupos de Trabalho ({displayGTs.length})
                             </label>
-                            <Select
-                              value={displayGtClientId || '__none__'}
-                              onValueChange={(value) => handleAllocationChange(profile.user_id, 'gtClientId', value)}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-xs gap-1"
+                              onClick={() => handleAddGT(profile.user_id)}
                             >
-                              <SelectTrigger className="h-9 text-sm">
-                                <SelectValue placeholder="Selecionar..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__none__">Nenhum</SelectItem>
-                                {clients.map((client) => (
-                                  <SelectItem key={client.id} value={client.id}>
-                                    <span className="truncate">{client.name}</span>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              <Plus className="w-3 h-3" />
+                              Adicionar GT
+                            </Button>
                           </div>
 
-                          <div className="space-y-1">
-                            <label className="text-xs text-muted-foreground">Função no GT</label>
-                            <Select
-                              value={displayGtRole || '__none__'}
-                              onValueChange={(value) => handleAllocationChange(profile.user_id, 'gtRole', value)}
-                              disabled={!displayGtClientId}
-                            >
-                              <SelectTrigger className="h-9 text-sm">
-                                <SelectValue placeholder="Selecionar..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__none__">Nenhuma</SelectItem>
-                                <SelectItem value="director">Diretor de Demandas</SelectItem>
-                                <SelectItem value="manager">Gerente de Demandas</SelectItem>
-                                <SelectItem value="consultant">Consultor</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                          {displayGTs.length === 0 && (
+                            <p className="text-xs text-muted-foreground italic">Nenhum GT atribuído</p>
+                          )}
+
+                          {displayGTs.map((gt, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <Select
+                                value={gt.client_id || '__none__'}
+                                onValueChange={(v) => handleGTClientChange(profile.user_id, idx, v === '__none__' ? '' : v)}
+                              >
+                                <SelectTrigger className="flex-1 h-8 text-sm">
+                                  <SelectValue placeholder="Cliente...">
+                                    {gt.client_id ? getClientName(gt.client_id) : 'Cliente...'}
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {clients.map((client) => (
+                                    <SelectItem key={client.id} value={client.id}>
+                                      {client.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Select
+                                value={gt.role || 'consultant'}
+                                onValueChange={(v) => handleGTRoleChange(profile.user_id, idx, v)}
+                              >
+                                <SelectTrigger className="w-32 h-8 text-sm">
+                                  <SelectValue>{getRoleLabel(gt.role)}</SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="director">Diretor</SelectItem>
+                                  <SelectItem value="manager">Gerente</SelectItem>
+                                  <SelectItem value="consultant">Consultor</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:text-destructive"
+                                onClick={() => handleRemoveGT(profile.user_id, idx)}
+                              >
+                                <X className="w-3 h-3" />
+                              </Button>
+                            </div>
+                          ))}
                         </div>
                       </div>
                     </motion.div>
