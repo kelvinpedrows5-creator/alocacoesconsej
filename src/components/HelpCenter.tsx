@@ -185,12 +185,12 @@ export function HelpCenter() {
             Enviar Relato
           </TabsTrigger>
           {isLeader && (
-            <TabsTrigger value="reports" className="flex-1 gap-2" onClick={fetchReports}>
+            <TabsTrigger value="reports" className="flex-1 gap-2" onClick={() => { fetchReports(); markReportsAsRead(); }}>
               <Inbox className="h-4 w-4" />
               Reportes
-              {reports.length > 0 && (
+              {reports.filter((r) => !r.is_read).length > 0 && (
                 <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0">
-                  {reports.length}
+                  {reports.filter((r) => !r.is_read).length}
                 </Badge>
               )}
             </TabsTrigger>
