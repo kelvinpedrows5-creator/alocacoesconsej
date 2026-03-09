@@ -224,7 +224,7 @@ const Admin = () => {
       { id: 'q6', label: 'Estilo de Comunicação', value: profileData.profile_communication_style, category: 'coordenador' },
       { id: 'q7', label: 'Resolução de Problemas', value: profileData.profile_problem_solving, category: 'coordenador' },
       // Consultor
-      { id: 'q5', label: 'Diretoria de Preferência', value: profileData.profile_preferred_directorate, isDirectorate: true, category: 'consultor' },
+      { id: 'q5', label: 'Diretoria de Preferência', value: profileData.profile_preferred_directorate, isDirectorate: true, category: 'coordenador' },
       { id: 'q16', label: 'Estilo de Demandas', value: (profileData as any).profile_demand_style, category: 'consultor' },
       { id: 'q17', label: 'Disponibilidade por Dia', value: (profileData as any).profile_availability_times, category: 'consultor' },
       { id: 'q18a', label: 'Escopos com Afinidade', value: (profileData as any).profile_scope_affinity, category: 'consultor', isText: true },

@@ -370,11 +370,11 @@ export const profileQuestions: ProfileQuestion[] = [
       { value: 'experimental', label: 'Testando diferentes soluções rapidamente' },
     ],
   },
-  // === CONSULTOR (6 perguntas) ===
+  // === CONSULTOR (5 perguntas) ===
   {
     id: 'q5',
     question: 'Em qual diretoria você tem mais interesse em atuar?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'dir-1', label: 'Demandas - Procedimentos e Clientes' },
