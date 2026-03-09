@@ -22,7 +22,7 @@ const menuItems = [
   { title: 'Panorama', value: 'overview', icon: Building2 },
   { title: 'Meu Perfil', value: 'my-profile', icon: User },
   { title: 'CONSEJ', value: 'consej', icon: Users },
-  { title: 'Clientes', value: 'clients', icon: Briefcase },
+  { title: 'Portfólio de Clientes', value: 'clients', icon: Briefcase },
 ];
 
 export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
