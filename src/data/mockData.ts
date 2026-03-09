@@ -275,8 +275,8 @@ export const cycles = [
 export const quarters = cycles;
 
 // Profile questions for matching members to coordinations
-// Category: 'coordenadoria' = first 6 questions about coordination/work preferences
-// Category: 'estilo' = remaining questions about consultant style
+// Category: 'consultor' = first 6 questions about consultant style
+// Category: 'coordenador' = remaining 6 questions about coordination/work preferences
 export type ProfileQuestionType = 'radio' | 'text' | 'compound';
 
 export interface ProfileQuestionOption {
@@ -287,7 +287,7 @@ export interface ProfileQuestionOption {
 export interface ProfileQuestion {
   id: string;
   question: string;
-  category: 'coordenadoria' | 'estilo';
+  category: 'consultor' | 'coordenador';
   type: ProfileQuestionType;
   options?: ProfileQuestionOption[];
   subQuestions?: { id: string; label: string; type: 'radio' | 'text'; options?: ProfileQuestionOption[] }[];
