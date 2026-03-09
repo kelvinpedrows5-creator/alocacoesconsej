@@ -412,7 +412,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q18',
     question: 'Quais escopos você mais executou, tem mais afinidades ou não gosta de executar?',
-    category: 'coordenador',
+    category: 'consultor',
     type: 'compound',
     subQuestions: [
       { id: 'q18_affinity', label: 'Escopos que mais executou / tem afinidade', type: 'text' },
