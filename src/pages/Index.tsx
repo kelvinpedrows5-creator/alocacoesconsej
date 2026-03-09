@@ -18,6 +18,7 @@ import { MemberBusinessOpportunity } from '@/components/MemberBusinessOpportunit
 import { BusinessOpportunitiesManagement } from '@/components/admin/BusinessOpportunitiesManagement';
 import { MyClientsOverview } from '@/components/MyClientsOverview';
 import { HelpCenter } from '@/components/HelpCenter';
+import { HandoffSurveySection } from '@/components/HandoffSurveySection';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useCycles } from '@/hooks/useCycles';
 import { Button } from '@/components/ui/button';
@@ -106,6 +107,8 @@ const Index = () => {
         return <BusinessOpportunitiesManagement />;
       case 'help-center':
         return <HelpCenter />;
+      case 'handoff-survey':
+        return <HandoffSurveySection />;
       default:
         return <CompanyOverview />;
     }
