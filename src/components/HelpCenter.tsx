@@ -27,6 +27,7 @@ interface Report {
   message: string;
   created_at: string;
   sender_name: string;
+  is_read: boolean;
 }
 
 const directorateNames: Record<string, string> = {
@@ -96,7 +97,7 @@ export function HelpCenter() {
 
     const { data, error } = await supabase
       .from('help_reports')
-      .select('id, message, created_at, user_id')
+      .select('id, message, created_at, user_id, is_read')
       .eq('target_leader_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -121,6 +122,7 @@ export function HelpCenter() {
         message: r.message,
         created_at: r.created_at,
         sender_name: profileMap[r.user_id] || 'Membro',
+        is_read: r.is_read,
       }))
     );
     setReportsLoading(false);
@@ -129,6 +131,16 @@ export function HelpCenter() {
   useEffect(() => {
     if (isLeader) fetchReports();
   }, [isLeader, user?.id]);
+
+  const markReportsAsRead = async () => {
+    if (!user) return;
+    const unreadIds = reports.filter((r) => !(r as any).is_read).map((r) => r.id);
+    if (unreadIds.length === 0) return;
+    await supabase
+      .from('help_reports')
+      .update({ is_read: true })
+      .in('id', unreadIds);
+  };
 
   const handleSubmit = async () => {
     if (!message.trim() || !selectedLeader || !user) return;
@@ -173,12 +185,12 @@ export function HelpCenter() {
             Enviar Relato
           </TabsTrigger>
           {isLeader && (
-            <TabsTrigger value="reports" className="flex-1 gap-2" onClick={fetchReports}>
+            <TabsTrigger value="reports" className="flex-1 gap-2" onClick={() => { fetchReports(); markReportsAsRead(); }}>
               <Inbox className="h-4 w-4" />
               Reportes
-              {reports.length > 0 && (
+              {reports.filter((r) => !r.is_read).length > 0 && (
                 <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0">
-                  {reports.length}
+                  {reports.filter((r) => !r.is_read).length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -275,10 +287,11 @@ export function HelpCenter() {
                     {reports.map((report, idx) => (
                       <div key={report.id}>
                         {idx > 0 && <Separator className="mb-4" />}
-                        <div className="space-y-2">
+                        <div className={`space-y-2 ${!report.is_read ? 'pl-3 border-l-2 border-destructive' : ''}`}>
                           <div className="flex items-center justify-between">
-                            <span className="font-medium text-sm text-foreground">
+                            <span className="font-medium text-sm text-foreground flex items-center gap-2">
                               {report.sender_name}
+                              {!report.is_read && <Badge variant="destructive" className="text-xs px-1.5 py-0">Novo</Badge>}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {format(new Date(report.created_at), "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR })}
