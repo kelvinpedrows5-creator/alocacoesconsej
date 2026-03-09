@@ -361,7 +361,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q7',
     question: 'Como você costuma resolver problemas?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'analytical_approach', label: 'Analisando dados e informações' },
