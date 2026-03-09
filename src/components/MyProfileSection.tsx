@@ -495,10 +495,13 @@ export function MyProfileSection() {
         profile_team_role: answers['q9'] || null,
         profile_learning_style: answers['q10'] || null,
         profile_stress_handling: answers['q11'] || null,
-        profile_leadership_style: answers['q12'] || null,
-        profile_feedback_preference: answers['q13'] || null,
-        profile_project_type: answers['q14'] || null,
-        profile_collaboration_tools: answers['q15'] || null,
+        profile_demand_style: answers['q16'] || null,
+        profile_availability_times: answers['q17'] || null,
+        profile_scope_affinity: answers['q18_affinity'] || null,
+        profile_scope_dislikes: answers['q18_dislikes'] || null,
+        profile_availability_shift: answers['q19'] || null,
+        profile_coworker_issue: answers['q20_answer'] || null,
+        profile_coworker_issue_details: answers['q20_details'] || null,
       } as any);
       toast({ title: 'Perfil salvo!', description: 'Suas respostas foram salvas com sucesso.' });
     } catch (error) {
