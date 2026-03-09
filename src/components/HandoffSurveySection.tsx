@@ -365,7 +365,7 @@ export function HandoffSurveySection() {
                             <p className="text-sm text-muted-foreground">{activeCycle.label}</p>
                           </div>
                         </div>
-                        {currentUserResponded && (
+                        {canAnswerSurveys && currentUserResponded && (
                           <Button 
                             size="sm"
                             variant="outline"
