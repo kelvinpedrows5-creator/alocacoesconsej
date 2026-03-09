@@ -95,6 +95,7 @@ const adminMenuItems = [
   { title: 'Sugestões', value: 'suggestions', icon: LayoutDashboard },
   { title: 'Coordenadorias', value: 'coordinations', icon: Building2 },
   { title: 'Grupos de Trabalho', value: 'gts', icon: Briefcase },
+  { title: 'Passagem de Bastão', value: 'handoff', icon: ArrowRightLeft },
   { title: 'Pesquisas', value: 'profiles', icon: FileText },
   { title: 'Gerenciar Membros', value: 'management', icon: UserCog },
 ];
