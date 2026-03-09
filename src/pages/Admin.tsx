@@ -405,7 +405,6 @@ const Admin = () => {
               className="space-y-8"
             >
               {renderContent()}
-              {renderContent()}
             </motion.div>
           </main>
 
