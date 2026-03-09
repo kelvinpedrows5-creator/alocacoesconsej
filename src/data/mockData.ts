@@ -298,7 +298,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q1',
     question: 'Qual área você tem mais interesse em desenvolver habilidades?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'analytical', label: 'Análise de dados e pesquisas' },
