@@ -297,7 +297,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          {renderMenuButton('help-center', 'Central de Ajuda', Heart, unreadHelpCount, 'Central de Ajuda')}
+          {renderMenuButton('help-center', 'Central de Ajuda', Heart, unreadHelpCount + unseenMemberCount, 'Central de Ajuda')}
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
