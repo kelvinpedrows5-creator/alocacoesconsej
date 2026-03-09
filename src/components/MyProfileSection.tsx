@@ -40,7 +40,7 @@ interface CoordinationMatch {
   color: string;
 }
 
-function CoordinationSelector() {
+export function CoordinationSelector() {
   const { profile } = useAuthContext();
   const { currentCycle } = useCycles();
   const { toast } = useToast();
@@ -542,10 +542,6 @@ export function MyProfileSection() {
             <Sparkles className="w-4 h-4" />
             Pesquisa de Perfil
           </TabsTrigger>
-          <TabsTrigger value="coordination" className="gap-2">
-            <Building2 className="w-4 h-4" />
-            Minha Coordenadoria
-          </TabsTrigger>
           <TabsTrigger value="history" className="gap-2">
             <History className="w-4 h-4" />
             Meu Histórico
@@ -711,9 +707,6 @@ export function MyProfileSection() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="coordination">
-          <CoordinationSelector />
-        </TabsContent>
 
         <TabsContent value="history">
           <MyHistorySection />
