@@ -475,6 +475,18 @@ export function HelpCenter() {
                             Situação marcada como resolvida pela liderança
                           </div>
                         )}
+
+                        <div className="flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteReport(report.id, 'sent')}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1" />
+                            Excluir
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
