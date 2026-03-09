@@ -193,48 +193,39 @@ export function HandoffSurveySection() {
 
   const leadershipClients = Object.values(clientSurveysMap);
 
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <ClipboardList className="h-6 w-6 text-primary" />
-            Passagem de Bastão
-          </h2>
-          <p className="text-muted-foreground text-sm mt-1">
-            Responda as pesquisas de passagem de bastão dos seus clientes anteriores
-          </p>
-        </div>
-        <Select value={activeCycleId} onValueChange={setSelectedCycleId}>
-          <SelectTrigger className="w-48">
-            <SelectValue placeholder="Selecione o ciclo" />
-          </SelectTrigger>
-          <SelectContent>
-            {eligibleCycles.map(c => (
-              <SelectItem key={c.id} value={c.id}>{c.label}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+  // Consultant view
+  const ConsultantView = () => {
+    if (!activeCycle) {
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <ClipboardList className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <p className="text-muted-foreground">Não há ciclo anterior disponível para passagem de bastão.</p>
+          </CardContent>
+        </Card>
+      );
+    }
 
-      {pendingSurveyClients.length > 0 && (
-        <Alert>
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>
-            Você possui <strong>{pendingSurveyClients.length}</strong> cliente(s) aguardando pesquisa de passagem de bastão neste ciclo.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {cycleClients.length === 0 ? (
+    if (cycleClients.length === 0) {
+      return (
         <Card>
           <CardContent className="py-12 text-center">
             <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-            <p className="text-muted-foreground">Você não estava alocado em nenhum Grupo de Trabalho neste ciclo.</p>
+            <p className="text-muted-foreground">Você não estava alocado como consultor em nenhum Grupo de Trabalho no ciclo anterior.</p>
           </CardContent>
         </Card>
-      ) : (
-        <div className="space-y-6">
+      );
+    }
+
+    return (
+      <div className="space-y-6">{pendingSurveyClients.length > 0 && (
+          <Alert>
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>
+              Você possui <strong>{pendingSurveyClients.length}</strong> cliente(s) aguardando pesquisa de passagem de bastão do ciclo <strong>{activeCycle.label}</strong>.
+            </AlertDescription>
+          </Alert>
+        )}
           {/* Pending surveys */}
           {pendingSurveyClients.length > 0 && (
             <div className="space-y-4">
