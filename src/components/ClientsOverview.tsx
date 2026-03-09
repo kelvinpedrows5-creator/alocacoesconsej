@@ -88,6 +88,39 @@ export function ClientsOverview() {
     }
   }, [currentCycle, selectedCycleId]);
 
+  const handleSaveLink = (clientId: string) => {
+    if (!contractLink.trim()) return;
+    updateClient({ id: clientId, updates: { contract_scope_url: contractLink.trim(), contract_scope_type: 'link' } });
+    setContractDialog(null);
+    setContractLink('');
+  };
+
+  const handleUploadPdf = async (clientId: string, file: File) => {
+    if (!file || file.type !== 'application/pdf') {
+      toast.error('Por favor, selecione um arquivo PDF válido.');
+      return;
+    }
+    setUploading(true);
+    try {
+      const filePath = `${clientId}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage.from('contracts').upload(filePath, file);
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage.from('contracts').getPublicUrl(filePath);
+      updateClient({ id: clientId, updates: { contract_scope_url: publicUrlData.publicUrl, contract_scope_type: 'pdf' } });
+      setContractDialog(null);
+      toast.success('PDF do contrato enviado com sucesso!');
+    } catch (err: any) {
+      toast.error('Erro ao enviar PDF: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveContract = (clientId: string) => {
+    updateClient({ id: clientId, updates: { contract_scope_url: null, contract_scope_type: null } });
+  };
+
   const activeCycleId = selectedCycleId || currentCycle?.id || '';
   const displayClients = activeCycleId ? getClientsByCycle(activeCycleId) : clients;
   const activeCycleLabel = cycles.find(c => c.id === activeCycleId)?.label || '';
