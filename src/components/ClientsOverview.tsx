@@ -243,6 +243,52 @@ export function ClientsOverview() {
                   <GTHandoffSurveyResults key={cycle.id} clientId={client.id} cycleId={cycle.id} />
                 ))}
 
+                {/* Contract Scope */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <FileText className="w-4 h-4 text-muted-foreground" />
+                    Escopo do Contrato
+                  </div>
+                  {client.contract_scope_url ? (
+                    <div className="flex items-center gap-2 pl-6">
+                      <a
+                        href={client.contract_scope_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                      >
+                        <ExternalLink className="w-3 h-3 shrink-0" />
+                        {client.contract_scope_type === 'pdf' ? 'Ver PDF do contrato' : 'Acessar escopo'}
+                      </a>
+                      {isAdmin && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleRemoveContract(client.id)}>
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="pl-6">
+                      {isAdmin ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs gap-1"
+                          onClick={() => {
+                            setContractDialog({ clientId: client.id, clientName: client.name });
+                            setContractType('link');
+                            setContractLink('');
+                          }}
+                        >
+                          <Upload className="w-3 h-3" />
+                          Adicionar escopo
+                        </Button>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">Nenhum escopo cadastrado</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Client Profile Info */}
                 {clientProfile && answeredCount > 0 && (
                   <Accordion type="single" collapsible>
