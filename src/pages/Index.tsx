@@ -154,7 +154,7 @@ const Index = () => {
                     variant="ghost"
                     size="icon"
                     className="rounded-full"
-                    onClick={() => navigate('/profile')}
+                    onClick={() => setActiveTab('my-profile')}
                   >
                     <Avatar className="h-9 w-9">
                       <AvatarImage src={profile?.avatar_url || undefined} />
