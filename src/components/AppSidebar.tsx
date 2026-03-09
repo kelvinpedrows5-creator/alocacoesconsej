@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, Users, User, Briefcase, Shield, ClipboardList, Lightbulb, UserCheck, Heart } from 'lucide-react';
+import { Building2, Users, User, Briefcase, Shield, ClipboardList, Lightbulb, UserCheck, Heart, FileText } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useLeadership } from '@/hooks/useLeadership';
 import { supabase } from '@/integrations/supabase/client';
