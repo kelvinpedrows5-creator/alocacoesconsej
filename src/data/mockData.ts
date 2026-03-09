@@ -336,7 +336,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q4',
     question: 'Qual competência você mais deseja desenvolver?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'negotiation', label: 'Negociação e fechamento de negócios' },
