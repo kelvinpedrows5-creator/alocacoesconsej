@@ -97,6 +97,8 @@ const Index = () => {
         return <MemberDemandSubmission />;
       case 'my-clients':
         return <MyClientsOverview />;
+      case 'my-coordination':
+        return <CoordinationSelector />;
       case 'my-opportunities':
         return <MemberBusinessOpportunity />;
       case 'opportunities-management':

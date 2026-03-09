@@ -40,7 +40,7 @@ interface CoordinationMatch {
   color: string;
 }
 
-function CoordinationSelector() {
+export function CoordinationSelector() {
   const { profile } = useAuthContext();
   const { currentCycle } = useCycles();
   const { toast } = useToast();

@@ -21,6 +21,7 @@ interface AppSidebarProps {
 const menuItems = [
   { title: 'Panorama', value: 'overview', icon: Building2 },
   { title: 'Meu Perfil', value: 'my-profile', icon: User },
+  { title: 'Minha Coordenadoria', value: 'my-coordination', icon: ClipboardList },
   { title: 'CONSEJ', value: 'consej', icon: Users },
   { title: 'Portfólio de Clientes', value: 'clients', icon: Briefcase },
   { title: 'Meus Clientes', value: 'my-clients', icon: UserCheck },
