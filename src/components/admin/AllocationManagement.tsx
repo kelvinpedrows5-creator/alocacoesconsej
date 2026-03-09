@@ -51,6 +51,9 @@ export const AllocationManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [pendingChanges, setPendingChanges] = useState<Map<string, PendingChange>>(new Map());
   const { toast } = useToast();
+  const { positions } = useLeadership();
+
+  const leaderUserIds = new Set(positions.map((p) => p.user_id));
 
   useEffect(() => {
     if (cycles.length > 0 && !selectedCycleId) {
