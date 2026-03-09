@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, Users, FileText, ExternalLink, ClipboardCheck, Upload, Link as LinkIcon, Trash2, Download } from 'lucide-react';
+import { Building, Users, FileText, ExternalLink, ClipboardCheck, Upload, Link as LinkIcon, Trash2, Download, ClipboardList, Bell } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { GTHandoffSurvey } from '@/components/GTHandoffSurvey';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Profile {
   user_id: string;
