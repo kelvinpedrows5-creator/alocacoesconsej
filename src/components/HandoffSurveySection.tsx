@@ -141,19 +141,57 @@ export function HandoffSurveySection() {
     enabled: !!activeCycleId && !!profile?.user_id,
   });
 
+  // Separate clients: those needing response (no one answered) vs completed (someone answered)
   const pendingSurveyClients = cycleClients.filter(
-    client => !completedSurveys.includes(client.id)
+    client => !completedSurveysByClient[client.id] || completedSurveysByClient[client.id].length === 0
   );
 
   const completedSurveyClients = cycleClients.filter(
-    client => completedSurveys.includes(client.id)
+    client => completedSurveysByClient[client.id] && completedSurveysByClient[client.id].length > 0
   );
 
-  // Filter cycles to show only those before the current cycle
-  const eligibleCycles = cycles.filter(c => {
-    if (!currentCycle) return c.is_visible;
-    return c.is_visible && c.value < currentCycle.value;
+  // Get all clients with surveys for leadership view
+  const { data: allClientsWithSurveys = [] } = useQuery({
+    queryKey: ['all_clients_with_handoff_surveys', activeCycleId],
+    queryFn: async () => {
+      if (!activeCycleId) return [];
+      const { data } = await supabase
+        .from('gt_handoff_surveys')
+        .select(`
+          client_id,
+          user_id,
+          created_at,
+          clients (
+            id,
+            name
+          )
+        `)
+        .eq('cycle_id', activeCycleId)
+        .order('created_at', { ascending: false });
+      
+      return data || [];
+    },
+    enabled: !!activeCycleId && isDemandasLeadership,
   });
+
+  // Group surveys by client for leadership view
+  const clientSurveysMap = allClientsWithSurveys.reduce((acc: any, survey: any) => {
+    const clientId = survey.client_id;
+    if (!acc[clientId]) {
+      acc[clientId] = {
+        clientId,
+        clientName: survey.clients?.name || 'Cliente',
+        surveys: []
+      };
+    }
+    acc[clientId].surveys.push({
+      userId: survey.user_id,
+      createdAt: survey.created_at
+    });
+    return acc;
+  }, {});
+
+  const leadershipClients = Object.values(clientSurveysMap);
 
   return (
     <div className="space-y-6">
