@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, Send, CheckCircle, Inbox, MessageSquare, MessageCircle, CheckCheck, FileText } from 'lucide-react';
+import { Heart, Send, CheckCircle, Inbox, MessageSquare, MessageCircle, CheckCheck, FileText, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -275,6 +275,25 @@ export function HelpCenter() {
     fetchReports();
   };
 
+  const handleDeleteReport = async (reportId: string, type: 'sent' | 'received') => {
+    const { error } = await supabase
+      .from('help_reports')
+      .delete()
+      .eq('id', reportId);
+
+    if (error) {
+      toast.error('Erro ao excluir relato.');
+      return;
+    }
+
+    toast.success('Relato excluído com sucesso.');
+    if (type === 'sent') {
+      setSentReports((prev) => prev.filter((r) => r.id !== reportId));
+    } else {
+      setReports((prev) => prev.filter((r) => r.id !== reportId));
+    }
+  };
+
   const positionLabel = (type: string) =>
     type === 'director' ? 'Diretor(a)' : 'Gerente';
 
@@ -456,6 +475,18 @@ export function HelpCenter() {
                             Situação marcada como resolvida pela liderança
                           </div>
                         )}
+
+                        <div className="flex justify-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteReport(report.id, 'sent')}
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1" />
+                            Excluir
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -550,6 +581,15 @@ export function HelpCenter() {
                               >
                                 <CheckCheck className="h-3.5 w-3.5 mr-1" />
                                 Marcar como resolvido
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-destructive hover:text-destructive"
+                                onClick={() => handleDeleteReport(report.id, 'received')}
+                              >
+                                <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                Excluir
                               </Button>
                             </div>
                           )}
