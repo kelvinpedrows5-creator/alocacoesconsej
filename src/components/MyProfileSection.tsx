@@ -29,7 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageCropper } from '@/components/ImageCropper';
 import { useToast } from '@/hooks/use-toast';
-import { profileQuestions, coordinationMatchingProfile, coordinations, directorates } from '@/data/mockData';
+import { profileQuestions, coordinationMatchingProfile, coordinations, directorates, type ProfileQuestion } from '@/data/mockData';
 import { useCycles } from '@/hooks/useCycles';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -346,21 +346,26 @@ export function MyProfileSection() {
     if (profile) {
       setDisplayName(profile.display_name || '');
       const savedAnswers: Record<string, string> = {};
-      if (profile.profile_skills) savedAnswers.q1 = profile.profile_skills;
-      if (profile.profile_work_style) savedAnswers.q2 = profile.profile_work_style;
-      if (profile.profile_activities) savedAnswers.q3 = profile.profile_activities;
-      if (profile.profile_competencies) savedAnswers.q4 = profile.profile_competencies;
-      if (profile.profile_preferred_directorate) savedAnswers.q5 = profile.profile_preferred_directorate;
-      if ((profile as any).profile_communication_style) savedAnswers.q6 = (profile as any).profile_communication_style;
-      if ((profile as any).profile_problem_solving) savedAnswers.q7 = (profile as any).profile_problem_solving;
-      if ((profile as any).profile_time_management) savedAnswers.q8 = (profile as any).profile_time_management;
-      if ((profile as any).profile_team_role) savedAnswers.q9 = (profile as any).profile_team_role;
-      if ((profile as any).profile_learning_style) savedAnswers.q10 = (profile as any).profile_learning_style;
-      if ((profile as any).profile_stress_handling) savedAnswers.q11 = (profile as any).profile_stress_handling;
-      if ((profile as any).profile_leadership_style) savedAnswers.q12 = (profile as any).profile_leadership_style;
-      if ((profile as any).profile_feedback_preference) savedAnswers.q13 = (profile as any).profile_feedback_preference;
-      if ((profile as any).profile_project_type) savedAnswers.q14 = (profile as any).profile_project_type;
-      if ((profile as any).profile_collaboration_tools) savedAnswers.q15 = (profile as any).profile_collaboration_tools;
+      const p = profile as any;
+      if (p.profile_skills) savedAnswers.q1 = p.profile_skills;
+      if (p.profile_work_style) savedAnswers.q2 = p.profile_work_style;
+      if (p.profile_activities) savedAnswers.q3 = p.profile_activities;
+      if (p.profile_competencies) savedAnswers.q4 = p.profile_competencies;
+      if (p.profile_preferred_directorate) savedAnswers.q5 = p.profile_preferred_directorate;
+      if (p.profile_communication_style) savedAnswers.q6 = p.profile_communication_style;
+      if (p.profile_problem_solving) savedAnswers.q7 = p.profile_problem_solving;
+      if (p.profile_time_management) savedAnswers.q8 = p.profile_time_management;
+      if (p.profile_team_role) savedAnswers.q9 = p.profile_team_role;
+      if (p.profile_learning_style) savedAnswers.q10 = p.profile_learning_style;
+      if (p.profile_stress_handling) savedAnswers.q11 = p.profile_stress_handling;
+      // New coordenadoria questions
+      if (p.profile_demand_style) savedAnswers.q16 = p.profile_demand_style;
+      if (p.profile_availability_times) savedAnswers.q17 = p.profile_availability_times;
+      if (p.profile_scope_affinity) savedAnswers.q18_affinity = p.profile_scope_affinity;
+      if (p.profile_scope_dislikes) savedAnswers.q18_dislikes = p.profile_scope_dislikes;
+      if (p.profile_availability_shift) savedAnswers.q19 = p.profile_availability_shift;
+      if (p.profile_coworker_issue) savedAnswers.q20_answer = p.profile_coworker_issue;
+      if (p.profile_coworker_issue_details) savedAnswers.q20_details = p.profile_coworker_issue_details;
       if (Object.keys(savedAnswers).length > 0) {
         setAnswers(savedAnswers);
         setHasFilledProfile(true);
@@ -490,10 +495,13 @@ export function MyProfileSection() {
         profile_team_role: answers['q9'] || null,
         profile_learning_style: answers['q10'] || null,
         profile_stress_handling: answers['q11'] || null,
-        profile_leadership_style: answers['q12'] || null,
-        profile_feedback_preference: answers['q13'] || null,
-        profile_project_type: answers['q14'] || null,
-        profile_collaboration_tools: answers['q15'] || null,
+        profile_demand_style: answers['q16'] || null,
+        profile_availability_times: answers['q17'] || null,
+        profile_scope_affinity: answers['q18_affinity'] || null,
+        profile_scope_dislikes: answers['q18_dislikes'] || null,
+        profile_availability_shift: answers['q19'] || null,
+        profile_coworker_issue: answers['q20_answer'] || null,
+        profile_coworker_issue_details: answers['q20_details'] || null,
       } as any);
       toast({ title: 'Perfil salvo!', description: 'Suas respostas foram salvas com sucesso.' });
     } catch (error) {
@@ -504,6 +512,17 @@ export function MyProfileSection() {
   const resetAllocationProfile = () => {
     setCurrentStep(0);
     setShowResults(false);
+  };
+
+  const isCurrentQuestionAnswered = () => {
+    const q = currentQuestion;
+    if (q.type === 'radio') return !!answers[q.id];
+    if (q.type === 'compound' && q.subQuestions) {
+      // At least the first sub-question must be answered
+      const firstSub = q.subQuestions[0];
+      return !!answers[firstSub.id];
+    }
+    return true;
   };
 
   if (loading) {
@@ -611,7 +630,7 @@ export function MyProfileSection() {
                 Pesquisa de Perfil
               </CardTitle>
               <CardDescription>
-                Responda as 15 perguntas para descobrir quais coordenadorias mais combinam com seu perfil.
+                Responda as {profileQuestions.length} perguntas para descobrir quais coordenadorias mais combinam com seu perfil.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -624,6 +643,19 @@ export function MyProfileSection() {
                     </div>
                     <Progress value={progress} className="h-2" />
                   </div>
+
+                  {/* Section indicator */}
+                  <div className="flex items-center gap-2">
+                    <Badge variant={currentQuestion.category === 'coordenadoria' ? 'default' : 'secondary'}>
+                      {currentQuestion.category === 'coordenadoria' ? '📋 Coordenadoria' : '🧑‍💼 Estilo do Consultor'}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {currentQuestion.category === 'coordenadoria'
+                        ? 'Perguntas sobre sua alocação e disponibilidade'
+                        : 'Perguntas sobre seu perfil e estilo de trabalho'}
+                    </span>
+                  </div>
+
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentStep}
@@ -634,28 +666,74 @@ export function MyProfileSection() {
                       className="space-y-4"
                     >
                       <h3 className="font-medium text-lg">{currentQuestion.question}</h3>
-                      <RadioGroup
-                        value={answers[currentQuestion.id] || ''}
-                        onValueChange={handleAnswer}
-                        className="space-y-3"
-                      >
-                        {currentQuestion.options.map((option) => (
-                          <div
-                            key={option.value}
-                            className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
-                              answers[currentQuestion.id] === option.value
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border hover:border-primary/50'
-                            }`}
-                            onClick={() => handleAnswer(option.value)}
-                          >
-                            <RadioGroupItem value={option.value} id={`profile-${option.value}`} />
-                            <Label htmlFor={`profile-${option.value}`} className="cursor-pointer flex-1">
-                              {option.label}
-                            </Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
+
+                      {/* Radio type */}
+                      {currentQuestion.type === 'radio' && currentQuestion.options && (
+                        <RadioGroup
+                          value={answers[currentQuestion.id] || ''}
+                          onValueChange={handleAnswer}
+                          className="space-y-3"
+                        >
+                          {currentQuestion.options.map((option) => (
+                            <div
+                              key={option.value}
+                              className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                                answers[currentQuestion.id] === option.value
+                                  ? 'border-primary bg-primary/5'
+                                  : 'border-border hover:border-primary/50'
+                              }`}
+                              onClick={() => handleAnswer(option.value)}
+                            >
+                              <RadioGroupItem value={option.value} id={`profile-${option.value}`} />
+                              <Label htmlFor={`profile-${option.value}`} className="cursor-pointer flex-1">
+                                {option.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                      )}
+
+                      {/* Compound type - multiple sub-questions */}
+                      {currentQuestion.type === 'compound' && currentQuestion.subQuestions && (
+                        <div className="space-y-4">
+                          {currentQuestion.subQuestions.map((sub) => (
+                            <div key={sub.id} className="space-y-2">
+                              <Label className="text-sm font-medium">{sub.label}</Label>
+                              {sub.type === 'radio' && sub.options ? (
+                                <RadioGroup
+                                  value={answers[sub.id] || ''}
+                                  onValueChange={(val) => setAnswers(prev => ({ ...prev, [sub.id]: val }))}
+                                  className="space-y-2"
+                                >
+                                  {sub.options.map((option) => (
+                                    <div
+                                      key={option.value}
+                                      className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                                        answers[sub.id] === option.value
+                                          ? 'border-primary bg-primary/5'
+                                          : 'border-border hover:border-primary/50'
+                                      }`}
+                                      onClick={() => setAnswers(prev => ({ ...prev, [sub.id]: option.value }))}
+                                    >
+                                      <RadioGroupItem value={option.value} id={`profile-${sub.id}-${option.value}`} />
+                                      <Label htmlFor={`profile-${sub.id}-${option.value}`} className="cursor-pointer flex-1">
+                                        {option.label}
+                                      </Label>
+                                    </div>
+                                  ))}
+                                </RadioGroup>
+                              ) : (
+                                <textarea
+                                  className="w-full min-h-[80px] p-3 rounded-lg border border-border bg-background text-foreground text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                  placeholder="Digite sua resposta..."
+                                  value={answers[sub.id] || ''}
+                                  onChange={(e) => setAnswers(prev => ({ ...prev, [sub.id]: e.target.value }))}
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </motion.div>
                   </AnimatePresence>
                   <div className="flex justify-between pt-4">
@@ -663,7 +741,7 @@ export function MyProfileSection() {
                       <ChevronLeft className="w-4 h-4 mr-1" />
                       Anterior
                     </Button>
-                    <Button onClick={handleNext} disabled={!answers[currentQuestion.id]}>
+                    <Button onClick={handleNext} disabled={!isCurrentQuestionAnswered()}>
                       {currentStep === profileQuestions.length - 1 ? (
                         <>Ver Resultados <Sparkles className="w-4 h-4 ml-1" /></>
                       ) : (
