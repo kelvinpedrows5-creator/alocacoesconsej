@@ -1,4 +1,4 @@
-import { Building2, Users, User, Briefcase, Shield, ClipboardList, Lightbulb } from 'lucide-react';
+import { Building2, Users, User, Briefcase, Shield, ClipboardList, Lightbulb, UserCheck } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useLeadership } from '@/hooks/useLeadership';
 import {
