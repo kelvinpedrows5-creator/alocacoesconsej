@@ -619,7 +619,7 @@ export function MyProfileSection() {
                 Pesquisa de Perfil
               </CardTitle>
               <CardDescription>
-                Responda as 15 perguntas para descobrir quais coordenadorias mais combinam com seu perfil.
+                Responda as {profileQuestions.length} perguntas para descobrir quais coordenadorias mais combinam com seu perfil.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -632,6 +632,19 @@ export function MyProfileSection() {
                     </div>
                     <Progress value={progress} className="h-2" />
                   </div>
+
+                  {/* Section indicator */}
+                  <div className="flex items-center gap-2">
+                    <Badge variant={currentQuestion.category === 'coordenadoria' ? 'default' : 'secondary'}>
+                      {currentQuestion.category === 'coordenadoria' ? '📋 Coordenadoria' : '🧑‍💼 Estilo do Consultor'}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {currentQuestion.category === 'coordenadoria'
+                        ? 'Perguntas sobre sua alocação e disponibilidade'
+                        : 'Perguntas sobre seu perfil e estilo de trabalho'}
+                    </span>
+                  </div>
+
                   <AnimatePresence mode="wait">
                     <motion.div
                       key={currentStep}
@@ -642,28 +655,74 @@ export function MyProfileSection() {
                       className="space-y-4"
                     >
                       <h3 className="font-medium text-lg">{currentQuestion.question}</h3>
-                      <RadioGroup
-                        value={answers[currentQuestion.id] || ''}
-                        onValueChange={handleAnswer}
-                        className="space-y-3"
-                      >
-                        {currentQuestion.options.map((option) => (
-                          <div
-                            key={option.value}
-                            className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
-                              answers[currentQuestion.id] === option.value
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border hover:border-primary/50'
-                            }`}
-                            onClick={() => handleAnswer(option.value)}
-                          >
-                            <RadioGroupItem value={option.value} id={`profile-${option.value}`} />
-                            <Label htmlFor={`profile-${option.value}`} className="cursor-pointer flex-1">
-                              {option.label}
-                            </Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
+
+                      {/* Radio type */}
+                      {currentQuestion.type === 'radio' && currentQuestion.options && (
+                        <RadioGroup
+                          value={answers[currentQuestion.id] || ''}
+                          onValueChange={handleAnswer}
+                          className="space-y-3"
+                        >
+                          {currentQuestion.options.map((option) => (
+                            <div
+                              key={option.value}
+                              className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                                answers[currentQuestion.id] === option.value
+                                  ? 'border-primary bg-primary/5'
+                                  : 'border-border hover:border-primary/50'
+                              }`}
+                              onClick={() => handleAnswer(option.value)}
+                            >
+                              <RadioGroupItem value={option.value} id={`profile-${option.value}`} />
+                              <Label htmlFor={`profile-${option.value}`} className="cursor-pointer flex-1">
+                                {option.label}
+                              </Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                      )}
+
+                      {/* Compound type - multiple sub-questions */}
+                      {currentQuestion.type === 'compound' && currentQuestion.subQuestions && (
+                        <div className="space-y-4">
+                          {currentQuestion.subQuestions.map((sub) => (
+                            <div key={sub.id} className="space-y-2">
+                              <Label className="text-sm font-medium">{sub.label}</Label>
+                              {sub.type === 'radio' && sub.options ? (
+                                <RadioGroup
+                                  value={answers[sub.id] || ''}
+                                  onValueChange={(val) => setAnswers(prev => ({ ...prev, [sub.id]: val }))}
+                                  className="space-y-2"
+                                >
+                                  {sub.options.map((option) => (
+                                    <div
+                                      key={option.value}
+                                      className={`flex items-center space-x-3 p-3 rounded-lg border transition-colors cursor-pointer ${
+                                        answers[sub.id] === option.value
+                                          ? 'border-primary bg-primary/5'
+                                          : 'border-border hover:border-primary/50'
+                                      }`}
+                                      onClick={() => setAnswers(prev => ({ ...prev, [sub.id]: option.value }))}
+                                    >
+                                      <RadioGroupItem value={option.value} id={`profile-${sub.id}-${option.value}`} />
+                                      <Label htmlFor={`profile-${sub.id}-${option.value}`} className="cursor-pointer flex-1">
+                                        {option.label}
+                                      </Label>
+                                    </div>
+                                  ))}
+                                </RadioGroup>
+                              ) : (
+                                <textarea
+                                  className="w-full min-h-[80px] p-3 rounded-lg border border-border bg-background text-foreground text-sm resize-y focus:outline-none focus:ring-2 focus:ring-primary/50"
+                                  placeholder="Digite sua resposta..."
+                                  value={answers[sub.id] || ''}
+                                  onChange={(e) => setAnswers(prev => ({ ...prev, [sub.id]: e.target.value }))}
+                                />
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </motion.div>
                   </AnimatePresence>
                   <div className="flex justify-between pt-4">
@@ -671,7 +730,7 @@ export function MyProfileSection() {
                       <ChevronLeft className="w-4 h-4 mr-1" />
                       Anterior
                     </Button>
-                    <Button onClick={handleNext} disabled={!answers[currentQuestion.id]}>
+                    <Button onClick={handleNext} disabled={!isCurrentQuestionAnswered()}>
                       {currentStep === profileQuestions.length - 1 ? (
                         <>Ver Resultados <Sparkles className="w-4 h-4 ml-1" /></>
                       ) : (
