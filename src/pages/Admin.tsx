@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   LayoutDashboard,
   Users,
   Building2,
-  ArrowLeft,
   FileText,
   Shield,
   Search,
@@ -26,12 +25,10 @@ import { CyclesManagement } from '@/components/admin/CyclesManagement';
 import { LeadershipManagement } from '@/components/admin/LeadershipManagement';
 import { AllocationManagement } from '@/components/admin/AllocationManagement';
 import { GTManagement } from '@/components/admin/GTManagement';
-import { AddMemberDialog } from '@/components/AddMemberDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
@@ -50,6 +47,19 @@ import {
 } from '@/components/ui/dialog';
 import { profileQuestions, directorates } from '@/data/mockData';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+  SidebarTrigger,
+  useSidebar,
+} from '@/components/ui/sidebar';
 
 interface ProfileData {
   id: string;
@@ -76,6 +86,53 @@ interface ProfileData {
   updated_at: string;
 }
 
+const adminMenuItems = [
+  { title: 'Alocações', value: 'allocations', icon: Users },
+  { title: 'Ciclos', value: 'cycles', icon: Calendar },
+  { title: 'Lideranças', value: 'leadership', icon: Crown },
+  { title: 'Sugestões', value: 'suggestions', icon: LayoutDashboard },
+  { title: 'Coordenadorias', value: 'coordinations', icon: Building2 },
+  { title: 'Grupos de Trabalho', value: 'gts', icon: Briefcase },
+  { title: 'Pesquisas', value: 'profiles', icon: FileText },
+  { title: 'Gerenciar Membros', value: 'management', icon: UserCog },
+];
+
+function AdminSidebar({ activeTab, onTabChange }: { activeTab: string; onTabChange: (tab: string) => void }) {
+  const { state, setOpenMobile } = useSidebar();
+  const collapsed = state === 'collapsed';
+
+  const handleClick = (value: string) => {
+    onTabChange(value);
+    setOpenMobile(false);
+  };
+
+  return (
+    <Sidebar collapsible="icon">
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupLabel>Administração</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {adminMenuItems.map((item) => (
+                <SidebarMenuItem key={item.value}>
+                  <SidebarMenuButton
+                    onClick={() => handleClick(item.value)}
+                    isActive={activeTab === item.value}
+                    tooltip={item.title}
+                  >
+                    <item.icon className="h-4 w-4" />
+                    {!collapsed && <span>{item.title}</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+    </Sidebar>
+  );
+}
+
 const Admin = () => {
   const navigate = useNavigate();
   const { profile } = useAuthContext();
@@ -85,12 +142,12 @@ const Admin = () => {
   const [loadingProfiles, setLoadingProfiles] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedProfile, setSelectedProfile] = useState<ProfileData | null>(null);
+  const [activeTab, setActiveTab] = useState('allocations');
 
   useEffect(() => {
     fetchAllProfiles();
   }, []);
 
-  // Set selected quarter when cycles load
   useEffect(() => {
     if (cycles.length > 0 && selectedQuarter === '2026-C1') {
       const current = cycles.find((c) => c.is_current);
@@ -119,12 +176,7 @@ const Admin = () => {
 
   const getInitials = (displayName: string | null, email: string) => {
     if (displayName) {
-      return displayName
-        .split(' ')
-        .map((n) => n[0])
-        .join('')
-        .toUpperCase()
-        .slice(0, 2);
+      return displayName.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2);
     }
     return email.charAt(0).toUpperCase();
   };
@@ -172,224 +224,206 @@ const Admin = () => {
     ];
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-lg border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" onClick={() => navigate('/')}>
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-              <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-accent">
-                <Shield className="w-6 h-6 text-primary-foreground" />
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'allocations':
+        return <AllocationManagement />;
+      case 'cycles':
+        return <CyclesManagement />;
+      case 'leadership':
+        return <LeadershipManagement />;
+      case 'suggestions':
+        return (
+          <>
+            <SuggestionsPanel />
+            <CoordinationGridFiltered />
+          </>
+        );
+      case 'coordinations':
+        return <CoordinationGridFiltered />;
+      case 'gts':
+        return <GTManagement />;
+      case 'profiles':
+        return (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-primary" />
+                Respostas das Pesquisas de Perfil
+              </CardTitle>
+              <CardDescription>
+                Visualize as respostas do questionário de alocação de cada membro (15 perguntas)
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome ou email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-9"
+                  />
+                </div>
               </div>
-              <div>
-                <h1 className="font-bold text-lg text-foreground">Painel Administrativo</h1>
-                <p className="text-xs text-muted-foreground">Alocações CONSEJ</p>
-              </div>
-            </div>
 
-            <div className="flex items-center gap-3">
-              {cycles.length > 0 && (
-                <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
-                  <SelectTrigger className="w-52">
-                    <SelectValue>
-                      {cycles.find((c) => c.value === selectedQuarter)?.label || selectedQuarter}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent>
-                    {cycles.map((c) => (
-                      <SelectItem key={c.value} value={c.value}>
-                        <span className="flex items-center gap-2">
-                          {c.label}
-                          {c.is_current && (
-                            <Badge variant="secondary" className="text-xs">Atual</Badge>
-                          )}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              <ReallocationDialog />
-              <AddMemberDialog />
-              <Button variant="ghost" size="icon" className="rounded-full" onClick={() => navigate('/profile')}>
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src={profile?.avatar_url || undefined} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-sm">
-                    {getInitials(profile?.display_name || null, profile?.email || '')}
-                  </AvatarFallback>
-                </Avatar>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+              {loadingProfiles ? (
+                <div className="flex items-center justify-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+              ) : (
+                <ScrollArea className="h-[500px]">
+                  <div className="space-y-3">
+                    {filteredProfiles.map((profileItem) => {
+                      const hasResponses =
+                        profileItem.profile_skills ||
+                        profileItem.profile_work_style ||
+                        profileItem.profile_activities;
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
-        >
-          {/* Stats */}
-          <StatsOverview />
-
-          {/* Tabs for different views */}
-          <Tabs defaultValue="allocations" className="space-y-6">
-            <TabsList className="bg-secondary/50 flex-wrap h-auto gap-1">
-              <TabsTrigger value="allocations" className="gap-2">
-                <Users className="w-4 h-4" />
-                Alocações
-              </TabsTrigger>
-              <TabsTrigger value="cycles" className="gap-2">
-                <Calendar className="w-4 h-4" />
-                Ciclos
-              </TabsTrigger>
-              <TabsTrigger value="leadership" className="gap-2">
-                <Crown className="w-4 h-4" />
-                Lideranças
-              </TabsTrigger>
-              <TabsTrigger value="suggestions" className="gap-2">
-                <LayoutDashboard className="w-4 h-4" />
-                Sugestões
-              </TabsTrigger>
-              <TabsTrigger value="coordinations" className="gap-2">
-                <Building2 className="w-4 h-4" />
-                Coordenadorias
-              </TabsTrigger>
-              <TabsTrigger value="gts" className="gap-2">
-                <Briefcase className="w-4 h-4" />
-                Grupos de Trabalho
-              </TabsTrigger>
-              <TabsTrigger value="profiles" className="gap-2">
-                <FileText className="w-4 h-4" />
-                Pesquisas ({profilesWithResponses.length})
-              </TabsTrigger>
-              <TabsTrigger value="management" className="gap-2">
-                <UserCog className="w-4 h-4" />
-                Gerenciar
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="allocations" className="space-y-6">
-              <AllocationManagement />
-            </TabsContent>
-
-            <TabsContent value="cycles" className="space-y-6">
-              <CyclesManagement />
-            </TabsContent>
-
-            <TabsContent value="leadership" className="space-y-6">
-              <LeadershipManagement />
-            </TabsContent>
-
-            <TabsContent value="suggestions" className="space-y-6">
-              <SuggestionsPanel />
-              <CoordinationGridFiltered />
-            </TabsContent>
-
-            <TabsContent value="coordinations">
-              <CoordinationGridFiltered />
-            </TabsContent>
-
-            <TabsContent value="gts">
-              <GTManagement />
-            </TabsContent>
-
-            <TabsContent value="profiles">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <FileText className="w-5 h-5 text-primary" />
-                    Respostas das Pesquisas de Perfil
-                  </CardTitle>
-                  <CardDescription>
-                    Visualize as respostas do questionário de alocação de cada membro (15 perguntas)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-4">
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar por nome ou email..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9"
-                      />
-                    </div>
+                      return (
+                        <motion.div
+                          key={profileItem.id}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          className="flex items-center justify-between p-4 rounded-lg border hover:border-primary/30 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-10 w-10">
+                              <AvatarImage src={profileItem.avatar_url || undefined} />
+                              <AvatarFallback className="bg-primary/10 text-primary">
+                                {getInitials(profileItem.display_name, profileItem.email)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="font-medium text-foreground">
+                                {profileItem.display_name || profileItem.email}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {profileItem.email}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={hasResponses ? 'default' : 'secondary'}>
+                              {hasResponses ? 'Respondido' : 'Pendente'}
+                            </Badge>
+                            {hasResponses && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setSelectedProfile(profileItem)}
+                              >
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </motion.div>
+                      );
+                    })}
                   </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+        );
+      case 'management':
+        return <AdminMembersManagement />;
+      default:
+        return <AllocationManagement />;
+    }
+  };
 
-                  {loadingProfiles ? (
-                    <div className="flex items-center justify-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <AdminSidebar activeTab={activeTab} onTabChange={setActiveTab} />
+
+        <div className="flex-1 flex flex-col min-h-screen">
+          {/* Header */}
+          <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-lg border-b border-border">
+            <div className="px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16 gap-2">
+                <div className="flex items-center gap-2">
+                  <SidebarTrigger />
+                  <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0">
+                    <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-accent">
+                      <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-primary-foreground" />
                     </div>
-                  ) : (
-                    <ScrollArea className="h-[500px]">
-                      <div className="space-y-3">
-                        {filteredProfiles.map((profileItem) => {
-                          const hasResponses =
-                            profileItem.profile_skills ||
-                            profileItem.profile_work_style ||
-                            profileItem.profile_activities;
+                    <div className="hidden sm:block">
+                      <h1 className="font-bold text-lg text-foreground">Painel Administrativo</h1>
+                      <p className="text-xs text-muted-foreground">Alocações CONSEJ</p>
+                    </div>
+                  </Link>
+                </div>
 
-                          return (
-                            <motion.div
-                              key={profileItem.id}
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              className="flex items-center justify-between p-4 rounded-lg border hover:border-primary/30 transition-colors"
-                            >
-                              <div className="flex items-center gap-3">
-                                <Avatar className="h-10 w-10">
-                                  <AvatarImage src={profileItem.avatar_url || undefined} />
-                                  <AvatarFallback className="bg-primary/10 text-primary">
-                                    {getInitials(profileItem.display_name, profileItem.email)}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <div>
-                                  <p className="font-medium text-foreground">
-                                    {profileItem.display_name || profileItem.email}
-                                  </p>
-                                  <p className="text-sm text-muted-foreground">
-                                    {profileItem.email}
-                                  </p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <Badge variant={hasResponses ? 'default' : 'secondary'}>
-                                  {hasResponses ? 'Respondido' : 'Pendente'}
-                                </Badge>
-                                {hasResponses && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setSelectedProfile(profileItem)}
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </div>
-                            </motion.div>
-                          );
-                        })}
-                      </div>
-                    </ScrollArea>
+                <div className="flex items-center gap-2 sm:gap-3">
+                  {cycles.length > 0 && (
+                    <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
+                      <SelectTrigger className="w-32 sm:w-52 shrink-0">
+                        <SelectValue>
+                          <span className="truncate">
+                            {cycles.find((c) => c.value === selectedQuarter)?.label || selectedQuarter}
+                          </span>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cycles.map((c) => (
+                          <SelectItem key={c.value} value={c.value}>
+                            <span className="flex items-center gap-2">
+                              {c.label}
+                              {c.is_current && (
+                                <Badge variant="secondary" className="text-xs">Atual</Badge>
+                              )}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
-                </CardContent>
-              </Card>
-            </TabsContent>
+                  <ReallocationDialog />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full"
+                    onClick={() => navigate('/profile')}
+                  >
+                    <Avatar className="h-9 w-9">
+                      <AvatarImage src={profile?.avatar_url || undefined} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                        {getInitials(profile?.display_name || null, profile?.email || '')}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </header>
 
-            <TabsContent value="management">
-              <AdminMembersManagement />
-            </TabsContent>
-          </Tabs>
-        </motion.div>
-      </main>
+          {/* Main Content */}
+          <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2 }}
+              className="space-y-8"
+            >
+              <StatsOverview />
+              {renderContent()}
+            </motion.div>
+          </main>
+
+          {/* Footer */}
+          <footer className="border-t border-border py-4 px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-center">
+              <span className="text-xs text-muted-foreground tracking-wide">
+                Developed by Kelvin Watson — 2026
+              </span>
+            </div>
+          </footer>
+        </div>
+      </div>
 
       {/* Profile Details Modal */}
       <Dialog open={!!selectedProfile} onOpenChange={() => setSelectedProfile(null)}>
@@ -416,7 +450,7 @@ const Admin = () => {
                   <div key={answer.id} className="p-3 rounded-lg bg-secondary/50">
                     <p className="text-xs text-muted-foreground mb-1">{answer.label}</p>
                     <p className="font-medium">
-                      {answer.isDirectorate 
+                      {answer.isDirectorate
                         ? getDirectorateName(answer.value)
                         : getAnswerLabel(answer.id, answer.value)
                       }
@@ -428,7 +462,7 @@ const Admin = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </SidebarProvider>
   );
 };
 
