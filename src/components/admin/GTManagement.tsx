@@ -577,7 +577,7 @@ export function GTManagement() {
                           className="h-7 text-xs gap-1 w-full justify-start"
                           onClick={() => setShowSuggestion(isOpen ? null : client.id)}
                         >
-                          <Sparkles className="h-3 w-3 text-amber-500" />
+                          <Sparkles className="h-3 w-3 text-accent" />
                           Sugestão de Equipe
                         </Button>
                         {isOpen && (
