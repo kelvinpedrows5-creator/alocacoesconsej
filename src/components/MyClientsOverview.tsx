@@ -62,7 +62,7 @@ export function MyClientsOverview() {
       const { data, error } = await supabase
         .from('demand_submissions')
         .select('id, title, user_id, gt_client_id, status, performed_at, created_at')
-        .eq('status', 'approved')
+        .eq('status', 'evaluated')
         .not('gt_client_id', 'is', null);
       if (error) throw error;
       return (data || []) as DemandSubmission[];
