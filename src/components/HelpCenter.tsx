@@ -275,6 +275,25 @@ export function HelpCenter() {
     fetchReports();
   };
 
+  const handleDeleteReport = async (reportId: string, type: 'sent' | 'received') => {
+    const { error } = await supabase
+      .from('help_reports')
+      .delete()
+      .eq('id', reportId);
+
+    if (error) {
+      toast.error('Erro ao excluir relato.');
+      return;
+    }
+
+    toast.success('Relato excluído com sucesso.');
+    if (type === 'sent') {
+      setSentReports((prev) => prev.filter((r) => r.id !== reportId));
+    } else {
+      setReports((prev) => prev.filter((r) => r.id !== reportId));
+    }
+  };
+
   const positionLabel = (type: string) =>
     type === 'director' ? 'Diretor(a)' : 'Gerente';
 
