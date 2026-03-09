@@ -324,6 +324,21 @@ export function MyClientsOverview() {
                     </AccordionItem>
                   </Accordion>
 
+                  {/* Handoff Survey Results - Client Profile */}
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="handoff-profile" className="border-none">
+                      <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">
+                        <div className="flex items-center gap-2">
+                          <MessageSquare className="w-4 h-4 text-muted-foreground" />
+                          Perfil do Cliente (Passagem de Bastão)
+                        </div>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <ClientHandoffProfile clientId={client.id} />
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+
                   {/* Contract Scope */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
