@@ -214,14 +214,24 @@ export function HandoffSurveySection() {
         <Card>
           <CardContent className="py-12 text-center">
             <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
-            <p className="text-muted-foreground">Você não estava alocado como consultor em nenhum Grupo de Trabalho no ciclo anterior.</p>
+            <p className="text-muted-foreground">Você não estava alocado como consultor em nenhum Grupo de Trabalho no ciclo {activeCycle.label}.</p>
           </CardContent>
         </Card>
       );
     }
 
     return (
-      <div className="space-y-6">{pendingSurveyClients.length > 0 && (
+      <div className="space-y-6">
+        {!canAnswerSurveys && (
+          <Alert>
+            <ClipboardList className="h-4 w-4" />
+            <AlertDescription>
+              Os clientes do ciclo <strong>{activeCycle.label}</strong> estão sendo exibidos, mas as pesquisas de passagem de bastão só poderão ser respondidas quando um novo ciclo for definido como atual.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {canAnswerSurveys && pendingSurveyClients.length > 0 && (
           <Alert>
             <AlertCircle className="h-4 w-4" />
             <AlertDescription>
