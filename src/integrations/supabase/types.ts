@@ -250,6 +250,8 @@ export type Database = {
       }
       clients: {
         Row: {
+          contract_scope_type: string | null
+          contract_scope_url: string | null
           created_at: string
           description: string | null
           id: string
@@ -257,6 +259,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          contract_scope_type?: string | null
+          contract_scope_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
@@ -264,6 +268,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          contract_scope_type?: string | null
+          contract_scope_url?: string | null
           created_at?: string
           description?: string | null
           id?: string
