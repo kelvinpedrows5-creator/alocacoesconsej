@@ -142,6 +142,23 @@ export function MyClientsOverview() {
     }
   };
 
+  const handleDownloadContract = async (url: string, clientName: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = `contrato_${clientName.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {
+      toast.error('Erro ao baixar o arquivo.');
+    }
+  };
+
   const handleRemoveContract = (clientId: string) => {
     updateClient({ id: clientId, updates: { contract_scope_url: null, contract_scope_type: null } });
   };
