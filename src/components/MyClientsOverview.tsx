@@ -221,6 +221,18 @@ export function MyClientsOverview() {
         </Select>
       </div>
 
+      {pendingSurveyClients.length > 0 && previousCycle && (
+        <Alert>
+          <Bell className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between gap-2 flex-wrap">
+            <span>
+              Você possui <strong>{pendingSurveyClients.length}</strong> cliente(s) de ciclos anteriores aguardando pesquisa de passagem de bastão.
+            </span>
+            <Badge variant="destructive">Responder agora</Badge>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {myClients.length === 0 ? (
         <Card>
           <CardContent className="py-12 text-center">
