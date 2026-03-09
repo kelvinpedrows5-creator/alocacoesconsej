@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LayoutDashboard, Menu } from 'lucide-react';
+import { Menu } from 'lucide-react';
+import logo from '@/assets/logo.png';
 import { StatsOverview } from '@/components/StatsOverview';
 import { MemberProfileResults } from '@/components/MemberProfileResults';
 import { MembersSection } from '@/components/MembersSection';
