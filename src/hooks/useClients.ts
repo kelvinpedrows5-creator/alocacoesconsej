@@ -6,6 +6,8 @@ export interface Client {
   id: string;
   name: string;
   description: string | null;
+  contract_scope_url: string | null;
+  contract_scope_type: string | null;
   created_at: string;
   updated_at: string;
 }
