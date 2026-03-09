@@ -375,7 +375,7 @@ export function MyProfileSection() {
           </TabsTrigger>
           <TabsTrigger value="allocation" className="gap-2">
             <Sparkles className="w-4 h-4" />
-            Perfil de Alocação
+            Pesquisa de Perfil
           </TabsTrigger>
           <TabsTrigger value="coordination" className="gap-2">
             <Building2 className="w-4 h-4" />
@@ -443,7 +443,7 @@ export function MyProfileSection() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
-                Perfil de Alocação
+                Pesquisa de Perfil
               </CardTitle>
               <CardDescription>
                 Responda as 15 perguntas para descobrir quais coordenadorias mais combinam com seu perfil.
