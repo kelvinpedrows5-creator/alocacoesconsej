@@ -422,7 +422,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q19',
     question: 'Qual seu turno com maior disponibilidade?',
-    category: 'coordenador',
+    category: 'consultor',
     type: 'radio',
     options: [
       { value: 'manha', label: 'Manhã' },
