@@ -349,7 +349,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q6',
     question: 'Qual é o seu estilo de comunicação preferido?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'direct', label: 'Direto e objetivo' },
