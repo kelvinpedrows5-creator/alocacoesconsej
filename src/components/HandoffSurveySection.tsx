@@ -237,73 +237,73 @@ export function HandoffSurveySection() {
               {pendingSurveyClients.map(client => {
                 const clientGTMembers = getGTMembersByClient(client.id, activeCycleId);
                 const consultants = clientGTMembers.filter(m => m.role === 'consultant');
-                  
-                  return (
-                    <Card key={client.id} className="border-destructive/50">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center">
-                              <Building className="h-5 w-5 text-destructive" />
-                            </div>
-                            <div>
-                              <CardTitle className="text-lg">{client.name}</CardTitle>
-                              <p className="text-sm text-muted-foreground">{activeCycle?.label}</p>
-                            </div>
+                
+                return (
+                  <Card key={client.id} className="border-destructive/50">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-destructive/10 flex items-center justify-center">
+                            <Building className="h-5 w-5 text-destructive" />
                           </div>
-                          <Button 
-                            size="sm"
-                            onClick={() => setSurveyDialog({ 
-                              clientId: client.id, 
-                              clientName: client.name,
-                              cycleId: activeCycleId,
-                              cycleLabel: activeCycle?.label || ''
-                            })}
-                          >
-                            <ClipboardList className="h-4 w-4 mr-1" />
-                            Responder
-                          </Button>
+                          <div>
+                            <CardTitle className="text-lg">{client.name}</CardTitle>
+                            <p className="text-sm text-muted-foreground">{activeCycle.label}</p>
+                          </div>
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <Accordion type="single" collapsible>
-                          <AccordionItem value="members" className="border-none">
-                            <AccordionTrigger className="text-sm py-2">
-                              <span className="flex items-center gap-2">
-                                <Users className="h-4 w-4" />
-                                Membros do GT ({clientGTMembers.length})
-                              </span>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                              <div className="flex flex-wrap gap-2 pt-2">
-                                {clientGTMembers.map(member => {
-                                  const memberProfile = getProfileByUserId(member.user_id);
-                                  return (
-                                    <div key={member.id} className="flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-3 py-1">
-                                      <Avatar className="h-6 w-6">
-                                        <AvatarImage src={memberProfile?.avatar_url || undefined} />
-                                        <AvatarFallback className="text-xs">
-                                          {getInitials(memberProfile?.display_name || null, memberProfile?.email || '')}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <span className="text-sm">{memberProfile?.display_name || memberProfile?.email}</span>
-                                      <Badge className={`text-xs ${getRoleBadgeVariant(member.role)}`}>
-                                        {getRoleLabel(member.role)}
-                                      </Badge>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                        </Accordion>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                        <Button 
+                          size="sm"
+                          onClick={() => setSurveyDialog({ 
+                            clientId: client.id, 
+                            clientName: client.name,
+                            cycleId: activeCycleId,
+                            cycleLabel: activeCycle?.label || ''
+                          })}
+                        >
+                          <ClipboardList className="h-4 w-4 mr-1" />
+                          Responder
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <Accordion type="single" collapsible>
+                        <AccordionItem value="members" className="border-none">
+                          <AccordionTrigger className="text-sm py-2">
+                            <span className="flex items-center gap-2">
+                              <Users className="h-4 w-4" />
+                              Consultores do GT ({consultants.length})
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="flex flex-wrap gap-2 pt-2">
+                              {consultants.map(member => {
+                                const memberProfile = getProfileByUserId(member.user_id);
+                                return (
+                                  <div key={member.id} className="flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-3 py-1">
+                                    <Avatar className="h-6 w-6">
+                                      <AvatarImage src={memberProfile?.avatar_url || undefined} />
+                                      <AvatarFallback className="text-xs">
+                                        {getInitials(memberProfile?.display_name || null, memberProfile?.email || '')}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm">{memberProfile?.display_name || memberProfile?.email}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Qualquer consultor pode responder a pesquisa. Após a primeira resposta, ela será marcada como concluída para todos.
+                            </p>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
-          )}
+          </div>
+        )}
 
           {/* Completed surveys */}
           {completedSurveyClients.length > 0 && (
