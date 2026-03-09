@@ -378,6 +378,8 @@ export function MyClientsOverview() {
                         )}
                       </div>
                     )}
+                  </div>
+
                   {/* Handoff Survey */}
                   {previousCycle && activeCycleId === currentCycle?.id && (
                     <div className="space-y-2">
