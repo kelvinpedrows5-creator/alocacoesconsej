@@ -274,11 +274,111 @@ export const cycles = [
 // Legacy export for backwards compatibility
 export const quarters = cycles;
 
-// Profile questions for matching members to coordinations (15 questions)
-export const profileQuestions = [
+// Profile questions for matching members to coordinations
+// Category: 'coordenadoria' = first 6 questions about coordination/work preferences
+// Category: 'estilo' = remaining questions about consultant style
+export type ProfileQuestionType = 'radio' | 'text' | 'compound';
+
+export interface ProfileQuestionOption {
+  value: string;
+  label: string;
+}
+
+export interface ProfileQuestion {
+  id: string;
+  question: string;
+  category: 'coordenadoria' | 'estilo';
+  type: ProfileQuestionType;
+  options?: ProfileQuestionOption[];
+  subQuestions?: { id: string; label: string; type: 'radio' | 'text'; options?: ProfileQuestionOption[] }[];
+}
+
+export const profileQuestions: ProfileQuestion[] = [
+  // === COORDENADORIA (6 perguntas) ===
+  {
+    id: 'q5',
+    question: 'Em qual diretoria você tem mais interesse em atuar?',
+    category: 'coordenadoria',
+    type: 'radio',
+    options: [
+      { value: 'dir-1', label: 'Demandas - Procedimentos e Clientes' },
+      { value: 'dir-2', label: 'Negócios - Closer e Growth' },
+      { value: 'dir-3', label: 'Presidência - Operações e Parcerias' },
+      { value: 'dir-4', label: 'Vice-Presidência - Inovação, Finanças e Estratégia' },
+      { value: 'dir-5', label: 'Marketing - Branding, Social Media e Inbound' },
+      { value: 'dir-6', label: 'Pesquisas e Pessoas - Pesquisas, Desempenho e Experiência' },
+    ],
+  },
+  {
+    id: 'q16',
+    question: 'Quais desses estilos de demandas mais se alinham com a sua preferência?',
+    category: 'coordenadoria',
+    type: 'radio',
+    options: [
+      { value: 'contratual', label: 'Contratual' },
+      { value: 'civil', label: 'Civil' },
+      { value: 'propriedade_industrial', label: 'Propriedade Industrial' },
+      { value: 'trabalhista_societario', label: 'Trabalhista/Societário' },
+    ],
+  },
+  {
+    id: 'q17',
+    question: 'Quantos momentos por dia você conseguirá estar disponível para a CONSEJ?',
+    category: 'coordenadoria',
+    type: 'radio',
+    options: [
+      { value: '1', label: '1 momento por dia' },
+      { value: '2', label: '2 momentos por dia' },
+      { value: '3', label: '3 momentos por dia' },
+      { value: '4_ou_mais', label: '4 ou mais momentos por dia' },
+    ],
+  },
+  {
+    id: 'q18',
+    question: 'Quais escopos você mais executou, tem mais afinidades ou não gosta de executar?',
+    category: 'coordenadoria',
+    type: 'compound',
+    subQuestions: [
+      { id: 'q18_affinity', label: 'Escopos que mais executou / tem afinidade', type: 'text' },
+      { id: 'q18_dislikes', label: 'Escopos que não gosta de executar', type: 'text' },
+    ],
+  },
+  {
+    id: 'q19',
+    question: 'Qual seu turno com maior disponibilidade?',
+    category: 'coordenadoria',
+    type: 'radio',
+    options: [
+      { value: 'manha', label: 'Manhã' },
+      { value: 'tarde', label: 'Tarde' },
+      { value: 'noite', label: 'Noite' },
+      { value: 'flexivel', label: 'Flexível (qualquer turno)' },
+    ],
+  },
+  {
+    id: 'q20',
+    question: 'Existe alguma pessoa que você não gostou de trabalhar junto?',
+    category: 'coordenadoria',
+    type: 'compound',
+    subQuestions: [
+      {
+        id: 'q20_answer',
+        label: 'Resposta',
+        type: 'radio',
+        options: [
+          { value: 'nao', label: 'Não' },
+          { value: 'sim', label: 'Sim' },
+        ],
+      },
+      { id: 'q20_details', label: 'Se sim, quem e por quê? (confidencial)', type: 'text' },
+    ],
+  },
+  // === ESTILO DO CONSULTOR (10 perguntas) ===
   {
     id: 'q1',
     question: 'Qual área você tem mais interesse em desenvolver habilidades?',
+    category: 'estilo',
+    type: 'radio',
     options: [
       { value: 'analytical', label: 'Análise de dados e pesquisas' },
       { value: 'creative', label: 'Criatividade e comunicação visual' },
@@ -290,6 +390,8 @@ export const profileQuestions = [
   {
     id: 'q2',
     question: 'Como você prefere trabalhar?',
+    category: 'estilo',
+    type: 'radio',
     options: [
       { value: 'autonomous', label: 'De forma autônoma e independente' },
       { value: 'collaborative', label: 'Em equipe e colaborativamente' },
@@ -300,6 +402,8 @@ export const profileQuestions = [
   {
     id: 'q3',
     question: 'Qual tipo de atividade mais te motiva?',
+    category: 'estilo',
+    type: 'radio',
     options: [
       { value: 'client', label: 'Contato direto com clientes' },
       { value: 'internal', label: 'Melhoria de processos internos' },
@@ -311,6 +415,8 @@ export const profileQuestions = [
   {
     id: 'q4',
     question: 'Qual competência você mais deseja desenvolver?',
+    category: 'estilo',
+    type: 'radio',
     options: [
       { value: 'negotiation', label: 'Negociação e fechamento de negócios' },
       { value: 'marketing', label: 'Marketing digital e branding' },
@@ -320,20 +426,10 @@ export const profileQuestions = [
     ],
   },
   {
-    id: 'q5',
-    question: 'Em qual diretoria você tem mais interesse em atuar?',
-    options: [
-      { value: 'dir-1', label: 'Demandas - Procedimentos e Clientes' },
-      { value: 'dir-2', label: 'Negócios - Closer e Growth' },
-      { value: 'dir-3', label: 'Presidência - Operações e Parcerias' },
-      { value: 'dir-4', label: 'Vice-Presidência - Inovação, Finanças e Estratégia' },
-      { value: 'dir-5', label: 'Marketing - Branding, Social Media e Inbound' },
-      { value: 'dir-6', label: 'Pesquisas e Pessoas - Pesquisas, Desempenho e Experiência' },
-    ],
-  },
-  {
     id: 'q6',
     question: 'Qual é o seu estilo de comunicação preferido?',
+    category: 'estilo',
+    type: 'radio',
     options: [
       { value: 'direct', label: 'Direto e objetivo' },
       { value: 'detailed', label: 'Detalhado e explicativo' },
@@ -344,6 +440,8 @@ export const profileQuestions = [
   {
     id: 'q7',
     question: 'Como você costuma resolver problemas?',
+    category: 'estilo',
+    type: 'radio',
     options: [
       { value: 'analytical_approach', label: 'Analisando dados e informações' },
       { value: 'intuitive', label: 'Confiando na intuição e experiência' },
@@ -354,6 +452,8 @@ export const profileQuestions = [
   {
     id: 'q8',
     question: 'Como você gerencia seu tempo e prioridades?',
+    category: 'estilo',
+    type: 'radio',
     options: [
       { value: 'structured', label: 'Com listas e cronogramas detalhados' },
       { value: 'flexible', label: 'De forma flexível, adaptando conforme necessário' },
@@ -364,6 +464,8 @@ export const profileQuestions = [
   {
     id: 'q9',
     question: 'Qual papel você costuma assumir em equipes?',
+    category: 'estilo',
+    type: 'radio',
     options: [
       { value: 'leader_role', label: 'Líder - organizando e direcionando' },
       { value: 'executor', label: 'Executor - fazendo acontecer' },
@@ -375,6 +477,8 @@ export const profileQuestions = [
   {
     id: 'q10',
     question: 'Como você prefere aprender coisas novas?',
+    category: 'estilo',
+    type: 'radio',
     options: [
       { value: 'hands_on', label: 'Colocando a mão na massa' },
       { value: 'reading', label: 'Lendo e estudando materiais' },
@@ -385,51 +489,13 @@ export const profileQuestions = [
   {
     id: 'q11',
     question: 'Como você lida com situações de pressão?',
+    category: 'estilo',
+    type: 'radio',
     options: [
       { value: 'calm', label: 'Mantenho a calma e foco no essencial' },
       { value: 'energized', label: 'Fico mais energizado e produtivo' },
       { value: 'delegate', label: 'Delego e busco apoio' },
       { value: 'plan', label: 'Reorganizo prioridades e faço um plano' },
-    ],
-  },
-  {
-    id: 'q12',
-    question: 'Qual estilo de liderança você mais admira?',
-    options: [
-      { value: 'servant', label: 'Liderança servidora - apoiando a equipe' },
-      { value: 'visionary', label: 'Liderança visionária - inspirando com propósito' },
-      { value: 'democratic', label: 'Liderança democrática - decisões em conjunto' },
-      { value: 'coaching', label: 'Liderança coach - desenvolvendo pessoas' },
-    ],
-  },
-  {
-    id: 'q13',
-    question: 'Como você prefere receber feedback?',
-    options: [
-      { value: 'direct_feedback', label: 'Direto e frequente' },
-      { value: 'formal', label: 'Em momentos formais e estruturados' },
-      { value: 'written', label: 'Por escrito, para refletir depois' },
-      { value: 'one_on_one', label: 'Em conversas individuais' },
-    ],
-  },
-  {
-    id: 'q14',
-    question: 'Que tipo de projeto te atrai mais?',
-    options: [
-      { value: 'new_initiative', label: 'Criar algo do zero' },
-      { value: 'improvement', label: 'Melhorar processos existentes' },
-      { value: 'scaling', label: 'Escalar e expandir iniciativas' },
-      { value: 'problem_solving', label: 'Resolver problemas complexos' },
-    ],
-  },
-  {
-    id: 'q15',
-    question: 'Qual ferramenta de trabalho colaborativo você prefere?',
-    options: [
-      { value: 'async', label: 'Ferramentas assíncronas (email, documentos)' },
-      { value: 'realtime', label: 'Comunicação em tempo real (chat, calls)' },
-      { value: 'visual_tools', label: 'Ferramentas visuais (quadros, fluxos)' },
-      { value: 'mixed', label: 'Combinação de diferentes ferramentas' },
     ],
   },
 ];
