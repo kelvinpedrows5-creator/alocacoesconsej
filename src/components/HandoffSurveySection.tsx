@@ -95,6 +95,9 @@ export function HandoffSurveySection() {
     ? visibleCycles[currentCycleIndex + 1] 
     : null;
 
+  // Check if surveys can be answered (only when there's a new current cycle)
+  const canAnswerSurveys = !!currentCycle && !!previousCycle;
+  
   const activeCycleId = previousCycle?.id || '';
   const activeCycle = previousCycle;
 
