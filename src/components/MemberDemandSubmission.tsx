@@ -392,9 +392,10 @@ export function MemberDemandSubmission() {
             <div className="space-y-3">
               {submissions
                 .filter((sub) => {
-                  if (filterMonth === 'all') return true;
                   const date = sub.performed_at ? new Date(sub.performed_at) : new Date(sub.created_at);
-                  return date.getMonth() === parseInt(filterMonth);
+                  if (filterYear !== 'all' && date.getFullYear() !== parseInt(filterYear)) return false;
+                  if (filterMonth !== 'all' && date.getMonth() !== parseInt(filterMonth)) return false;
+                  return true;
                 })
                 .map((sub) => (
                 <motion.div
