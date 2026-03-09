@@ -188,7 +188,7 @@ export function MyClientsOverview() {
                               if (!answer) return null;
                               return (
                                 <div key={idx} className="bg-muted/30 rounded-lg p-3">
-                                  <p className="text-xs font-medium text-muted-foreground mb-1">{q}</p>
+                                  <p className="text-xs font-medium text-muted-foreground mb-1">{q.label}</p>
                                   <p className="text-sm">{answer as string}</p>
                                 </div>
                               );
