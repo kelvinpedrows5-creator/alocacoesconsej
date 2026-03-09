@@ -116,6 +116,37 @@ export function MyClientsOverview() {
   const cycleClients = getClientsByCycle(activeCycleId);
   const myClients = cycleClients.filter(client => isUserInGT(client.id, activeCycleId));
 
+  // Find previous cycle for handoff survey notification
+  const visibleCycles = cycles.filter(c => c.is_visible).sort((a, b) => b.value.localeCompare(a.value));
+  const currentCycleIndex = visibleCycles.findIndex(c => c.id === currentCycle?.id);
+  const previousCycle = currentCycleIndex >= 0 && currentCycleIndex < visibleCycles.length - 1 
+    ? visibleCycles[currentCycleIndex + 1] 
+    : null;
+
+  // Get clients from previous cycle where user was in GT
+  const previousCycleClients = previousCycle 
+    ? getClientsByCycle(previousCycle.id).filter(client => isUserInGT(client.id, previousCycle.id))
+    : [];
+
+  // Check which surveys are already completed for previous cycle
+  const { data: completedSurveys = [] } = useQuery({
+    queryKey: ['completed_handoff_surveys', previousCycle?.id, profile?.user_id],
+    queryFn: async () => {
+      if (!previousCycle || !profile?.user_id) return [];
+      const { data } = await supabase
+        .from('gt_handoff_surveys')
+        .select('client_id')
+        .eq('cycle_id', previousCycle.id)
+        .eq('user_id', profile.user_id);
+      return (data || []).map(s => s.client_id);
+    },
+    enabled: !!previousCycle && !!profile?.user_id,
+  });
+
+  const pendingSurveyClients = previousCycleClients.filter(
+    client => !completedSurveys.includes(client.id)
+  );
+
   const handleSaveLink = (clientId: string) => {
     if (!contractLink.trim()) return;
     updateClient({ id: clientId, updates: { contract_scope_url: contractLink.trim(), contract_scope_type: 'link' } });
