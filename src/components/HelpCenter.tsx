@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, Send, CheckCircle, Inbox, MessageSquare } from 'lucide-react';
+import { Heart, Send, CheckCircle, Inbox, MessageSquare, MessageCircle, CheckCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
@@ -28,6 +28,8 @@ interface Report {
   created_at: string;
   sender_name: string;
   is_read: boolean;
+  status: string;
+  leader_comment: string | null;
 }
 
 const directorateNames: Record<string, string> = {
@@ -49,6 +51,9 @@ export function HelpCenter() {
   const [sent, setSent] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [reportsLoading, setReportsLoading] = useState(false);
+  const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [replyComment, setReplyComment] = useState('');
+  const [replyLoading, setReplyLoading] = useState(false);
 
   const isLeader = user
     ? positions.some((p) => p.user_id === user.id)
@@ -97,7 +102,7 @@ export function HelpCenter() {
 
     const { data, error } = await supabase
       .from('help_reports')
-      .select('id, message, created_at, user_id, is_read')
+      .select('id, message, created_at, user_id, is_read, status, leader_comment')
       .eq('target_leader_id', user.id)
       .order('created_at', { ascending: false });
 
@@ -123,6 +128,8 @@ export function HelpCenter() {
         created_at: r.created_at,
         sender_name: profileMap[r.user_id] || 'Membro',
         is_read: r.is_read,
+        status: r.status,
+        leader_comment: r.leader_comment,
       }))
     );
     setReportsLoading(false);
@@ -134,7 +141,7 @@ export function HelpCenter() {
 
   const markReportsAsRead = async () => {
     if (!user) return;
-    const unreadIds = reports.filter((r) => !(r as any).is_read).map((r) => r.id);
+    const unreadIds = reports.filter((r) => !r.is_read).map((r) => r.id);
     if (unreadIds.length === 0) return;
     await supabase
       .from('help_reports')
@@ -165,8 +172,47 @@ export function HelpCenter() {
     setTimeout(() => setSent(false), 4000);
   };
 
+  const handleReply = async (reportId: string) => {
+    if (!replyComment.trim()) return;
+    setReplyLoading(true);
+
+    const { error } = await supabase
+      .from('help_reports')
+      .update({ leader_comment: replyComment.trim(), is_read: true })
+      .eq('id', reportId);
+
+    setReplyLoading(false);
+
+    if (error) {
+      toast.error('Erro ao enviar comentário.');
+      return;
+    }
+
+    toast.success('Comentário enviado com sucesso.');
+    setReplyComment('');
+    setReplyingTo(null);
+    fetchReports();
+  };
+
+  const handleResolve = async (reportId: string) => {
+    const { error } = await supabase
+      .from('help_reports')
+      .update({ status: 'resolved', is_read: true })
+      .eq('id', reportId);
+
+    if (error) {
+      toast.error('Erro ao marcar como resolvido.');
+      return;
+    }
+
+    toast.success('Situação marcada como resolvida.');
+    fetchReports();
+  };
+
   const positionLabel = (type: string) =>
     type === 'director' ? 'Diretor(a)' : 'Gerente';
+
+  const unresolvedCount = reports.filter((r) => r.status !== 'resolved').length;
 
   return (
     <div className="space-y-6 max-w-2xl mx-auto">
@@ -188,9 +234,9 @@ export function HelpCenter() {
             <TabsTrigger value="reports" className="flex-1 gap-2" onClick={() => { fetchReports(); markReportsAsRead(); }}>
               <Inbox className="h-4 w-4" />
               Reportes
-              {reports.filter((r) => !r.is_read).length > 0 && (
+              {unresolvedCount > 0 && (
                 <Badge variant="destructive" className="ml-1 text-xs px-1.5 py-0">
-                  {reports.filter((r) => !r.is_read).length}
+                  {unresolvedCount}
                 </Badge>
               )}
             </TabsTrigger>
@@ -287,11 +333,15 @@ export function HelpCenter() {
                     {reports.map((report, idx) => (
                       <div key={report.id}>
                         {idx > 0 && <Separator className="mb-4" />}
-                        <div className={`space-y-2 ${!report.is_read ? 'pl-3 border-l-2 border-destructive' : ''}`}>
-                          <div className="flex items-center justify-between">
+                        <div className={`space-y-3 ${report.status !== 'resolved' ? 'pl-3 border-l-2 border-destructive' : 'pl-3 border-l-2 border-primary'}`}>
+                          <div className="flex items-center justify-between flex-wrap gap-1">
                             <span className="font-medium text-sm text-foreground flex items-center gap-2">
                               {report.sender_name}
-                              {!report.is_read && <Badge variant="destructive" className="text-xs px-1.5 py-0">Novo</Badge>}
+                              {report.status === 'resolved' ? (
+                                <Badge variant="outline" className="text-xs border-primary text-primary">Resolvido</Badge>
+                              ) : (
+                                <Badge variant="destructive" className="text-xs px-1.5 py-0">Pendente</Badge>
+                              )}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {format(new Date(report.created_at), "dd 'de' MMMM 'de' yyyy, HH:mm", { locale: ptBR })}
@@ -300,6 +350,64 @@ export function HelpCenter() {
                           <p className="text-sm text-muted-foreground whitespace-pre-wrap">
                             {report.message}
                           </p>
+
+                          {report.leader_comment && (
+                            <div className="bg-muted/50 rounded-md p-3 space-y-1">
+                              <span className="text-xs font-medium text-foreground flex items-center gap-1">
+                                <MessageCircle className="h-3 w-3" /> Seu comentário
+                              </span>
+                              <p className="text-sm text-muted-foreground">{report.leader_comment}</p>
+                            </div>
+                          )}
+
+                          {report.status !== 'resolved' && (
+                            <div className="flex gap-2 flex-wrap">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  setReplyingTo(replyingTo === report.id ? null : report.id);
+                                  setReplyComment(report.leader_comment || '');
+                                }}
+                              >
+                                <MessageCircle className="h-3.5 w-3.5 mr-1" />
+                                {report.leader_comment ? 'Editar comentário' : 'Comentar'}
+                              </Button>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                onClick={() => handleResolve(report.id)}
+                              >
+                                <CheckCheck className="h-3.5 w-3.5 mr-1" />
+                                Marcar como resolvido
+                              </Button>
+                            </div>
+                          )}
+
+                          {replyingTo === report.id && (
+                            <div className="space-y-2 pt-1">
+                              <Textarea
+                                placeholder="Escreva seu comentário para o membro..."
+                                value={replyComment}
+                                onChange={(e) => setReplyComment(e.target.value)}
+                                rows={3}
+                                maxLength={1000}
+                              />
+                              <div className="flex gap-2 justify-end">
+                                <Button variant="ghost" size="sm" onClick={() => { setReplyingTo(null); setReplyComment(''); }}>
+                                  Cancelar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleReply(report.id)}
+                                  disabled={!replyComment.trim() || replyLoading}
+                                >
+                                  <Send className="h-3.5 w-3.5 mr-1" />
+                                  {replyLoading ? 'Enviando...' : 'Enviar'}
+                                </Button>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

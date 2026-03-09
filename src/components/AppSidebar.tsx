@@ -31,27 +31,36 @@ const menuItems = [
   { title: 'Meus Clientes', value: 'my-clients', icon: UserCheck },
 ];
 
+function NotificationBadge({ count, collapsed }: { count: number; collapsed: boolean }) {
+  if (count === 0) return null;
+  if (collapsed) {
+    return <span className="absolute -top-1.5 -right-1.5 h-3 w-3 rounded-full bg-destructive" />;
+  }
+  return (
+    <Badge variant="destructive" className="text-xs px-1.5 py-0 h-5 min-w-5 flex items-center justify-center">
+      {count}
+    </Badge>
+  );
+}
+
 export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
   const { state, setOpenMobile } = useSidebar();
   const collapsed = state === 'collapsed';
   const { isAdmin, user } = useAuthContext();
   const { positions } = useLeadership();
 
-  // Check if user is Gerente de Demandas (directorate_id = 'dir-1', position_type = 'manager')
   const isDemandasManager = user
     ? positions.some(
         (p) => p.user_id === user.id && p.directorate_id === 'dir-1' && p.position_type === 'manager'
       )
     : false;
 
-  // Check if user is Negócios manager or director (directorate_id = 'dir-2')
   const isNegociosLeadership = user
     ? positions.some(
         (p) => p.user_id === user.id && p.directorate_id === 'dir-2' && (p.position_type === 'manager' || p.position_type === 'director')
       )
     : false;
 
-  // Check if user is any director
   const isDirector = user
     ? positions.some(
         (p) => p.user_id === user.id && p.position_type === 'director'
@@ -67,39 +76,116 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
     ? positions.some((p) => p.user_id === user.id)
     : false;
 
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadHelpCount, setUnreadHelpCount] = useState(0);
+  const [pendingDemandsCount, setPendingDemandsCount] = useState(0);
+  const [returnedDemandsCount, setReturnedDemandsCount] = useState(0);
+  const [pendingOpportunitiesCount, setPendingOpportunitiesCount] = useState(0);
 
+  // Help reports notifications (leaders)
   useEffect(() => {
     if (!isLeader || !user) return;
-
     const fetchUnread = async () => {
       const { count } = await supabase
         .from('help_reports')
         .select('id', { count: 'exact', head: true })
         .eq('target_leader_id', user.id)
-        .eq('is_read', false);
-      setUnreadCount(count || 0);
+        .neq('status', 'resolved');
+      setUnreadHelpCount(count || 0);
     };
-
     fetchUnread();
-
     const channel = supabase
       .channel('help-reports-unread')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'help_reports' }, () => {
-        fetchUnread();
-      })
-      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'help_reports' }, () => {
-        fetchUnread();
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'help_reports' }, () => fetchUnread())
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
   }, [isLeader, user?.id]);
+
+  // Pending demands notifications (Demandas manager)
+  useEffect(() => {
+    if (!isDemandasManager || !user) return;
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from('demand_submissions')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      setPendingDemandsCount(count || 0);
+    };
+    fetchPending();
+    const channel = supabase
+      .channel('demands-pending')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'demand_submissions' }, () => fetchPending())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isDemandasManager, user?.id]);
+
+  // Returned demands notifications (members)
+  useEffect(() => {
+    if (!showMemberDemands || !user) return;
+    const fetchReturned = async () => {
+      const { count } = await supabase
+        .from('demand_submissions')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('status', 'returned');
+      setReturnedDemandsCount(count || 0);
+    };
+    fetchReturned();
+    const channel = supabase
+      .channel('demands-returned')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'demand_submissions' }, () => fetchReturned())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [showMemberDemands, user?.id]);
+
+  // Pending opportunities notifications (Negócios leadership)
+  useEffect(() => {
+    if (!isNegociosLeadership || !user) return;
+    const fetchPending = async () => {
+      const { count } = await supabase
+        .from('business_opportunities')
+        .select('id', { count: 'exact', head: true })
+        .eq('status', 'pending');
+      setPendingOpportunitiesCount(count || 0);
+    };
+    fetchPending();
+    const channel = supabase
+      .channel('opportunities-pending')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'business_opportunities' }, () => fetchPending())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [isNegociosLeadership, user?.id]);
 
   const handleClick = (value: string) => {
     onTabChange(value);
     setOpenMobile(false);
   };
+
+  const renderMenuButton = (
+    value: string,
+    label: string,
+    Icon: React.ElementType,
+    count: number,
+    tooltip: string
+  ) => (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        onClick={() => handleClick(value)}
+        isActive={activeTab === value}
+        tooltip={tooltip}
+      >
+        <div className="relative">
+          <Icon className="h-4 w-4" />
+          {collapsed && <NotificationBadge count={count} collapsed={true} />}
+        </div>
+        {!collapsed && (
+          <span className="flex items-center gap-2">
+            {label}
+            <NotificationBadge count={count} collapsed={false} />
+          </span>
+        )}
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
 
   return (
     <Sidebar collapsible="icon">
@@ -129,16 +215,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
             <SidebarGroupLabel>Gestão</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={() => handleClick('demands')}
-                    isActive={activeTab === 'demands'}
-                    tooltip="Controle de Demandas"
-                  >
-                    <ClipboardList className="h-4 w-4" />
-                    {!collapsed && <span>Controle de Demandas</span>}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                {renderMenuButton('demands', 'Controle de Demandas', ClipboardList, pendingDemandsCount, 'Controle de Demandas')}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -149,18 +226,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
             <SidebarGroupLabel>Minhas Atividades</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {showMemberDemands && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      onClick={() => handleClick('my-demands')}
-                      isActive={activeTab === 'my-demands'}
-                      tooltip="Minhas Demandas"
-                    >
-                      <ClipboardList className="h-4 w-4" />
-                      {!collapsed && <span>Minhas Demandas</span>}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
+                {showMemberDemands && renderMenuButton('my-demands', 'Minhas Demandas', ClipboardList, returnedDemandsCount, 'Minhas Demandas')}
                 {showMemberOpportunities && (
                   <SidebarMenuItem>
                     <SidebarMenuButton
@@ -183,16 +249,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
             <SidebarGroupLabel>Negócios</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    onClick={() => handleClick('opportunities-management')}
-                    isActive={activeTab === 'opportunities-management'}
-                    tooltip="Gestão de Oportunidades"
-                  >
-                    <Lightbulb className="h-4 w-4" />
-                    {!collapsed && <span>Gestão de Oportunidades</span>}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                {renderMenuButton('opportunities-management', 'Gestão de Oportunidades', Lightbulb, pendingOpportunitiesCount, 'Gestão de Oportunidades')}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
@@ -220,30 +277,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
       </SidebarContent>
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={() => handleClick('help-center')}
-              isActive={activeTab === 'help-center'}
-              tooltip="Central de Ajuda"
-            >
-              <div className="relative">
-                <Heart className="h-4 w-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1.5 -right-1.5 h-3 w-3 rounded-full bg-destructive" />
-                )}
-              </div>
-              {!collapsed && (
-                <span className="flex items-center gap-2">
-                  Central de Ajuda
-                  {unreadCount > 0 && (
-                    <Badge variant="destructive" className="text-xs px-1.5 py-0 h-5 min-w-5 flex items-center justify-center">
-                      {unreadCount}
-                    </Badge>
-                  )}
-                </span>
-              )}
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {renderMenuButton('help-center', 'Central de Ajuda', Heart, unreadHelpCount, 'Central de Ajuda')}
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
