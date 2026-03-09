@@ -456,6 +456,30 @@ export type Database = {
           },
         ]
       }
+      help_reports: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          target_leader_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          target_leader_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          target_leader_id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       leadership_positions: {
         Row: {
           created_at: string
