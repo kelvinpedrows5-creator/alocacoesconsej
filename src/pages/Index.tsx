@@ -107,6 +107,8 @@ const Index = () => {
         return <BusinessOpportunitiesManagement />;
       case 'help-center':
         return <HelpCenter />;
+      case 'handoff-survey':
+        return <HandoffSurveySection />;
       default:
         return <CompanyOverview />;
     }

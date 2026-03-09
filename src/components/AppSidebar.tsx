@@ -305,6 +305,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 )}
+                {renderMenuButton('handoff-survey', 'Passagem de Bastão', FileText, pendingHandoffCount, 'Passagem de Bastão')}
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
