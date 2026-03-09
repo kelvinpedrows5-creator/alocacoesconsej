@@ -27,6 +27,7 @@ interface Report {
   message: string;
   created_at: string;
   sender_name: string;
+  is_read: boolean;
 }
 
 const directorateNames: Record<string, string> = {
