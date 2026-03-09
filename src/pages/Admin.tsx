@@ -25,6 +25,7 @@ import { CyclesManagement } from '@/components/admin/CyclesManagement';
 import { LeadershipManagement } from '@/components/admin/LeadershipManagement';
 import { AllocationManagement } from '@/components/admin/AllocationManagement';
 import { GTManagement } from '@/components/admin/GTManagement';
+import { HandoffManagement } from '@/components/admin/HandoffManagement';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
