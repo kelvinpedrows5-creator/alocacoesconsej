@@ -175,7 +175,8 @@ const Index = () => {
               transition={{ duration: 0.2 }}
               className="space-y-8"
             >
-              <StatsOverview />
+              {activeTab === 'overview' && <StatsOverview />}
+              {activeTab === 'clients' && <StatsOverview variant="clients-only" />}
               {renderContent()}
             </motion.div>
           </main>

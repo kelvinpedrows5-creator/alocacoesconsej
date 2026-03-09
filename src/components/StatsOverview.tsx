@@ -37,7 +37,7 @@ const StatCard = ({
   </motion.div>
 );
 
-export const StatsOverview = () => {
+export const StatsOverview = ({ variant = 'full' }: { variant?: 'full' | 'clients-only' }) => {
   const { isAdmin, user } = useAuthContext();
   const { 
     totalMembers, 
@@ -48,7 +48,14 @@ export const StatsOverview = () => {
     isLoading 
   } = useRealStats(user?.id);
 
-  // Admin sees full stats including clients (GTs)
+  if (variant === 'clients-only') {
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard icon={Briefcase} label="Clientes (GTs)" value={isLoading ? '...' : totalClients} color="#8B5CF6" delay={0} />
+      </div>
+    );
+  }
+
   const adminStats = [
     { icon: Users, label: 'Total de Membros', value: isLoading ? '...' : totalMembers, color: '#3B82F6' },
     { icon: LayoutGrid, label: 'Coordenadorias', value: totalCoordinations, color: '#10B981' },
@@ -56,7 +63,6 @@ export const StatsOverview = () => {
     { icon: Briefcase, label: 'Clientes (GTs)', value: isLoading ? '...' : totalClients, color: '#8B5CF6' },
   ];
 
-  // Member sees their own progress
   const memberStats = [
     { icon: Users, label: 'Total de Membros', value: isLoading ? '...' : totalMembers, color: '#3B82F6' },
     { icon: LayoutGrid, label: 'Coordenadorias', value: totalCoordinations, color: '#10B981' },
