@@ -101,6 +101,25 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
     return () => { supabase.removeChannel(channel); };
   }, [isLeader, user?.id]);
 
+  // Member unseen help report updates
+  useEffect(() => {
+    if (!user) return;
+    const fetchUnseen = async () => {
+      const { count } = await supabase
+        .from('help_reports')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('member_seen', false);
+      setUnseenMemberCount(count || 0);
+    };
+    fetchUnseen();
+    const channel = supabase
+      .channel('help-reports-member-unseen')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'help_reports' }, () => fetchUnseen())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id]);
+
   // Pending demands notifications (Demandas manager)
   useEffect(() => {
     if (!isDemandasManager || !user) return;
