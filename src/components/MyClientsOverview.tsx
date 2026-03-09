@@ -15,7 +15,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { GTHandoffSurvey } from '@/components/GTHandoffSurvey';
+import { GTHandoffSurvey, GTHandoffSurveyResults } from '@/components/GTHandoffSurvey';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Profile {
