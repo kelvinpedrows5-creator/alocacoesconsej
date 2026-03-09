@@ -1,10 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, Users, FileText, ClipboardList } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Building, Users, FileText, ClipboardList, Link as LinkIcon, Upload, ExternalLink, Trash2 } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useClients, GT_PROFILE_QUESTIONS } from '@/hooks/useClients';
 import { useCycles } from '@/hooks/useCycles';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -12,6 +15,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { GTHandoffSurvey, GTHandoffSurveyResults } from '@/components/GTHandoffSurvey';
+import { toast } from 'sonner';
 
 interface Profile {
   user_id: string;
@@ -21,11 +25,16 @@ interface Profile {
 }
 
 export function ClientsOverview() {
-  const { clients, clientProfiles, gtMembers, getClientProfile, getGTMembersByClient, getClientsByCycle } = useClients();
+  const { clients, clientProfiles, gtMembers, getClientProfile, getGTMembersByClient, getClientsByCycle, updateClient } = useClients();
   const { cycles, currentCycle } = useCycles();
-  const { profile } = useAuthContext();
+  const { profile, isAdmin } = useAuthContext();
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
   const [surveyTarget, setSurveyTarget] = useState<{ clientId: string; clientName: string; cycleId: string; cycleLabel: string } | null>(null);
+  const [contractDialog, setContractDialog] = useState<{ clientId: string; clientName: string } | null>(null);
+  const [contractType, setContractType] = useState<'link' | 'pdf'>('link');
+  const [contractLink, setContractLink] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ['all_profiles_for_clients_view'],
@@ -78,6 +87,39 @@ export function ClientsOverview() {
       setSelectedCycleId(currentCycle.id);
     }
   }, [currentCycle, selectedCycleId]);
+
+  const handleSaveLink = (clientId: string) => {
+    if (!contractLink.trim()) return;
+    updateClient({ id: clientId, updates: { contract_scope_url: contractLink.trim(), contract_scope_type: 'link' } });
+    setContractDialog(null);
+    setContractLink('');
+  };
+
+  const handleUploadPdf = async (clientId: string, file: File) => {
+    if (!file || file.type !== 'application/pdf') {
+      toast.error('Por favor, selecione um arquivo PDF válido.');
+      return;
+    }
+    setUploading(true);
+    try {
+      const filePath = `${clientId}/${Date.now()}_${file.name}`;
+      const { error: uploadError } = await supabase.storage.from('contracts').upload(filePath, file);
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage.from('contracts').getPublicUrl(filePath);
+      updateClient({ id: clientId, updates: { contract_scope_url: publicUrlData.publicUrl, contract_scope_type: 'pdf' } });
+      setContractDialog(null);
+      toast.success('PDF do contrato enviado com sucesso!');
+    } catch (err: any) {
+      toast.error('Erro ao enviar PDF: ' + err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleRemoveContract = (clientId: string) => {
+    updateClient({ id: clientId, updates: { contract_scope_url: null, contract_scope_type: null } });
+  };
 
   const activeCycleId = selectedCycleId || currentCycle?.id || '';
   const displayClients = activeCycleId ? getClientsByCycle(activeCycleId) : clients;
@@ -201,6 +243,52 @@ export function ClientsOverview() {
                   <GTHandoffSurveyResults key={cycle.id} clientId={client.id} cycleId={cycle.id} />
                 ))}
 
+                {/* Contract Scope */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <FileText className="w-4 h-4 text-muted-foreground" />
+                    Escopo do Contrato
+                  </div>
+                  {client.contract_scope_url ? (
+                    <div className="flex items-center gap-2 pl-6">
+                      <a
+                        href={client.contract_scope_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                      >
+                        <ExternalLink className="w-3 h-3 shrink-0" />
+                        {client.contract_scope_type === 'pdf' ? 'Ver PDF do contrato' : 'Acessar escopo'}
+                      </a>
+                      {isAdmin && (
+                        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleRemoveContract(client.id)}>
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="pl-6">
+                      {isAdmin ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs gap-1"
+                          onClick={() => {
+                            setContractDialog({ clientId: client.id, clientName: client.name });
+                            setContractType('link');
+                            setContractLink('');
+                          }}
+                        >
+                          <Upload className="w-3 h-3" />
+                          Adicionar escopo
+                        </Button>
+                      ) : (
+                        <p className="text-xs text-muted-foreground italic">Nenhum escopo cadastrado</p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Client Profile Info */}
                 {clientProfile && answeredCount > 0 && (
                   <Accordion type="single" collapsible>
@@ -253,6 +341,71 @@ export function ClientsOverview() {
           onClose={() => setSurveyTarget(null)}
         />
       )}
+
+      {/* Contract Scope Dialog */}
+      <Dialog open={!!contractDialog} onOpenChange={(open) => !open && setContractDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Escopo do Contrato — {contractDialog?.clientName}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="flex gap-2">
+              <Button
+                variant={contractType === 'link' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setContractType('link')}
+                className="gap-1"
+              >
+                <LinkIcon className="w-3 h-3" />
+                Link
+              </Button>
+              <Button
+                variant={contractType === 'pdf' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setContractType('pdf')}
+                className="gap-1"
+              >
+                <Upload className="w-3 h-3" />
+                PDF
+              </Button>
+            </div>
+
+            {contractType === 'link' ? (
+              <div className="space-y-2">
+                <Label>URL do escopo</Label>
+                <Input
+                  placeholder="https://..."
+                  value={contractLink}
+                  onChange={(e) => setContractLink(e.target.value)}
+                />
+                <Button
+                  className="w-full"
+                  disabled={!contractLink.trim()}
+                  onClick={() => contractDialog && handleSaveLink(contractDialog.clientId)}
+                >
+                  Salvar link
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Arquivo PDF</Label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="application/pdf"
+                  className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file && contractDialog) handleUploadPdf(contractDialog.clientId, file);
+                  }}
+                  disabled={uploading}
+                />
+                {uploading && <p className="text-xs text-muted-foreground">Enviando...</p>}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
