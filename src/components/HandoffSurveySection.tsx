@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, Users, ClipboardList, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Building, Users, ClipboardList, CheckCircle2, AlertCircle, BookOpen, CheckSquare } from 'lucide-react';
 import { useClients } from '@/hooks/useClients';
 import { useCycles } from '@/hooks/useCycles';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -14,6 +14,8 @@ import { GTHandoffSurvey, GTHandoffSurveyResults } from '@/components/GTHandoffS
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 
 interface Profile {
   user_id: string;
@@ -195,6 +197,89 @@ export function HandoffSurveySection() {
   }, {});
 
   const leadershipClients = Object.values(clientSurveysMap);
+
+  // === FUTURO GT: Current cycle clients where user is consultant, showing previous cycle surveys ===
+  const currentCycleClients = currentCycle
+    ? getClientsByCycle(currentCycle.id).filter(client => isUserConsultantInGT(client.id, currentCycle.id))
+    : [];
+
+  // Fetch handoff surveys from previous cycle for current cycle clients
+  const { data: previousCycleSurveys = [] } = useQuery({
+    queryKey: ['previous_cycle_surveys_for_futuro_gt', previousCycle?.id, currentCycleClients.map(c => c.id)],
+    queryFn: async () => {
+      if (!previousCycle || currentCycleClients.length === 0) return [];
+      const clientIds = currentCycleClients.map(c => c.id);
+      const { data, error } = await supabase
+        .from('gt_handoff_surveys')
+        .select('*')
+        .eq('cycle_id', previousCycle.id)
+        .in('client_id', clientIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!previousCycle && currentCycleClients.length > 0,
+  });
+
+  // Fetch read confirmations for current user
+  const { data: readConfirmations = [] } = useQuery({
+    queryKey: ['handoff_read_confirmations', currentCycle?.id, profile?.user_id],
+    queryFn: async () => {
+      if (!currentCycle || !profile?.user_id) return [];
+      const { data, error } = await supabase
+        .from('handoff_read_confirmations')
+        .select('*')
+        .eq('cycle_id', currentCycle.id)
+        .eq('user_id', profile.user_id);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!currentCycle && !!profile?.user_id,
+  });
+
+  const getReadConfirmation = (clientId: string) => {
+    return readConfirmations.find((rc: any) => rc.client_id === clientId);
+  };
+
+  const handleConfirmRead = async (clientId: string, field: 'confirmed_top' | 'confirmed_bottom') => {
+    if (!profile?.user_id || !currentCycle) return;
+    const existing = getReadConfirmation(clientId);
+    try {
+      if (existing) {
+        await supabase
+          .from('handoff_read_confirmations')
+          .update({ [field]: true, updated_at: new Date().toISOString() })
+          .eq('id', existing.id);
+      } else {
+        await supabase
+          .from('handoff_read_confirmations')
+          .insert({
+            client_id: clientId,
+            cycle_id: currentCycle.id,
+            user_id: profile.user_id,
+            [field]: true,
+          });
+      }
+      queryClient.invalidateQueries({ queryKey: ['handoff_read_confirmations'] });
+      toast.success(field === 'confirmed_top' ? 'Leitura inicial confirmada!' : 'Leitura final confirmada!');
+    } catch (err: any) {
+      toast.error('Erro ao confirmar leitura: ' + err.message);
+    }
+  };
+
+  const getSurveysForClient = (clientId: string) => {
+    return previousCycleSurveys.filter((s: any) => s.client_id === clientId);
+  };
+
+  const questionLabels: Record<string, string> = {
+    q1_demands_executed: 'Demandas executadas',
+    q2_pending_demands: 'Demandas em andamento',
+    q3_client_interest: 'Interesse em novas demandas',
+    q4_client_profile: 'Perfil do cliente',
+    q5_difficulties: 'Dificuldades encontradas',
+    q6_communication: 'Comunicação com o cliente',
+    q7_client_value: 'Percepção de valor',
+    q8_general_summary: 'Resumo geral para novos consultores',
+  };
 
   // Consultant view
   const ConsultantView = () => {
@@ -387,7 +472,7 @@ export function HandoffSurveySection() {
                           <strong>{respondents.length}</strong> resposta(s) recebida(s) de consultores do GT
                         </p>
                       </div>
-                      <Accordion type="single" collapsible>
+                      <Accordion type="multiple">
                         <AccordionItem value="members" className="border-none">
                           <AccordionTrigger className="text-sm py-2">
                             <span className="flex items-center gap-2">
@@ -435,6 +520,150 @@ export function HandoffSurveySection() {
             </div>
           </div>
         )}
+      </div>
+    );
+  };
+
+  // Futuro GT View - Shows previous cycle surveys for current cycle clients
+  const FuturoGTView = () => {
+    if (!currentCycle || !previousCycle) {
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <BookOpen className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <p className="text-muted-foreground">Não há informações de passagem de bastão disponíveis.</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (currentCycleClients.length === 0) {
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <Users className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <p className="text-muted-foreground">Você não está alocado como consultor em nenhum GT no ciclo atual ({currentCycle.label}).</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <Alert>
+          <BookOpen className="h-4 w-4" />
+          <AlertDescription>
+            Leia atentamente as informações da passagem de bastão do ciclo <strong>{previousCycle.label}</strong> para seus clientes no ciclo atual. 
+            A confirmação de leitura (início e fim) é <strong>obrigatória</strong>.
+          </AlertDescription>
+        </Alert>
+
+        <div className="grid gap-4">
+          {currentCycleClients.map(client => {
+            const clientSurveys = getSurveysForClient(client.id);
+            const confirmation = getReadConfirmation(client.id);
+            const topConfirmed = confirmation?.confirmed_top || false;
+            const bottomConfirmed = confirmation?.confirmed_bottom || false;
+            const fullyConfirmed = topConfirmed && bottomConfirmed;
+
+            return (
+              <Card key={client.id} className={fullyConfirmed ? "border-primary/30 bg-primary/5" : "border-amber-500/30"}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${fullyConfirmed ? 'bg-primary/10' : 'bg-amber-500/10'}`}>
+                        <Building className={`h-5 w-5 ${fullyConfirmed ? 'text-primary' : 'text-amber-600'}`} />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          {client.name}
+                          {fullyConfirmed && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">Passagem do ciclo {previousCycle.label}</p>
+                      </div>
+                    </div>
+                    {fullyConfirmed ? (
+                      <Badge className="bg-primary/10 text-primary border-primary/20">Leitura confirmada</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-amber-600 border-amber-500/30 bg-amber-500/10">Pendente</Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {clientSurveys.length === 0 ? (
+                    <p className="text-sm text-muted-foreground italic">
+                      Nenhuma passagem de bastão foi registrada para este cliente no ciclo {previousCycle.label}.
+                    </p>
+                  ) : (
+                    <>
+                      {/* Top confirmation checkbox */}
+                      <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
+                        <Checkbox 
+                          id={`top-${client.id}`}
+                          checked={topConfirmed}
+                          disabled={topConfirmed}
+                          onCheckedChange={() => handleConfirmRead(client.id, 'confirmed_top')}
+                        />
+                        <label htmlFor={`top-${client.id}`} className="text-sm font-medium cursor-pointer leading-tight">
+                          Confirmo que estou iniciando a leitura das informações de passagem de bastão deste cliente.
+                        </label>
+                      </div>
+
+                      {/* Survey content */}
+                      {clientSurveys.map((survey: any) => {
+                        const authorProfile = getProfileByUserId(survey.user_id);
+                        return (
+                          <Card key={survey.id} className="bg-background">
+                            <CardContent className="py-3 px-4 space-y-3">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Avatar className="h-6 w-6">
+                                    <AvatarImage src={authorProfile?.avatar_url || undefined} />
+                                    <AvatarFallback className="text-xs">
+                                      {getInitials(authorProfile?.display_name || null, authorProfile?.email || '')}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <span className="text-sm font-medium">{authorProfile?.display_name || authorProfile?.email || 'Membro'}</span>
+                                </div>
+                                <Badge variant="outline" className="text-xs">{previousCycle.label}</Badge>
+                              </div>
+                              {Object.entries(questionLabels).map(([key, label]) => {
+                                const value = (survey as any)[key];
+                                if (!value) return null;
+                                return (
+                                  <div key={key}>
+                                    <p className="text-xs text-muted-foreground font-medium">{label}:</p>
+                                    <p className="text-sm mt-0.5">{value}</p>
+                                  </div>
+                                );
+                              })}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+
+                      {/* Bottom confirmation checkbox */}
+                      <div className="flex items-start gap-3 p-3 rounded-lg border bg-muted/30">
+                        <Checkbox 
+                          id={`bottom-${client.id}`}
+                          checked={bottomConfirmed}
+                          disabled={bottomConfirmed || !topConfirmed}
+                          onCheckedChange={() => handleConfirmRead(client.id, 'confirmed_bottom')}
+                        />
+                        <label htmlFor={`bottom-${client.id}`} className="text-sm font-medium cursor-pointer leading-tight">
+                          {!topConfirmed 
+                            ? 'Confirme a leitura inicial primeiro (checkbox acima).'
+                            : 'Confirmo que li integralmente as informações de passagem de bastão deste cliente e estou ciente do conteúdo.'
+                          }
+                        </label>
+                      </div>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
     );
   };
@@ -600,17 +829,40 @@ export function HandoffSurveySection() {
         <Tabs defaultValue="all" className="w-full">
           <TabsList>
             <TabsTrigger value="all">Todas as Pesquisas</TabsTrigger>
+            <TabsTrigger value="futuro-gt">Futuro GT</TabsTrigger>
             <TabsTrigger value="my-gts">Meus GTs</TabsTrigger>
           </TabsList>
           <TabsContent value="all" className="mt-6">
             <LeadershipView />
+          </TabsContent>
+          <TabsContent value="futuro-gt" className="mt-6">
+            <FuturoGTView />
           </TabsContent>
           <TabsContent value="my-gts" className="mt-6">
             <ConsultantView />
           </TabsContent>
         </Tabs>
       ) : (
-        <ConsultantView />
+        <Tabs defaultValue="futuro-gt" className="w-full">
+          <TabsList>
+            <TabsTrigger value="futuro-gt">
+              Futuro GT
+              {currentCycleClients.some(c => {
+                const conf = getReadConfirmation(c.id);
+                return !conf?.confirmed_top || !conf?.confirmed_bottom;
+              }) && (
+                <span className="ml-1.5 h-2 w-2 rounded-full bg-destructive inline-block" />
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="responder">Responder Passagem</TabsTrigger>
+          </TabsList>
+          <TabsContent value="futuro-gt" className="mt-6">
+            <FuturoGTView />
+          </TabsContent>
+          <TabsContent value="responder" className="mt-6">
+            <ConsultantView />
+          </TabsContent>
+        </Tabs>
       )}
 
       {surveyDialog && (
