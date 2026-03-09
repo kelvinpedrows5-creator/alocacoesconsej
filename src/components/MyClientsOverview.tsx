@@ -35,6 +35,84 @@ interface DemandSubmission {
   created_at: string;
 }
 
+// Sub-component: Client Handoff Profile from all cycles
+function ClientHandoffProfile({ clientId }: { clientId: string }) {
+  const { data: surveys = [] } = useQuery({
+    queryKey: ['client_handoff_profile', clientId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('gt_handoff_surveys')
+        .select(`
+          *,
+          allocation_cycles (label, value)
+        `)
+        .eq('client_id', clientId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  const { data: surveyProfiles = [] } = useQuery({
+    queryKey: ['client_handoff_profile_authors', clientId],
+    queryFn: async () => {
+      if (surveys.length === 0) return [];
+      const userIds = [...new Set(surveys.map(s => s.user_id))];
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('user_id, display_name, email')
+        .in('user_id', userIds);
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: surveys.length > 0,
+  });
+
+  const questionLabels: Record<string, string> = {
+    q1_demands_executed: 'Demandas executadas',
+    q2_pending_demands: 'Demandas em andamento',
+    q3_client_interest: 'Interesse em novas demandas',
+    q4_client_profile: 'Perfil do cliente',
+    q5_difficulties: 'Dificuldades encontradas',
+    q6_communication: 'Comunicação com o cliente',
+    q7_client_value: 'Percepção de valor',
+    q8_general_summary: 'Resumo geral',
+  };
+
+  if (surveys.length === 0) {
+    return <p className="text-xs text-muted-foreground italic pl-6">Nenhuma passagem de bastão registrada para este cliente.</p>;
+  }
+
+  return (
+    <div className="space-y-3 pl-6">
+      {surveys.map((survey: any) => {
+        const author = surveyProfiles.find(p => p.user_id === survey.user_id);
+        const cycleLabel = survey.allocation_cycles?.label || '';
+        return (
+          <Card key={survey.id} className="bg-muted/30">
+            <CardContent className="py-3 px-4 space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">{author?.display_name || author?.email || 'Membro'}</span>
+                <Badge variant="outline" className="text-xs">{cycleLabel}</Badge>
+              </div>
+              {Object.entries(questionLabels).map(([key, label]) => {
+                const value = (survey as any)[key];
+                if (!value) return null;
+                return (
+                  <div key={key}>
+                    <p className="text-xs text-muted-foreground font-medium">{label}:</p>
+                    <p className="text-sm mt-0.5">{value}</p>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
 export function MyClientsOverview() {
   const { clients, gtMembers, getGTMembersByClient, getClientsByCycle, updateClient } = useClients();
   const { cycles, currentCycle } = useCycles();
