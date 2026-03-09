@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, Users, FileText, ExternalLink, ClipboardCheck, Upload, Link as LinkIcon, Trash2, Download, ClipboardList, Bell } from 'lucide-react';
+import { Building, Users, FileText, ExternalLink, ClipboardCheck, Upload, Link as LinkIcon, Trash2, Download, ClipboardList, Bell, MessageSquare } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
