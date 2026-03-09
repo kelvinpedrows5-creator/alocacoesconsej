@@ -10,6 +10,10 @@ import {
   ChevronLeft,
   Check,
   Building2,
+  History,
+  ClipboardCheck,
+  Users,
+  Briefcase,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
