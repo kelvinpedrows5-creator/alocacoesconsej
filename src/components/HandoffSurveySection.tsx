@@ -71,21 +71,32 @@ export function HandoffSurveySection() {
     return gtMembers.some(m => m.client_id === clientId && m.cycle_id === cycleId && m.user_id === profile.user_id);
   };
 
-  // Find previous cycle for handoff survey notification
+  const isUserConsultantInGT = (clientId: string, cycleId: string) => {
+    if (!profile?.user_id) return false;
+    return gtMembers.some(m => 
+      m.client_id === clientId && 
+      m.cycle_id === cycleId && 
+      m.user_id === profile.user_id && 
+      m.role === 'consultant'
+    );
+  };
+
+  // Check if user is demandas manager or director
+  const isDemandasLeadership = user
+    ? positions.some(
+        (p) => p.user_id === user.id && p.directorate_id === 'dir-1' && (p.position_type === 'manager' || p.position_type === 'director')
+      )
+    : false;
+
+  // Find previous cycle for handoff survey
   const visibleCycles = cycles.filter(c => c.is_visible).sort((a, b) => b.value.localeCompare(a.value));
   const currentCycleIndex = visibleCycles.findIndex(c => c.id === currentCycle?.id);
   const previousCycle = currentCycleIndex >= 0 && currentCycleIndex < visibleCycles.length - 1 
     ? visibleCycles[currentCycleIndex + 1] 
     : null;
 
-  useEffect(() => {
-    if (previousCycle && !selectedCycleId) {
-      setSelectedCycleId(previousCycle.id);
-    }
-  }, [previousCycle, selectedCycleId]);
-
-  const activeCycleId = selectedCycleId || previousCycle?.id || '';
-  const activeCycle = cycles.find(c => c.id === activeCycleId);
+  const activeCycleId = previousCycle?.id || '';
+  const activeCycle = previousCycle;
 
   // Get clients from selected cycle where user was in GT
   const cycleClients = activeCycleId 
