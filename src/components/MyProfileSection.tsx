@@ -553,6 +553,10 @@ export function MyProfileSection() {
         <TabsContent value="coordination">
           <CoordinationSelector />
         </TabsContent>
+
+        <TabsContent value="history">
+          <MyHistorySection />
+        </TabsContent>
       </Tabs>
 
       {imageSrc && (
