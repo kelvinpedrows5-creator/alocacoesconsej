@@ -400,7 +400,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q17',
     question: 'Quantos momentos por dia você conseguirá estar disponível para a CONSEJ?',
-    category: 'coordenador',
+    category: 'consultor',
     type: 'radio',
     options: [
       { value: '1', label: '1 momento por dia' },
