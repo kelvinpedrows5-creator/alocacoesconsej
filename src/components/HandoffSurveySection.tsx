@@ -305,33 +305,38 @@ export function HandoffSurveySection() {
           </div>
         )}
 
-          {/* Completed surveys */}
-          {completedSurveyClients.length > 0 && (
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-primary" />
-                Pesquisas Concluídas ({completedSurveyClients.length})
-              </h3>
-              <div className="grid gap-4">
-                {completedSurveyClients.map(client => {
-                  const clientGTMembers = getGTMembersByClient(client.id, activeCycleId);
-                  
-                  return (
-                    <Card key={client.id} className="border-primary/30 bg-primary/5">
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                              <Building className="h-5 w-5 text-primary" />
-                            </div>
-                            <div>
-                              <CardTitle className="text-lg flex items-center gap-2">
-                                {client.name}
-                                <CheckCircle2 className="h-4 w-4 text-primary" />
-                              </CardTitle>
-                              <p className="text-sm text-muted-foreground">{activeCycle?.label}</p>
-                            </div>
+
+        {/* Completed surveys */}
+        {completedSurveyClients.length > 0 && (
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold flex items-center gap-2">
+              <CheckCircle2 className="h-5 w-5 text-primary" />
+              Pesquisas Concluídas ({completedSurveyClients.length})
+            </h3>
+            <div className="grid gap-4">
+              {completedSurveyClients.map(client => {
+                const clientGTMembers = getGTMembersByClient(client.id, activeCycleId);
+                const consultants = clientGTMembers.filter(m => m.role === 'consultant');
+                const respondents = completedSurveysByClient[client.id] || [];
+                const currentUserResponded = userCompletedSurveys.includes(client.id);
+                
+                return (
+                  <Card key={client.id} className="border-primary/30 bg-primary/5">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                            <Building className="h-5 w-5 text-primary" />
                           </div>
+                          <div>
+                            <CardTitle className="text-lg flex items-center gap-2">
+                              {client.name}
+                              <CheckCircle2 className="h-4 w-4 text-primary" />
+                            </CardTitle>
+                            <p className="text-sm text-muted-foreground">{activeCycle.label}</p>
+                          </div>
+                        </div>
+                        {currentUserResponded && (
                           <Button 
                             size="sm"
                             variant="outline"
@@ -342,61 +347,239 @@ export function HandoffSurveySection() {
                               cycleLabel: activeCycle?.label || ''
                             })}
                           >
-                            Editar
+                            Editar minha resposta
                           </Button>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <Accordion type="single" collapsible>
-                          <AccordionItem value="members" className="border-none">
-                            <AccordionTrigger className="text-sm py-2">
-                              <span className="flex items-center gap-2">
-                                <Users className="h-4 w-4" />
-                                Membros do GT ({clientGTMembers.length})
-                              </span>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                              <div className="flex flex-wrap gap-2 pt-2">
-                                {clientGTMembers.map(member => {
-                                  const memberProfile = getProfileByUserId(member.user_id);
-                                  return (
-                                    <div key={member.id} className="flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-3 py-1">
-                                      <Avatar className="h-6 w-6">
-                                        <AvatarImage src={memberProfile?.avatar_url || undefined} />
-                                        <AvatarFallback className="text-xs">
-                                          {getInitials(memberProfile?.display_name || null, memberProfile?.email || '')}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <span className="text-sm">{memberProfile?.display_name || memberProfile?.email}</span>
-                                      <Badge className={`text-xs ${getRoleBadgeVariant(member.role)}`}>
-                                        {getRoleLabel(member.role)}
-                                      </Badge>
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </AccordionContent>
-                          </AccordionItem>
-                          <AccordionItem value="surveys" className="border-none">
-                            <AccordionTrigger className="text-sm py-2">
-                              <span className="flex items-center gap-2">
-                                <ClipboardList className="h-4 w-4" />
-                                Ver Respostas do GT
-                              </span>
-                            </AccordionTrigger>
-                            <AccordionContent>
-                              <GTHandoffSurveyResults clientId={client.id} cycleId={activeCycleId} />
-                            </AccordionContent>
-                          </AccordionItem>
-                        </Accordion>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 mb-3">
+                        <p className="text-sm text-muted-foreground">
+                          <strong>{respondents.length}</strong> resposta(s) recebida(s) de consultores do GT
+                        </p>
+                      </div>
+                      <Accordion type="single" collapsible>
+                        <AccordionItem value="members" className="border-none">
+                          <AccordionTrigger className="text-sm py-2">
+                            <span className="flex items-center gap-2">
+                              <Users className="h-4 w-4" />
+                              Consultores do GT ({consultants.length})
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <div className="flex flex-wrap gap-2 pt-2">
+                              {consultants.map(member => {
+                                const memberProfile = getProfileByUserId(member.user_id);
+                                const hasResponded = respondents.includes(member.user_id);
+                                return (
+                                  <div key={member.id} className="flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-3 py-1">
+                                    <Avatar className="h-6 w-6">
+                                      <AvatarImage src={memberProfile?.avatar_url || undefined} />
+                                      <AvatarFallback className="text-xs">
+                                        {getInitials(memberProfile?.display_name || null, memberProfile?.email || '')}
+                                      </AvatarFallback>
+                                    </Avatar>
+                                    <span className="text-sm">{memberProfile?.display_name || memberProfile?.email}</span>
+                                    {hasResponded && <CheckCircle2 className="h-3 w-3 text-primary" />}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="surveys" className="border-none">
+                          <AccordionTrigger className="text-sm py-2">
+                            <span className="flex items-center gap-2">
+                              <ClipboardList className="h-4 w-4" />
+                              Ver Todas as Respostas
+                            </span>
+                          </AccordionTrigger>
+                          <AccordionContent>
+                            <GTHandoffSurveyResults clientId={client.id} cycleId={activeCycleId} />
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  // Leadership view
+  const LeadershipView = () => {
+    if (!activeCycle) {
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <ClipboardList className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <p className="text-muted-foreground">Não há ciclo anterior disponível.</p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    if (leadershipClients.length === 0) {
+      return (
+        <Card>
+          <CardContent className="py-12 text-center">
+            <ClipboardList className="h-12 w-12 text-muted-foreground/50 mx-auto mb-4" />
+            <p className="text-muted-foreground">
+              Nenhuma pesquisa de passagem de bastão foi respondida ainda para o ciclo {activeCycle.label}.
+            </p>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <Alert>
+          <CheckCircle2 className="h-4 w-4" />
+          <AlertDescription>
+            <strong>{leadershipClients.length}</strong> cliente(s) com pesquisas respondidas no ciclo <strong>{activeCycle.label}</strong>.
+          </AlertDescription>
+        </Alert>
+
+        <div className="grid gap-4">
+          {leadershipClients.map((item: any) => {
+            const clientGTMembers = getGTMembersByClient(item.clientId, activeCycleId);
+            
+            return (
+              <Card key={item.clientId}>
+                <CardHeader className="pb-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                      <Building className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-lg">{item.clientName}</CardTitle>
+                      <p className="text-sm text-muted-foreground">
+                        {item.surveys.length} resposta(s) recebida(s)
+                      </p>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Accordion type="single" collapsible>
+                    <AccordionItem value="respondents" className="border-none">
+                      <AccordionTrigger className="text-sm py-2">
+                        <span className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          Quem respondeu ({item.surveys.length})
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {item.surveys.map((survey: any, idx: number) => {
+                            const memberProfile = getProfileByUserId(survey.userId);
+                            return (
+                              <div key={idx} className="flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-3 py-1">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage src={memberProfile?.avatar_url || undefined} />
+                                  <AvatarFallback className="text-xs">
+                                    {getInitials(memberProfile?.display_name || null, memberProfile?.email || '')}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-sm">{memberProfile?.display_name || memberProfile?.email}</span>
+                                <CheckCircle2 className="h-3 w-3 text-primary" />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="members" className="border-none">
+                      <AccordionTrigger className="text-sm py-2">
+                        <span className="flex items-center gap-2">
+                          <Users className="h-4 w-4" />
+                          Membros do GT ({clientGTMembers.length})
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          {clientGTMembers.map(member => {
+                            const memberProfile = getProfileByUserId(member.user_id);
+                            return (
+                              <div key={member.id} className="flex items-center gap-2 bg-muted/50 rounded-full pl-1 pr-3 py-1">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarImage src={memberProfile?.avatar_url || undefined} />
+                                  <AvatarFallback className="text-xs">
+                                    {getInitials(memberProfile?.display_name || null, memberProfile?.email || '')}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span className="text-sm">{memberProfile?.display_name || memberProfile?.email}</span>
+                                <Badge className={`text-xs ${getRoleBadgeVariant(member.role)}`}>
+                                  {getRoleLabel(member.role)}
+                                </Badge>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                    <AccordionItem value="surveys" className="border-none">
+                      <AccordionTrigger className="text-sm py-2">
+                        <span className="flex items-center gap-2">
+                          <ClipboardList className="h-4 w-4" />
+                          Ver Todas as Respostas
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent>
+                        <GTHandoffSurveyResults clientId={item.clientId} cycleId={activeCycleId} />
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <ClipboardList className="h-6 w-6 text-primary" />
+            Passagem de Bastão
+          </h2>
+          <p className="text-muted-foreground text-sm mt-1">
+            {isDemandasLeadership 
+              ? 'Visualize todas as pesquisas de passagem de bastão respondidas'
+              : 'Responda as pesquisas de passagem de bastão dos seus clientes do ciclo anterior'
+            }
+          </p>
+          {activeCycle && (
+            <p className="text-sm text-primary font-medium mt-1">
+              Ciclo: {activeCycle.label}
+            </p>
           )}
         </div>
+      </div>
+
+      {isDemandasLeadership ? (
+        <Tabs defaultValue="all" className="w-full">
+          <TabsList>
+            <TabsTrigger value="all">Todas as Pesquisas</TabsTrigger>
+            <TabsTrigger value="my-gts">Meus GTs</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all" className="mt-6">
+            <LeadershipView />
+          </TabsContent>
+          <TabsContent value="my-gts" className="mt-6">
+            <ConsultantView />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <ConsultantView />
       )}
 
       {surveyDialog && (
