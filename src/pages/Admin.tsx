@@ -233,12 +233,7 @@ const Admin = () => {
       case 'leadership':
         return <LeadershipManagement />;
       case 'suggestions':
-        return (
-          <>
-            <SuggestionsPanel />
-            <CoordinationGridFiltered />
-          </>
-        );
+        return <SuggestionsPanel />;
       case 'coordinations':
         return <CoordinationGridFiltered />;
       case 'gts':
