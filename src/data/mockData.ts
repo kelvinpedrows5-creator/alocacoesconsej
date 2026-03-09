@@ -294,7 +294,7 @@ export interface ProfileQuestion {
 }
 
 export const profileQuestions: ProfileQuestion[] = [
-  // === CONSULTOR (6 perguntas) ===
+  // === COORDENADOR (6 perguntas) ===
   {
     id: 'q1',
     question: 'Qual área você tem mais interesse em desenvolver habilidades?',
