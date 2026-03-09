@@ -122,6 +122,7 @@ export function HelpCenter() {
         message: r.message,
         created_at: r.created_at,
         sender_name: profileMap[r.user_id] || 'Membro',
+        is_read: r.is_read,
       }))
     );
     setReportsLoading(false);
