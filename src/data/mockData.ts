@@ -323,7 +323,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q3',
     question: 'Qual tipo de atividade mais te motiva?',
-    category: 'consultor',
+    category: 'coordenador',
     type: 'radio',
     options: [
       { value: 'client', label: 'Contato direto com clientes' },
