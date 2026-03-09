@@ -63,6 +63,39 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
   const showMemberOpportunities = !isAdmin && !isNegociosLeadership && !isDirector && !isDemandasManager;
   const showOpportunitiesManagement = isNegociosLeadership;
 
+  const isLeader = user
+    ? positions.some((p) => p.user_id === user.id)
+    : false;
+
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!isLeader || !user) return;
+
+    const fetchUnread = async () => {
+      const { count } = await supabase
+        .from('help_reports')
+        .select('id', { count: 'exact', head: true })
+        .eq('target_leader_id', user.id)
+        .eq('is_read', false);
+      setUnreadCount(count || 0);
+    };
+
+    fetchUnread();
+
+    const channel = supabase
+      .channel('help-reports-unread')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'help_reports' }, () => {
+        fetchUnread();
+      })
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'help_reports' }, () => {
+        fetchUnread();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [isLeader, user?.id]);
+
   const handleClick = (value: string) => {
     onTabChange(value);
     setOpenMobile(false);
