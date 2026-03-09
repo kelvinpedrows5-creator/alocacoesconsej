@@ -158,6 +158,51 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
     return () => { supabase.removeChannel(channel); };
   }, [showMemberDemands, user?.id]);
 
+  // Pending handoff surveys for "Meus Clientes"
+  useEffect(() => {
+    if (!user) return;
+    const fetchPendingHandoff = async () => {
+      // Get current cycle
+      const { data: currentCycleData } = await supabase
+        .from('allocation_cycles')
+        .select('id, value')
+        .eq('is_current', true)
+        .single();
+      if (!currentCycleData) return;
+
+      // Get previous cycle
+      const { data: prevCycleData } = await supabase
+        .from('allocation_cycles')
+        .select('id')
+        .eq('is_visible', true)
+        .lt('value', currentCycleData.value)
+        .order('value', { ascending: false })
+        .limit(1)
+        .single();
+      if (!prevCycleData) { setPendingHandoffCount(0); return; }
+
+      // Get user's GT memberships in previous cycle
+      const { data: gtMemberships } = await supabase
+        .from('gt_members')
+        .select('client_id')
+        .eq('user_id', user.id)
+        .eq('cycle_id', prevCycleData.id);
+      if (!gtMemberships || gtMemberships.length === 0) { setPendingHandoffCount(0); return; }
+
+      // Get completed surveys
+      const { data: completedSurveys } = await supabase
+        .from('gt_handoff_surveys')
+        .select('client_id')
+        .eq('user_id', user.id)
+        .eq('cycle_id', prevCycleData.id);
+
+      const completedClientIds = (completedSurveys || []).map(s => s.client_id);
+      const pending = gtMemberships.filter(m => !completedClientIds.includes(m.client_id));
+      setPendingHandoffCount(pending.length);
+    };
+    fetchPendingHandoff();
+  }, [user?.id]);
+
   // Pending opportunities notifications (Negócios leadership)
   useEffect(() => {
     if (!isNegociosLeadership || !user) return;
