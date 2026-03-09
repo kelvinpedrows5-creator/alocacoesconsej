@@ -13,6 +13,7 @@ import {
   Calendar,
   Crown,
   Briefcase,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useCycles } from '@/hooks/useCycles';
@@ -25,6 +26,7 @@ import { CyclesManagement } from '@/components/admin/CyclesManagement';
 import { LeadershipManagement } from '@/components/admin/LeadershipManagement';
 import { AllocationManagement } from '@/components/admin/AllocationManagement';
 import { GTManagement } from '@/components/admin/GTManagement';
+import { HandoffManagement } from '@/components/admin/HandoffManagement';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -93,6 +95,7 @@ const adminMenuItems = [
   { title: 'Sugestões', value: 'suggestions', icon: LayoutDashboard },
   { title: 'Coordenadorias', value: 'coordinations', icon: Building2 },
   { title: 'Grupos de Trabalho', value: 'gts', icon: Briefcase },
+  { title: 'Passagem de Bastão', value: 'handoff', icon: ArrowRightLeft },
   { title: 'Pesquisas', value: 'profiles', icon: FileText },
   { title: 'Gerenciar Membros', value: 'management', icon: UserCog },
 ];
@@ -238,6 +241,8 @@ const Admin = () => {
         return <CoordinationGridFiltered />;
       case 'gts':
         return <GTManagement />;
+      case 'handoff':
+        return <HandoffManagement />;
       case 'profiles':
         return (
           <Card>
