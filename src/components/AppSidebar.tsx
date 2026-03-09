@@ -4,6 +4,7 @@ import { useLeadership } from '@/hooks/useLeadership';
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -25,7 +26,6 @@ const menuItems = [
   { title: 'CONSEJ', value: 'consej', icon: Users },
   { title: 'Portfólio de Clientes', value: 'clients', icon: Briefcase },
   { title: 'Meus Clientes', value: 'my-clients', icon: UserCheck },
-  { title: 'Central de Ajuda', value: 'help-center', icon: Heart },
 ];
 
 export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
@@ -182,6 +182,20 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
           </SidebarGroup>
         )}
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => handleClick('help-center')}
+              isActive={activeTab === 'help-center'}
+              tooltip="Central de Ajuda"
+            >
+              <Heart className="h-4 w-4" />
+              {!collapsed && <span>Central de Ajuda</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
