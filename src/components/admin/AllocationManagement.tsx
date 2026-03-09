@@ -246,7 +246,6 @@ export const AllocationManagement = () => {
         p.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (p.display_name && p.display_name.toLowerCase().includes(searchQuery.toLowerCase()))
     );
-  );
 
   const loading = loadingCycles || loadingAllocations || loadingProfiles || loadingClients;
 
