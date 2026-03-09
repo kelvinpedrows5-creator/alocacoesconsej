@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import { Menu } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { StatsOverview } from '@/components/StatsOverview';
-import { MemberProfileResults } from '@/components/MemberProfileResults';
+import { MyProfileSection } from '@/components/MyProfileSection';
 import { MembersSection } from '@/components/MembersSection';
 import { CompanyOverview } from '@/components/CompanyOverview';
 import { ClientsOverview } from '@/components/ClientsOverview';
@@ -86,7 +86,7 @@ const Index = () => {
       case 'overview':
         return <CompanyOverview />;
       case 'my-profile':
-        return <MemberProfileResults />;
+        return <MyProfileSection />;
       case 'consej':
         return <MembersSection />;
       case 'clients':
@@ -154,7 +154,7 @@ const Index = () => {
                     variant="ghost"
                     size="icon"
                     className="rounded-full"
-                    onClick={() => navigate('/profile')}
+                    onClick={() => setActiveTab('my-profile')}
                   >
                     <Avatar className="h-9 w-9">
                       <AvatarImage src={profile?.avatar_url || undefined} />
