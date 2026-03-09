@@ -84,6 +84,13 @@ interface ProfileData {
   profile_feedback_preference: string | null;
   profile_project_type: string | null;
   profile_collaboration_tools: string | null;
+  profile_demand_style: string | null;
+  profile_availability_times: string | null;
+  profile_scope_affinity: string | null;
+  profile_scope_dislikes: string | null;
+  profile_availability_shift: string | null;
+  profile_coworker_issue: string | null;
+  profile_coworker_issue_details: string | null;
   created_at: string;
   updated_at: string;
 }
