@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { LayoutDashboard, Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
+import { Mail, Lock, User, ArrowRight, AlertCircle } from 'lucide-react';
+import logo from '@/assets/logo.png';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -105,9 +106,7 @@ const Auth = () => {
         className="w-full max-w-md"
       >
         <div className="flex items-center justify-center gap-3 mb-8">
-          <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-accent">
-            <LayoutDashboard className="w-8 h-8 text-primary-foreground" />
-          </div>
+          <img src={logo} alt="CONSEJ Logo" className="w-12 h-12 object-contain" />
           <div className="text-center">
             <h1 className="font-bold text-2xl text-foreground">Alocações CONSEJ</h1>
             <p className="text-sm text-muted-foreground">Sistema de Gestão de Membros</p>
