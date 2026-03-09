@@ -378,7 +378,31 @@ export function MyClientsOverview() {
                         )}
                       </div>
                     )}
-                  </div>
+                  {/* Handoff Survey */}
+                  {previousCycle && activeCycleId === currentCycle?.id && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <ClipboardList className="w-4 h-4" />
+                        Passagem de Bastão do ciclo anterior
+                      </div>
+                      <div className="pl-6">
+                        <Button
+                          variant={pendingSurveyClients.some(c => c.id === client.id) ? 'default' : 'outline'}
+                          size="sm"
+                          className="text-xs gap-1"
+                          onClick={() => setSurveyDialog({
+                            clientId: client.id,
+                            clientName: client.name,
+                            cycleId: previousCycle.id,
+                            cycleLabel: previousCycle.label,
+                          })}
+                        >
+                          <ClipboardList className="w-3 h-3" />
+                          {pendingSurveyClients.some(c => c.id === client.id) ? 'Responder Pesquisa (Pendente)' : 'Ver/Editar Pesquisa'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
