@@ -1,21 +1,13 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Building, Users, FileText, ClipboardList, Link as LinkIcon, Upload, ExternalLink, Trash2 } from 'lucide-react';
+import { Building, Users, ClipboardCheck } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { useClients, GT_PROFILE_QUESTIONS } from '@/hooks/useClients';
+import { useClients } from '@/hooks/useClients';
 import { useCycles } from '@/hooks/useCycles';
-import { useAuthContext } from '@/contexts/AuthContext';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { GTHandoffSurvey, GTHandoffSurveyResults } from '@/components/GTHandoffSurvey';
-import { toast } from 'sonner';
 
 interface Profile {
   user_id: string;
@@ -24,17 +16,15 @@ interface Profile {
   avatar_url: string | null;
 }
 
+interface DemandCount {
+  gt_client_id: string;
+  count: number;
+}
+
 export function ClientsOverview() {
-  const { clients, clientProfiles, gtMembers, getClientProfile, getGTMembersByClient, getClientsByCycle, updateClient } = useClients();
+  const { clients, gtMembers, getGTMembersByClient, getClientsByCycle } = useClients();
   const { cycles, currentCycle } = useCycles();
-  const { profile, isAdmin } = useAuthContext();
   const [selectedCycleId, setSelectedCycleId] = useState<string>('');
-  const [surveyTarget, setSurveyTarget] = useState<{ clientId: string; clientName: string; cycleId: string; cycleLabel: string } | null>(null);
-  const [contractDialog, setContractDialog] = useState<{ clientId: string; clientName: string } | null>(null);
-  const [contractType, setContractType] = useState<'link' | 'pdf'>('link');
-  const [contractLink, setContractLink] = useState('');
-  const [uploading, setUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profiles = [] } = useQuery({
     queryKey: ['all_profiles_for_clients_view'],
@@ -47,6 +37,28 @@ export function ClientsOverview() {
     },
   });
 
+  // Fetch executed demand counts per client
+  const { data: demandCounts = [] } = useQuery({
+    queryKey: ['demand_counts_by_client'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('demand_submissions')
+        .select('gt_client_id')
+        .eq('status', 'approved')
+        .not('gt_client_id', 'is', null);
+      if (error) throw error;
+      
+      // Count per client
+      const counts: Record<string, number> = {};
+      (data || []).forEach((d: any) => {
+        if (d.gt_client_id) {
+          counts[d.gt_client_id] = (counts[d.gt_client_id] || 0) + 1;
+        }
+      });
+      return Object.entries(counts).map(([gt_client_id, count]) => ({ gt_client_id, count }));
+    },
+  });
+
   const getProfileByUserId = (userId: string) => profiles.find(p => p.user_id === userId);
 
   const getInitials = (name: string | null, email: string) => {
@@ -56,8 +68,8 @@ export function ClientsOverview() {
 
   const getRoleLabel = (role: string) => {
     switch (role) {
-      case 'director': return 'Diretor de Demandas';
-      case 'manager': return 'Gerente de Demandas';
+      case 'director': return 'Diretor';
+      case 'manager': return 'Gerente';
       case 'consultant': return 'Consultor';
       default: return role;
     }
@@ -72,58 +84,18 @@ export function ClientsOverview() {
     }
   };
 
-  // Find previous (non-current) visible cycles for handoff surveys
-  const previousVisibleCycles = cycles.filter(c => c.is_visible && !c.is_current);
-
-  // Check if user is a GT member for a given client in a given cycle
-  const isUserInGT = (clientId: string, cycleId: string) => {
-    if (!profile?.user_id) return false;
-    return gtMembers.some(m => m.client_id === clientId && m.cycle_id === cycleId && m.user_id === profile.user_id);
+  const getDemandCount = (clientId: string) => {
+    return demandCounts.find(d => d.gt_client_id === clientId)?.count || 0;
   };
 
-  // Set initial cycle
   useEffect(() => {
     if (currentCycle && !selectedCycleId) {
       setSelectedCycleId(currentCycle.id);
     }
   }, [currentCycle, selectedCycleId]);
 
-  const handleSaveLink = (clientId: string) => {
-    if (!contractLink.trim()) return;
-    updateClient({ id: clientId, updates: { contract_scope_url: contractLink.trim(), contract_scope_type: 'link' } });
-    setContractDialog(null);
-    setContractLink('');
-  };
-
-  const handleUploadPdf = async (clientId: string, file: File) => {
-    if (!file || file.type !== 'application/pdf') {
-      toast.error('Por favor, selecione um arquivo PDF válido.');
-      return;
-    }
-    setUploading(true);
-    try {
-      const filePath = `${clientId}/${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage.from('contracts').upload(filePath, file);
-      if (uploadError) throw uploadError;
-
-      const { data: publicUrlData } = supabase.storage.from('contracts').getPublicUrl(filePath);
-      updateClient({ id: clientId, updates: { contract_scope_url: publicUrlData.publicUrl, contract_scope_type: 'pdf' } });
-      setContractDialog(null);
-      toast.success('PDF do contrato enviado com sucesso!');
-    } catch (err: any) {
-      toast.error('Erro ao enviar PDF: ' + err.message);
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  const handleRemoveContract = (clientId: string) => {
-    updateClient({ id: clientId, updates: { contract_scope_url: null, contract_scope_type: null } });
-  };
-
   const activeCycleId = selectedCycleId || currentCycle?.id || '';
   const displayClients = activeCycleId ? getClientsByCycle(activeCycleId) : clients;
-  const activeCycleLabel = cycles.find(c => c.id === activeCycleId)?.label || '';
 
   if (clients.length === 0) {
     return (
@@ -138,9 +110,12 @@ export function ClientsOverview() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
-          <h2 className="text-xl font-semibold text-foreground">Clientes & Grupos de Trabalho</h2>
-          <p className="text-sm text-muted-foreground">
-            Informações sobre cada cliente para auxiliar na passagem de bastão e alocação
+          <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Building className="h-6 w-6 text-primary" />
+            Portfólio de Clientes
+          </h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Todos os clientes da CONSEJ
           </p>
         </div>
         <Select value={activeCycleId} onValueChange={setSelectedCycleId}>
@@ -163,249 +138,67 @@ export function ClientsOverview() {
           <p>Nenhum cliente vinculado a este ciclo.</p>
         </div>
       ) : (
-      <div className="grid gap-6 md:grid-cols-2">
-        {displayClients.map((client) => {
-          const clientProfile = getClientProfile(client.id);
-          const members = activeCycleId ? getGTMembersByClient(client.id, activeCycleId) : [];
-          const director = members.find(m => m.role === 'director');
-          const manager = members.find(m => m.role === 'manager');
-          const consultants = members.filter(m => m.role === 'consultant');
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {displayClients.map((client) => {
+            const members = activeCycleId ? getGTMembersByClient(client.id, activeCycleId) : [];
+            const manager = members.find(m => m.role === 'manager');
+            const managerProfile = manager ? getProfileByUserId(manager.user_id) : null;
+            const executedDemands = getDemandCount(client.id);
 
-          const answeredCount = clientProfile
-            ? GT_PROFILE_QUESTIONS.filter(q => clientProfile[q.key as keyof typeof clientProfile]).length
-            : 0;
-
-          return (
-            <Card key={client.id} className="overflow-hidden">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Building className="w-5 h-5 text-primary" />
-                  {client.name}
-                </CardTitle>
-                {client.description && (
-                  <p className="text-sm text-muted-foreground">{client.description}</p>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* GT Composition */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <Users className="w-4 h-4 text-muted-foreground" />
-                    Composição do GT
-                  </div>
-                  {members.length === 0 ? (
-                    <p className="text-xs text-muted-foreground italic pl-6">
-                      Nenhum membro alocado no ciclo atual
-                    </p>
-                  ) : (
-                    <div className="space-y-1.5 pl-6">
-                      {[director, manager, ...consultants].filter(Boolean).map((member) => {
-                        if (!member) return null;
-                        const p = getProfileByUserId(member.user_id);
-                        return (
-                          <div key={member.id} className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarImage src={p?.avatar_url || undefined} />
-                              <AvatarFallback className="text-xs">
-                                {getInitials(p?.display_name || null, p?.email || '')}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="text-sm truncate">{p?.display_name || p?.email || 'Usuário'}</span>
-                            <Badge variant="outline" className={`text-xs shrink-0 ${getRoleBadgeVariant(member.role)}`}>
-                              {getRoleLabel(member.role)}
-                            </Badge>
-                          </div>
-                        );
-                      })}
+            return (
+              <Card key={client.id} className="overflow-hidden">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Building className="w-5 h-5 text-primary" />
+                    {client.name}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* GT Members */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                      <Users className="w-4 h-4" />
+                      Equipe do GT ({members.length})
                     </div>
-                  )}
-                </div>
-
-                {/* Handoff Survey Button - show for previous cycles where user was in GT */}
-                {previousVisibleCycles.map(cycle => {
-                  if (!isUserInGT(client.id, cycle.id)) return null;
-                  return (
-                    <Button
-                      key={cycle.id}
-                      variant="outline"
-                      size="sm"
-                      className="w-full gap-2 text-xs"
-                      onClick={() => setSurveyTarget({ clientId: client.id, clientName: client.name, cycleId: cycle.id, cycleLabel: cycle.label })}
-                    >
-                      <ClipboardList className="w-3 h-3" />
-                      Preencher Pesquisa de Passagem — {cycle.label}
-                    </Button>
-                  );
-                })}
-
-                {/* Show existing handoff survey results for previous cycles */}
-                {previousVisibleCycles.map(cycle => (
-                  <GTHandoffSurveyResults key={cycle.id} clientId={client.id} cycleId={cycle.id} />
-                ))}
-
-                {/* Contract Scope */}
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm font-medium">
-                    <FileText className="w-4 h-4 text-muted-foreground" />
-                    Escopo do Contrato
+                    {members.length === 0 ? (
+                      <p className="text-xs text-muted-foreground italic pl-6">
+                        Nenhum membro alocado neste ciclo
+                      </p>
+                    ) : (
+                      <div className="space-y-1.5 pl-6">
+                        {members.map((member) => {
+                          const p = getProfileByUserId(member.user_id);
+                          return (
+                            <div key={member.id} className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarImage src={p?.avatar_url || undefined} />
+                                <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                  {getInitials(p?.display_name || null, p?.email || '')}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm truncate">{p?.display_name || p?.email || 'Usuário'}</span>
+                              <Badge variant="outline" className={`text-[10px] px-1.5 py-0 shrink-0 ${getRoleBadgeVariant(member.role)}`}>
+                                {getRoleLabel(member.role)}
+                              </Badge>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                  {client.contract_scope_url ? (
-                    <div className="flex items-center gap-2 pl-6">
-                      <a
-                        href={client.contract_scope_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
-                      >
-                        <ExternalLink className="w-3 h-3 shrink-0" />
-                        {client.contract_scope_type === 'pdf' ? 'Ver PDF do contrato' : 'Acessar escopo'}
-                      </a>
-                      {isAdmin && (
-                        <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleRemoveContract(client.id)}>
-                          <Trash2 className="w-3 h-3 text-destructive" />
-                        </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <div className="pl-6">
-                      {isAdmin ? (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-xs gap-1"
-                          onClick={() => {
-                            setContractDialog({ clientId: client.id, clientName: client.name });
-                            setContractType('link');
-                            setContractLink('');
-                          }}
-                        >
-                          <Upload className="w-3 h-3" />
-                          Adicionar escopo
-                        </Button>
-                      ) : (
-                        <p className="text-xs text-muted-foreground italic">Nenhum escopo cadastrado</p>
-                      )}
-                    </div>
-                  )}
-                </div>
 
-                {/* Client Profile Info */}
-                {clientProfile && answeredCount > 0 && (
-                  <Accordion type="single" collapsible>
-                    <AccordionItem value="profile" className="border-none">
-                      <AccordionTrigger className="py-2 text-sm font-medium hover:no-underline">
-                        <div className="flex items-center gap-2">
-                          <FileText className="w-4 h-4 text-muted-foreground" />
-                          Perfil do Cliente ({answeredCount}/{GT_PROFILE_QUESTIONS.length})
-                        </div>
-                      </AccordionTrigger>
-                      <AccordionContent>
-                        <div className="space-y-3 pl-6">
-                          {GT_PROFILE_QUESTIONS.map((q) => {
-                            const answer = clientProfile[q.key as keyof typeof clientProfile];
-                            if (!answer) return null;
-                            return (
-                              <div key={q.key} className="space-y-0.5">
-                                <p className="text-xs font-medium text-muted-foreground">{q.label}</p>
-                                <p className="text-sm text-foreground">{answer as string}</p>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </AccordionContent>
-                    </AccordionItem>
-                  </Accordion>
-                )}
-
-                {!clientProfile || answeredCount === 0 ? (
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground pl-6">
-                    <FileText className="w-3 h-3" />
-                    Perfil do cliente ainda não preenchido
+                  {/* Executed Demands Count */}
+                  <div className="flex items-center gap-2 text-sm pl-6">
+                    <ClipboardCheck className="w-4 h-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Demandas executadas:</span>
+                    <Badge variant="secondary" className="font-semibold">{executedDemands}</Badge>
                   </div>
-                ) : null}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       )}
-
-      {/* Handoff Survey Dialog */}
-      {surveyTarget && (
-        <GTHandoffSurvey
-          clientId={surveyTarget.clientId}
-          clientName={surveyTarget.clientName}
-          cycleId={surveyTarget.cycleId}
-          cycleLabel={surveyTarget.cycleLabel}
-          open={!!surveyTarget}
-          onClose={() => setSurveyTarget(null)}
-        />
-      )}
-
-      {/* Contract Scope Dialog */}
-      <Dialog open={!!contractDialog} onOpenChange={(open) => !open && setContractDialog(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Escopo do Contrato — {contractDialog?.clientName}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Button
-                variant={contractType === 'link' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setContractType('link')}
-                className="gap-1"
-              >
-                <LinkIcon className="w-3 h-3" />
-                Link
-              </Button>
-              <Button
-                variant={contractType === 'pdf' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setContractType('pdf')}
-                className="gap-1"
-              >
-                <Upload className="w-3 h-3" />
-                PDF
-              </Button>
-            </div>
-
-            {contractType === 'link' ? (
-              <div className="space-y-2">
-                <Label>URL do escopo</Label>
-                <Input
-                  placeholder="https://..."
-                  value={contractLink}
-                  onChange={(e) => setContractLink(e.target.value)}
-                />
-                <Button
-                  className="w-full"
-                  disabled={!contractLink.trim()}
-                  onClick={() => contractDialog && handleSaveLink(contractDialog.clientId)}
-                >
-                  Salvar link
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Label>Arquivo PDF</Label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="application/pdf"
-                  className="block w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary file:text-primary-foreground hover:file:bg-primary/90 cursor-pointer"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file && contractDialog) handleUploadPdf(contractDialog.clientId, file);
-                  }}
-                  disabled={uploading}
-                />
-                {uploading && <p className="text-xs text-muted-foreground">Enviando...</p>}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
