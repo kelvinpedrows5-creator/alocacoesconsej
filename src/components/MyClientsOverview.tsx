@@ -474,6 +474,17 @@ export function MyClientsOverview() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {surveyDialog && (
+        <GTHandoffSurvey
+          clientId={surveyDialog.clientId}
+          clientName={surveyDialog.clientName}
+          cycleId={surveyDialog.cycleId}
+          cycleLabel={surveyDialog.cycleLabel}
+          open={!!surveyDialog}
+          onClose={() => setSurveyDialog(null)}
+        />
+      )}
     </div>
   );
 }
