@@ -363,6 +363,14 @@ export type Database = {
           difficulty_level: string | null
           id: string
           key_learnings: string | null
+          q1_demands_executed: string | null
+          q2_pending_demands: string | null
+          q3_client_interest: string | null
+          q4_client_profile: string | null
+          q5_difficulties: string | null
+          q6_communication: string | null
+          q7_client_value: string | null
+          q8_general_summary: string | null
           recommendations: string | null
           updated_at: string
           user_id: string
@@ -376,6 +384,14 @@ export type Database = {
           difficulty_level?: string | null
           id?: string
           key_learnings?: string | null
+          q1_demands_executed?: string | null
+          q2_pending_demands?: string | null
+          q3_client_interest?: string | null
+          q4_client_profile?: string | null
+          q5_difficulties?: string | null
+          q6_communication?: string | null
+          q7_client_value?: string | null
+          q8_general_summary?: string | null
           recommendations?: string | null
           updated_at?: string
           user_id: string
@@ -389,6 +405,14 @@ export type Database = {
           difficulty_level?: string | null
           id?: string
           key_learnings?: string | null
+          q1_demands_executed?: string | null
+          q2_pending_demands?: string | null
+          q3_client_interest?: string | null
+          q4_client_profile?: string | null
+          q5_difficulties?: string | null
+          q6_communication?: string | null
+          q7_client_value?: string | null
+          q8_general_summary?: string | null
           recommendations?: string | null
           updated_at?: string
           user_id?: string

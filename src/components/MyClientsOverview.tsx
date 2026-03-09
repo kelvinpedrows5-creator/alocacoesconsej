@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Building, Users, FileText, ExternalLink, ClipboardCheck, Upload, Link as LinkIcon, Trash2, Download } from 'lucide-react';
+import { Building, Users, FileText, ExternalLink, ClipboardCheck, Upload, Link as LinkIcon, Trash2, Download, ClipboardList, Bell } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -15,6 +15,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { GTHandoffSurvey } from '@/components/GTHandoffSurvey';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface Profile {
   user_id: string;
@@ -42,6 +44,7 @@ export function MyClientsOverview() {
   const [contractType, setContractType] = useState<'link' | 'pdf'>('link');
   const [contractLink, setContractLink] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [surveyDialog, setSurveyDialog] = useState<{ clientId: string; clientName: string; cycleId: string; cycleLabel: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: profiles = [] } = useQuery({
@@ -112,6 +115,37 @@ export function MyClientsOverview() {
   const activeCycleId = selectedCycleId || currentCycle?.id || '';
   const cycleClients = getClientsByCycle(activeCycleId);
   const myClients = cycleClients.filter(client => isUserInGT(client.id, activeCycleId));
+
+  // Find previous cycle for handoff survey notification
+  const visibleCycles = cycles.filter(c => c.is_visible).sort((a, b) => b.value.localeCompare(a.value));
+  const currentCycleIndex = visibleCycles.findIndex(c => c.id === currentCycle?.id);
+  const previousCycle = currentCycleIndex >= 0 && currentCycleIndex < visibleCycles.length - 1 
+    ? visibleCycles[currentCycleIndex + 1] 
+    : null;
+
+  // Get clients from previous cycle where user was in GT
+  const previousCycleClients = previousCycle 
+    ? getClientsByCycle(previousCycle.id).filter(client => isUserInGT(client.id, previousCycle.id))
+    : [];
+
+  // Check which surveys are already completed for previous cycle
+  const { data: completedSurveys = [] } = useQuery({
+    queryKey: ['completed_handoff_surveys', previousCycle?.id, profile?.user_id],
+    queryFn: async () => {
+      if (!previousCycle || !profile?.user_id) return [];
+      const { data } = await supabase
+        .from('gt_handoff_surveys')
+        .select('client_id')
+        .eq('cycle_id', previousCycle.id)
+        .eq('user_id', profile.user_id);
+      return (data || []).map(s => s.client_id);
+    },
+    enabled: !!previousCycle && !!profile?.user_id,
+  });
+
+  const pendingSurveyClients = previousCycleClients.filter(
+    client => !completedSurveys.includes(client.id)
+  );
 
   const handleSaveLink = (clientId: string) => {
     if (!contractLink.trim()) return;
@@ -186,6 +220,18 @@ export function MyClientsOverview() {
           </SelectContent>
         </Select>
       </div>
+
+      {pendingSurveyClients.length > 0 && previousCycle && (
+        <Alert>
+          <Bell className="h-4 w-4" />
+          <AlertDescription className="flex items-center justify-between gap-2 flex-wrap">
+            <span>
+              Você possui <strong>{pendingSurveyClients.length}</strong> cliente(s) de ciclos anteriores aguardando pesquisa de passagem de bastão.
+            </span>
+            <Badge variant="destructive">Responder agora</Badge>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {myClients.length === 0 ? (
         <Card>
@@ -333,6 +379,32 @@ export function MyClientsOverview() {
                       </div>
                     )}
                   </div>
+
+                  {/* Handoff Survey */}
+                  {previousCycle && activeCycleId === currentCycle?.id && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                        <ClipboardList className="w-4 h-4" />
+                        Passagem de Bastão do ciclo anterior
+                      </div>
+                      <div className="pl-6">
+                        <Button
+                          variant={pendingSurveyClients.some(c => c.id === client.id) ? 'default' : 'outline'}
+                          size="sm"
+                          className="text-xs gap-1"
+                          onClick={() => setSurveyDialog({
+                            clientId: client.id,
+                            clientName: client.name,
+                            cycleId: previousCycle.id,
+                            cycleLabel: previousCycle.label,
+                          })}
+                        >
+                          <ClipboardList className="w-3 h-3" />
+                          {pendingSurveyClients.some(c => c.id === client.id) ? 'Responder Pesquisa (Pendente)' : 'Ver/Editar Pesquisa'}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -404,6 +476,17 @@ export function MyClientsOverview() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {surveyDialog && (
+        <GTHandoffSurvey
+          clientId={surveyDialog.clientId}
+          clientName={surveyDialog.clientName}
+          cycleId={surveyDialog.cycleId}
+          cycleLabel={surveyDialog.cycleLabel}
+          open={!!surveyDialog}
+          onClose={() => setSurveyDialog(null)}
+        />
+      )}
     </div>
   );
 }
