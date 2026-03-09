@@ -346,21 +346,26 @@ export function MyProfileSection() {
     if (profile) {
       setDisplayName(profile.display_name || '');
       const savedAnswers: Record<string, string> = {};
-      if (profile.profile_skills) savedAnswers.q1 = profile.profile_skills;
-      if (profile.profile_work_style) savedAnswers.q2 = profile.profile_work_style;
-      if (profile.profile_activities) savedAnswers.q3 = profile.profile_activities;
-      if (profile.profile_competencies) savedAnswers.q4 = profile.profile_competencies;
-      if (profile.profile_preferred_directorate) savedAnswers.q5 = profile.profile_preferred_directorate;
-      if ((profile as any).profile_communication_style) savedAnswers.q6 = (profile as any).profile_communication_style;
-      if ((profile as any).profile_problem_solving) savedAnswers.q7 = (profile as any).profile_problem_solving;
-      if ((profile as any).profile_time_management) savedAnswers.q8 = (profile as any).profile_time_management;
-      if ((profile as any).profile_team_role) savedAnswers.q9 = (profile as any).profile_team_role;
-      if ((profile as any).profile_learning_style) savedAnswers.q10 = (profile as any).profile_learning_style;
-      if ((profile as any).profile_stress_handling) savedAnswers.q11 = (profile as any).profile_stress_handling;
-      if ((profile as any).profile_leadership_style) savedAnswers.q12 = (profile as any).profile_leadership_style;
-      if ((profile as any).profile_feedback_preference) savedAnswers.q13 = (profile as any).profile_feedback_preference;
-      if ((profile as any).profile_project_type) savedAnswers.q14 = (profile as any).profile_project_type;
-      if ((profile as any).profile_collaboration_tools) savedAnswers.q15 = (profile as any).profile_collaboration_tools;
+      const p = profile as any;
+      if (p.profile_skills) savedAnswers.q1 = p.profile_skills;
+      if (p.profile_work_style) savedAnswers.q2 = p.profile_work_style;
+      if (p.profile_activities) savedAnswers.q3 = p.profile_activities;
+      if (p.profile_competencies) savedAnswers.q4 = p.profile_competencies;
+      if (p.profile_preferred_directorate) savedAnswers.q5 = p.profile_preferred_directorate;
+      if (p.profile_communication_style) savedAnswers.q6 = p.profile_communication_style;
+      if (p.profile_problem_solving) savedAnswers.q7 = p.profile_problem_solving;
+      if (p.profile_time_management) savedAnswers.q8 = p.profile_time_management;
+      if (p.profile_team_role) savedAnswers.q9 = p.profile_team_role;
+      if (p.profile_learning_style) savedAnswers.q10 = p.profile_learning_style;
+      if (p.profile_stress_handling) savedAnswers.q11 = p.profile_stress_handling;
+      // New coordenadoria questions
+      if (p.profile_demand_style) savedAnswers.q16 = p.profile_demand_style;
+      if (p.profile_availability_times) savedAnswers.q17 = p.profile_availability_times;
+      if (p.profile_scope_affinity) savedAnswers.q18_affinity = p.profile_scope_affinity;
+      if (p.profile_scope_dislikes) savedAnswers.q18_dislikes = p.profile_scope_dislikes;
+      if (p.profile_availability_shift) savedAnswers.q19 = p.profile_availability_shift;
+      if (p.profile_coworker_issue) savedAnswers.q20_answer = p.profile_coworker_issue;
+      if (p.profile_coworker_issue_details) savedAnswers.q20_details = p.profile_coworker_issue_details;
       if (Object.keys(savedAnswers).length > 0) {
         setAnswers(savedAnswers);
         setHasFilledProfile(true);
