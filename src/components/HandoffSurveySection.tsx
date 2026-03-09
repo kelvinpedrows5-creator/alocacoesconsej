@@ -243,8 +243,17 @@ export function HandoffSurveySection() {
         {pendingSurveyClients.length > 0 && (
           <div className="space-y-4">
             <h3 className="text-lg font-semibold flex items-center gap-2">
-              <AlertCircle className="h-5 w-5 text-destructive" />
-              Pesquisas Pendentes ({pendingSurveyClients.length})
+              {canAnswerSurveys ? (
+                <>
+                  <AlertCircle className="h-5 w-5 text-destructive" />
+                  Pesquisas Pendentes ({pendingSurveyClients.length})
+                </>
+              ) : (
+                <>
+                  <ClipboardList className="h-5 w-5 text-muted-foreground" />
+                  Meus Clientes - {activeCycle.label} ({pendingSurveyClients.length})
+                </>
+              )}
             </h3>
             <div className="grid gap-4">
               {pendingSurveyClients.map(client => {
