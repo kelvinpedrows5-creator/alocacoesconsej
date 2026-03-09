@@ -25,6 +25,7 @@ const menuItems = [
   { title: 'CONSEJ', value: 'consej', icon: Users },
   { title: 'Portfólio de Clientes', value: 'clients', icon: Briefcase },
   { title: 'Meus Clientes', value: 'my-clients', icon: UserCheck },
+  { title: 'Central de Ajuda', value: 'help-center', icon: Heart },
 ];
 
 export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {

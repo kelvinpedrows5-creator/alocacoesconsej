@@ -104,6 +104,8 @@ const Index = () => {
         return <MemberBusinessOpportunity />;
       case 'opportunities-management':
         return <BusinessOpportunitiesManagement />;
+      case 'help-center':
+        return <HelpCenter />;
       default:
         return <CompanyOverview />;
     }
