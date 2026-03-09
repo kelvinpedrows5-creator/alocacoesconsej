@@ -388,7 +388,7 @@ export const profileQuestions: ProfileQuestion[] = [
   {
     id: 'q16',
     question: 'Quais desses estilos de demandas mais se alinham com a sua preferência?',
-    category: 'coordenador',
+    category: 'consultor',
     type: 'radio',
     options: [
       { value: 'contratual', label: 'Contratual' },
