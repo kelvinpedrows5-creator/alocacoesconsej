@@ -286,14 +286,25 @@ export function MyClientsOverview() {
                     </div>
                     {client.contract_scope_url ? (
                       <div className="flex items-center gap-2 pl-6">
-                        <a
-                          href={client.contract_scope_url}
-                          download
-                          className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
-                        >
-                          <Download className="w-3 h-3 shrink-0" />
-                          {client.contract_scope_type === 'pdf' ? 'Baixar PDF do contrato' : 'Acessar escopo'}
-                        </a>
+                        {client.contract_scope_type === 'pdf' ? (
+                          <button
+                            onClick={() => handleDownloadContract(client.contract_scope_url!, client.name)}
+                            className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                          >
+                            <Download className="w-3 h-3 shrink-0" />
+                            Baixar PDF do contrato
+                          </button>
+                        ) : (
+                          <a
+                            href={client.contract_scope_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-sm text-primary hover:underline flex items-center gap-1 truncate"
+                          >
+                            <ExternalLink className="w-3 h-3 shrink-0" />
+                            Acessar escopo
+                          </a>
+                        )}
                         {(isAdmin || isUserInGT(client.id, activeCycleId)) && (
                           <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0" onClick={() => handleRemoveContract(client.id)}>
                             <Trash2 className="w-3 h-3 text-destructive" />
