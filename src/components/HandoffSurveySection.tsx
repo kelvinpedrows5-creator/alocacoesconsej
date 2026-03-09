@@ -98,14 +98,37 @@ export function HandoffSurveySection() {
   const activeCycleId = previousCycle?.id || '';
   const activeCycle = previousCycle;
 
-  // Get clients from selected cycle where user was in GT
+  // Get clients from previous cycle where user was consultant in GT
   const cycleClients = activeCycleId 
-    ? getClientsByCycle(activeCycleId).filter(client => isUserInGT(client.id, activeCycleId))
+    ? getClientsByCycle(activeCycleId).filter(client => isUserConsultantInGT(client.id, activeCycleId))
     : [];
 
-  // Check which surveys are already completed for selected cycle
-  const { data: completedSurveys = [] } = useQuery({
-    queryKey: ['completed_handoff_surveys_section', activeCycleId, profile?.user_id],
+  // Check which surveys are already completed for previous cycle (by ANY consultant)
+  const { data: completedSurveysByClient = {} } = useQuery({
+    queryKey: ['handoff_surveys_by_client', activeCycleId],
+    queryFn: async () => {
+      if (!activeCycleId) return {};
+      const { data } = await supabase
+        .from('gt_handoff_surveys')
+        .select('client_id, user_id')
+        .eq('cycle_id', activeCycleId);
+      
+      // Group by client_id
+      const grouped: Record<string, string[]> = {};
+      (data || []).forEach(survey => {
+        if (!grouped[survey.client_id]) {
+          grouped[survey.client_id] = [];
+        }
+        grouped[survey.client_id].push(survey.user_id);
+      });
+      return grouped;
+    },
+    enabled: !!activeCycleId,
+  });
+
+  // Check if current user completed survey for each client
+  const { data: userCompletedSurveys = [] } = useQuery({
+    queryKey: ['user_completed_handoff_surveys', activeCycleId, profile?.user_id],
     queryFn: async () => {
       if (!activeCycleId || !profile?.user_id) return [];
       const { data } = await supabase
