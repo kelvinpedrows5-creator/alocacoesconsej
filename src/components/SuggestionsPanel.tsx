@@ -240,8 +240,7 @@ export const SuggestionsPanel = () => {
                           <span className="font-medium text-foreground truncate">{suggestion.userName}</span>
                           <Badge
                             variant="outline"
-                            className="text-xs shrink-0"
-                            style={{ borderColor: priority.color, color: priority.color }}
+                            className={`text-xs shrink-0 ${priority.bgColor} ${priority.color}`}
                           >
                             <PriorityIcon className="w-3 h-3 mr-1" />
                             Prioridade {priority.label}
