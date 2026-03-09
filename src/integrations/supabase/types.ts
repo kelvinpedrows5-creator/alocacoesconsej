@@ -461,7 +461,9 @@ export type Database = {
           created_at: string
           id: string
           is_read: boolean
+          leader_comment: string | null
           message: string
+          status: string
           target_leader_id: string
           user_id: string
         }
@@ -469,7 +471,9 @@ export type Database = {
           created_at?: string
           id?: string
           is_read?: boolean
+          leader_comment?: string | null
           message: string
+          status?: string
           target_leader_id: string
           user_id: string
         }
@@ -477,7 +481,9 @@ export type Database = {
           created_at?: string
           id?: string
           is_read?: boolean
+          leader_comment?: string | null
           message?: string
+          status?: string
           target_leader_id?: string
           user_id?: string
         }
