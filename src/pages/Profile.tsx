@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft,
-  ArrowLeft,
   Camera,
   Save,
   User,
@@ -15,6 +14,7 @@ import {
   Users,
   Building2,
 } from 'lucide-react';
+import logo from '@/assets/logo.png';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
