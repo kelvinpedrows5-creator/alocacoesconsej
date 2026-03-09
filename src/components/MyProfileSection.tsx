@@ -514,6 +514,17 @@ export function MyProfileSection() {
     setShowResults(false);
   };
 
+  const isCurrentQuestionAnswered = () => {
+    const q = currentQuestion;
+    if (q.type === 'radio') return !!answers[q.id];
+    if (q.type === 'compound' && q.subQuestions) {
+      // At least the first sub-question must be answered
+      const firstSub = q.subQuestions[0];
+      return !!answers[firstSub.id];
+    }
+    return true;
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
