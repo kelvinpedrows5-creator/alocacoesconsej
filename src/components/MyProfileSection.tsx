@@ -646,13 +646,13 @@ export function MyProfileSection() {
 
                   {/* Section indicator */}
                   <div className="flex items-center gap-2">
-                    <Badge variant={currentQuestion.category === 'coordenadoria' ? 'default' : 'secondary'}>
-                      {currentQuestion.category === 'coordenadoria' ? '📋 Coordenadoria' : '🧑‍💼 Estilo do Consultor'}
+                    <Badge variant={currentQuestion.category === 'consultor' ? 'default' : 'secondary'}>
+                      {currentQuestion.category === 'consultor' ? '🧑‍💼 Consultor' : '📋 Coordenador'}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
-                      {currentQuestion.category === 'coordenadoria'
-                        ? 'Perguntas sobre sua alocação e disponibilidade'
-                        : 'Perguntas sobre seu perfil e estilo de trabalho'}
+                      {currentQuestion.category === 'consultor'
+                        ? 'Perguntas sobre seu perfil e estilo de trabalho'
+                        : 'Perguntas sobre sua alocação e disponibilidade'}
                     </span>
                   </div>
 

@@ -463,8 +463,8 @@ const Admin = () => {
                       <div key={answer.id}>
                         {showHeader && (
                           <div className="flex items-center gap-2 py-2 mt-2 first:mt-0">
-                            <Badge variant={answer.category === 'coordenadoria' ? 'default' : 'secondary'}>
-                              {answer.category === 'coordenadoria' ? '📋 Coordenadoria' : '🧑‍💼 Estilo do Consultor'}
+                            <Badge variant={answer.category === 'consultor' ? 'default' : 'secondary'}>
+                              {answer.category === 'consultor' ? '🧑‍💼 Consultor' : '📋 Coordenador'}
                             </Badge>
                           </div>
                         )}
