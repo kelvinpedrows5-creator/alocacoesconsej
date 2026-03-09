@@ -182,6 +182,20 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
           </SidebarGroup>
         )}
       </SidebarContent>
+      <SidebarFooter>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              onClick={() => handleClick('help-center')}
+              isActive={activeTab === 'help-center'}
+              tooltip="Central de Ajuda"
+            >
+              <Heart className="h-4 w-4" />
+              {!collapsed && <span>Central de Ajuda</span>}
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
     </Sidebar>
   );
 }
