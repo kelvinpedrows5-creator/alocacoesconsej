@@ -239,10 +239,13 @@ export const AllocationManagement = () => {
     }
   };
 
-  const filteredProfiles = profiles.filter(
-    (p) =>
-      p.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.display_name && p.display_name.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredProfiles = profiles
+    .filter((p) => !leaderUserIds.has(p.user_id))
+    .filter(
+      (p) =>
+        p.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.display_name && p.display_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
   );
 
   const loading = loadingCycles || loadingAllocations || loadingProfiles || loadingClients;
