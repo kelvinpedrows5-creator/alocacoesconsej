@@ -13,6 +13,7 @@ import {
   Calendar,
   Crown,
   Briefcase,
+  ArrowRightLeft,
 } from 'lucide-react';
 import { useAuthContext } from '@/contexts/AuthContext';
 import { useCycles } from '@/hooks/useCycles';
