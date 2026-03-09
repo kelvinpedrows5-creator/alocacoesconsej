@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Search, Building2, ArrowRight, Briefcase, AlertCircle, CheckCircle2, Plus, X } from 'lucide-react';
 import { useAllocations } from '@/hooks/useAllocations';
+import { useLeadership } from '@/hooks/useLeadership';
 import { useCycles } from '@/hooks/useCycles';
 import { useClients } from '@/hooks/useClients';
 import { supabase } from '@/integrations/supabase/client';
@@ -50,6 +51,9 @@ export const AllocationManagement = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [pendingChanges, setPendingChanges] = useState<Map<string, PendingChange>>(new Map());
   const { toast } = useToast();
+  const { positions } = useLeadership();
+
+  const leaderUserIds = new Set(positions.map((p) => p.user_id));
 
   useEffect(() => {
     if (cycles.length > 0 && !selectedCycleId) {
@@ -235,11 +239,13 @@ export const AllocationManagement = () => {
     }
   };
 
-  const filteredProfiles = profiles.filter(
-    (p) =>
-      p.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (p.display_name && p.display_name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  const filteredProfiles = profiles
+    .filter((p) => !leaderUserIds.has(p.user_id))
+    .filter(
+      (p) =>
+        p.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (p.display_name && p.display_name.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
 
   const loading = loadingCycles || loadingAllocations || loadingProfiles || loadingClients;
 
