@@ -443,7 +443,7 @@ export function MyProfileSection() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-primary" />
-                Perfil de Alocação
+                Pesquisa de Perfil
               </CardTitle>
               <CardDescription>
                 Responda as 15 perguntas para descobrir quais coordenadorias mais combinam com seu perfil.
