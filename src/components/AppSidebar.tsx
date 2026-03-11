@@ -28,7 +28,7 @@ const menuItems = [
   { title: 'Minha Coordenadoria', value: 'my-coordination', icon: ClipboardList },
   { title: 'CONSEJ', value: 'consej', icon: Users },
   { title: 'Portfólio de Clientes', value: 'clients', icon: Briefcase },
-  { title: 'Meus Clientes', value: 'my-clients', icon: UserCheck },
+  { title: 'Meus Clientes', value: 'my-clients', icon: UserCheck, hideForDemandasManager: true },
 ];
 
 function NotificationBadge({ count, collapsed }: { count: number; collapsed: boolean }) {
