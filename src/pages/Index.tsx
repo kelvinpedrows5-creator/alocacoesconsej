@@ -21,6 +21,7 @@ import { ManagerClientsView } from '@/components/admin/ManagerClientsView';
 import { HelpCenter } from '@/components/HelpCenter';
 import { HandoffSurveySection } from '@/components/HandoffSurveySection';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { useLeadership } from '@/hooks/useLeadership';
 import { useCycles } from '@/hooks/useCycles';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
