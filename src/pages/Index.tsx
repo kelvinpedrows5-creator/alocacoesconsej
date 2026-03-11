@@ -104,7 +104,7 @@ const Index = () => {
       case 'my-demands':
         return <MemberDemandSubmission />;
       case 'my-clients':
-        return <MyClientsOverview />;
+        return isDemandasManager ? <ManagerClientsView /> : <MyClientsOverview />;
       case 'my-coordination':
         return <CoordinationSelector />;
       case 'my-opportunities':
