@@ -17,6 +17,7 @@ import { MemberDemandSubmission } from '@/components/MemberDemandSubmission';
 import { MemberBusinessOpportunity } from '@/components/MemberBusinessOpportunity';
 import { BusinessOpportunitiesManagement } from '@/components/admin/BusinessOpportunitiesManagement';
 import { MyClientsOverview } from '@/components/MyClientsOverview';
+import { ManagerClientsView } from '@/components/admin/ManagerClientsView';
 import { HelpCenter } from '@/components/HelpCenter';
 import { HandoffSurveySection } from '@/components/HandoffSurveySection';
 import { useAuthContext } from '@/contexts/AuthContext';
