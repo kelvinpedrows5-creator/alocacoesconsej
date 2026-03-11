@@ -434,7 +434,7 @@ const Admin = () => {
 
       {/* Profile Details Modal */}
       <Dialog open={!!selectedProfile} onOpenChange={() => setSelectedProfile(null)}>
-        <DialogContent className="max-w-lg max-h-[80vh]">
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-3">
               <Avatar className="h-10 w-10">
