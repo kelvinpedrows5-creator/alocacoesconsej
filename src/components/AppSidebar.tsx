@@ -315,6 +315,16 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {renderMenuButton('demands', 'Controle de Demandas', ClipboardList, pendingDemandsCount, 'Controle de Demandas')}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => handleClick('my-clients')}
+                    isActive={activeTab === 'my-clients'}
+                    tooltip="Meus Clientes"
+                  >
+                    <UserCheck className="h-4 w-4" />
+                    {!collapsed && <span>Meus Clientes</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
