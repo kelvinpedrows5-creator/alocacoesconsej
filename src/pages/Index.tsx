@@ -37,7 +37,11 @@ import {
 const Index = () => {
   const navigate = useNavigate();
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { profile, isAdmin, roleLoading, refreshProfile } = useAuthContext();
+  const { profile, isAdmin, roleLoading, refreshProfile, user } = useAuthContext();
+  const { positions } = useLeadership();
+  const isDemandasManager = user
+    ? positions.some(p => p.user_id === user.id && p.directorate_id === 'dir-1' && p.position_type === 'manager')
+    : false;
   const { cycles, currentCycle } = useCycles();
   const [activeTab, setActiveTab] = useState('overview');
 
