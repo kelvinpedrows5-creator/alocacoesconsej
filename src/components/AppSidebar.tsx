@@ -291,7 +291,9 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
           <SidebarGroupLabel>Navegação</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {menuItems
+                .filter(item => !(item as any).hideForDemandasManager || !isDemandasManager)
+                .map((item) => (
                 <SidebarMenuItem key={item.value}>
                   <SidebarMenuButton
                     onClick={() => handleClick(item.value)}
