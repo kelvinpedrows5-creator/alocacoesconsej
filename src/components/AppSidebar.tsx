@@ -28,7 +28,7 @@ const menuItems = [
   { title: 'Minha Coordenadoria', value: 'my-coordination', icon: ClipboardList },
   { title: 'CONSEJ', value: 'consej', icon: Users },
   { title: 'Portfólio de Clientes', value: 'clients', icon: Briefcase },
-  { title: 'Meus Clientes', value: 'my-clients', icon: UserCheck },
+  { title: 'Meus Clientes', value: 'my-clients', icon: UserCheck, hideForDemandasManager: true },
 ];
 
 function NotificationBadge({ count, collapsed }: { count: number; collapsed: boolean }) {
@@ -291,7 +291,9 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
           <SidebarGroupLabel>Navegação</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {menuItems
+                .filter(item => !(item as any).hideForDemandasManager || !isDemandasManager)
+                .map((item) => (
                 <SidebarMenuItem key={item.value}>
                   <SidebarMenuButton
                     onClick={() => handleClick(item.value)}
@@ -313,6 +315,16 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
             <SidebarGroupContent>
               <SidebarMenu>
                 {renderMenuButton('demands', 'Controle de Demandas', ClipboardList, pendingDemandsCount, 'Controle de Demandas')}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    onClick={() => handleClick('my-clients')}
+                    isActive={activeTab === 'my-clients'}
+                    tooltip="Meus Clientes"
+                  >
+                    <UserCheck className="h-4 w-4" />
+                    {!collapsed && <span>Meus Clientes</span>}
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

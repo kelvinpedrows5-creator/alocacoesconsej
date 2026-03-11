@@ -17,9 +17,11 @@ import { MemberDemandSubmission } from '@/components/MemberDemandSubmission';
 import { MemberBusinessOpportunity } from '@/components/MemberBusinessOpportunity';
 import { BusinessOpportunitiesManagement } from '@/components/admin/BusinessOpportunitiesManagement';
 import { MyClientsOverview } from '@/components/MyClientsOverview';
+import { ManagerClientsView } from '@/components/admin/ManagerClientsView';
 import { HelpCenter } from '@/components/HelpCenter';
 import { HandoffSurveySection } from '@/components/HandoffSurveySection';
 import { useAuthContext } from '@/contexts/AuthContext';
+import { useLeadership } from '@/hooks/useLeadership';
 import { useCycles } from '@/hooks/useCycles';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -35,7 +37,11 @@ import {
 const Index = () => {
   const navigate = useNavigate();
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const { profile, isAdmin, roleLoading, refreshProfile } = useAuthContext();
+  const { profile, isAdmin, roleLoading, refreshProfile, user } = useAuthContext();
+  const { positions } = useLeadership();
+  const isDemandasManager = user
+    ? positions.some(p => p.user_id === user.id && p.directorate_id === 'dir-1' && p.position_type === 'manager')
+    : false;
   const { cycles, currentCycle } = useCycles();
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -98,7 +104,7 @@ const Index = () => {
       case 'my-demands':
         return <MemberDemandSubmission />;
       case 'my-clients':
-        return <MyClientsOverview />;
+        return isDemandasManager ? <ManagerClientsView /> : <MyClientsOverview />;
       case 'my-coordination':
         return <CoordinationSelector />;
       case 'my-opportunities':

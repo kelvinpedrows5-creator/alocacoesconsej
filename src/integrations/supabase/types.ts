@@ -278,6 +278,50 @@ export type Database = {
         }
         Relationships: []
       }
+      demand_dispatches: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string
+          deadline_hours: number
+          description: string | null
+          id: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by: string
+          deadline_hours?: number
+          description?: string | null
+          id?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          deadline_hours?: number
+          description?: string | null
+          id?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demand_dispatches_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demand_submission_helpers: {
         Row: {
           created_at: string
