@@ -200,7 +200,7 @@ const Admin = () => {
   const getAnswerLabel = (questionId: string, value: string | null) => {
     if (!value) return 'Não respondido';
     const question = profileQuestions.find((q) => q.id === questionId);
-    const option = question?.options.find((o) => o.value === value);
+    const option = question?.options?.find((o) => o.value === value);
     return option?.label || value;
   };
 
