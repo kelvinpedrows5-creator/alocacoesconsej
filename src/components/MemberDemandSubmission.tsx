@@ -39,6 +39,7 @@ interface ClientData {
 
 interface Submission {
   id: string;
+  user_id: string;
   title: string;
   description: string | null;
   status: string;
@@ -103,7 +104,7 @@ export function MemberDemandSubmission() {
     try {
       setLoading(true);
       const [submissionsRes, profilesRes, helpersRes, gtRes, clientsRes] = await Promise.all([
-        supabase.from('demand_submissions').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }),
+        supabase.from('demand_submissions').select('*').order('created_at', { ascending: false }),
         supabase.from('profiles').select('user_id, display_name, email, avatar_url'),
         supabase.from('demand_submission_helpers').select('*'),
         supabase.from('gt_members').select('user_id, client_id, cycle_id'),
@@ -115,8 +116,9 @@ export function MemberDemandSubmission() {
       setClients(clientsRes.data || []);
 
       const allHelpers = helpersRes.data || [];
-      const subs: Submission[] = (submissionsRes.data || []).map((s: any) => ({
+      const allSubmissions = (submissionsRes.data || []).map((s: any) => ({
         id: s.id,
+        user_id: s.user_id,
         title: s.title,
         description: s.description,
         status: s.status,
@@ -126,6 +128,10 @@ export function MemberDemandSubmission() {
         helpers: allHelpers.filter((h: any) => h.submission_id === s.id).map((h: any) => h.helper_user_id),
         evaluation_notes: s.evaluation_notes || null,
       }));
+      // Show demands where user is submitter OR helper
+      const subs: Submission[] = allSubmissions.filter(
+        (s: any) => s.user_id === user!.id || s.helpers.includes(user!.id)
+      );
       setSubmissions(subs);
     } catch (error: any) {
       console.error('Error fetching data:', error);
@@ -172,6 +178,7 @@ export function MemberDemandSubmission() {
       setSubmissions((prev) => [
         {
           id: data.id,
+          user_id: user.id,
           title: data.title,
           description: data.description,
           status: data.status,
@@ -405,7 +412,25 @@ export function MemberDemandSubmission() {
                   className="p-4 rounded-lg border border-border"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-foreground flex-1">{sub.title}</h3>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">{sub.title}</h3>
+                      {sub.user_id !== user?.id && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Badge variant="outline" className="text-xs bg-accent/50">
+                            <Users className="w-3 h-3 mr-1" />
+                            Você ajudou
+                          </Badge>
+                          {(() => {
+                            const submitter = getProfile(sub.user_id);
+                            return submitter ? (
+                              <span className="text-xs text-muted-foreground">
+                                — registrada por {submitter.display_name || submitter.email}
+                              </span>
+                            ) : null;
+                          })()}
+                        </div>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <Badge
                         className={
@@ -420,14 +445,16 @@ export function MemberDemandSubmission() {
                           <><Clock className="w-3 h-3 mr-1" /> Pendente</>
                         )}
                       </Badge>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(sub.id)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      {sub.user_id === user?.id && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          onClick={() => handleDelete(sub.id)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                   {sub.description && (

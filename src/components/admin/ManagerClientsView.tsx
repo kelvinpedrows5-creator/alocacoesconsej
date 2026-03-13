@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import {
   Building,
@@ -8,6 +8,9 @@ import {
   Clock,
   Check,
   Search,
+  Plus,
+  Sparkles,
+  Star,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,8 +35,9 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { useClients } from '@/hooks/useClients';
+import { useClients, GT_PROFILE_QUESTIONS } from '@/hooks/useClients';
 import { useCycles } from '@/hooks/useCycles';
+import { useDemandsControl } from '@/hooks/useDemandsControl';
 import { toast } from 'sonner';
 
 interface Profile {
@@ -45,8 +49,9 @@ interface Profile {
 
 export function ManagerClientsView() {
   const { user } = useAuthContext();
-  const { clients, gtMembers, getGTMembersByClient, getClientsByCycle } = useClients();
+  const { clients, gtMembers, getGTMembersByClient, getClientsByCycle, addClient } = useClients();
   const { cycles, currentCycle } = useCycles();
+  const { getMemberScores } = useDemandsControl();
   const [selectedCycleId, setSelectedCycleId] = useState('');
   const [sortAsc, setSortAsc] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,18 +64,36 @@ export function ManagerClientsView() {
   const [dispatching, setDispatching] = useState(false);
   const [dispatches, setDispatches] = useState<any[]>([]);
 
+  // New Client state
+  const [newClientDialog, setNewClientDialog] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientDesc, setNewClientDesc] = useState('');
+  const [newClientProfileAnswers, setNewClientProfileAnswers] = useState<Record<string, string>>({});
+  const [showSuggestion, setShowSuggestion] = useState(false);
+  const [creatingClient, setCreatingClient] = useState(false);
+  const [submissions, setSubmissions] = useState<{ user_id: string; helpers?: string[] }[]>([]);
+
   useEffect(() => {
     if (currentCycle && !selectedCycleId) setSelectedCycleId(currentCycle.id);
   }, [currentCycle, selectedCycleId]);
 
   useEffect(() => {
     const fetchData = async () => {
-      const [profilesRes, dispatchesRes] = await Promise.all([
+      const [profilesRes, dispatchesRes, subsRes, helpersRes] = await Promise.all([
         supabase.from('profiles').select('user_id, display_name, email, avatar_url'),
         supabase.from('demand_dispatches').select('*').order('created_at', { ascending: false }),
+        supabase.from('demand_submissions').select('user_id, id').eq('status', 'evaluated'),
+        supabase.from('demand_submission_helpers').select('submission_id, helper_user_id'),
       ]);
       setProfiles(profilesRes.data || []);
       setDispatches(dispatchesRes.data || []);
+      
+      const allHelpers = helpersRes.data || [];
+      const subs = (subsRes.data || []).map((s: any) => ({
+        user_id: s.user_id,
+        helpers: allHelpers.filter((h: any) => h.submission_id === s.id).map((h: any) => h.helper_user_id),
+      }));
+      setSubmissions(subs);
     };
     fetchData();
   }, []);
@@ -140,7 +163,68 @@ export function ManagerClientsView() {
     }
   };
 
-  const getClientName = (clientId: string) => clients.find(c => c.id === clientId)?.name || clientId;
+  // GT suggestion logic based on client profile answers
+  const gtSuggestion = useMemo(() => {
+    if (!showSuggestion || Object.keys(newClientProfileAnswers).length < 5) return null;
+
+    const answers = newClientProfileAnswers;
+    
+    // Determine recommended team size based on complexity and contact frequency
+    let recommendedSize = 1; // minimum consultants
+    const complexity = answers['question_5'];
+    const contactFreq = answers['question_2'];
+    const demandStyle = answers['question_3'];
+    
+    if (complexity === 'Alta complexidade - exige especialistas') recommendedSize = 3;
+    else if (complexity === 'Média complexidade - exige experiência') recommendedSize = 2;
+    else if (complexity === 'Variável - depende do projeto') recommendedSize = 2;
+    
+    if (contactFreq === 'Alta - contato diário' && recommendedSize < 3) recommendedSize++;
+    if (demandStyle === 'Demandas emergenciais e urgentes' && recommendedSize < 3) recommendedSize++;
+    if (recommendedSize > 3) recommendedSize = 3;
+
+    // Get ranked members (from useDemandsControl)
+    const memberScores = getMemberScores(profiles, submissions);
+    
+    // Filter out those already in too many GTs this cycle
+    const memberGtCount = new Map<string, number>();
+    gtMembers.filter(m => m.cycle_id === activeCycleId).forEach(m => {
+      memberGtCount.set(m.user_id, (memberGtCount.get(m.user_id) || 0) + 1);
+    });
+
+    const suggestedMembers = memberScores
+      .filter(m => (memberGtCount.get(m.user_id) || 0) < 3) // not overloaded
+      .slice(0, recommendedSize);
+
+    return {
+      recommendedSize,
+      suggestedMembers,
+    };
+  }, [showSuggestion, newClientProfileAnswers, profiles, submissions, getMemberScores, gtMembers, activeCycleId]);
+
+  const handleCreateClient = async () => {
+    if (!newClientName.trim()) return;
+    setCreatingClient(true);
+    try {
+      addClient({
+        name: newClientName.trim(),
+        description: newClientDesc.trim() || undefined,
+        cycleId: activeCycleId || undefined,
+      });
+      toast.success('Cliente criado com sucesso!');
+      setNewClientDialog(false);
+      setNewClientName('');
+      setNewClientDesc('');
+      setNewClientProfileAnswers({});
+      setShowSuggestion(false);
+    } catch (err: any) {
+      toast.error('Erro ao criar cliente: ' + err.message);
+    } finally {
+      setCreatingClient(false);
+    }
+  };
+
+  const answeredCount = Object.keys(newClientProfileAnswers).length;
 
   return (
     <div className="space-y-6">
@@ -154,7 +238,7 @@ export function ManagerClientsView() {
             Clientes sob sua responsabilidade como Gerente de Demandas
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Select value={activeCycleId} onValueChange={setSelectedCycleId}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Selecione o ciclo" />
@@ -165,6 +249,10 @@ export function ManagerClientsView() {
               ))}
             </SelectContent>
           </Select>
+          <Button variant="outline" onClick={() => setNewClientDialog(true)} className="gap-2">
+            <Plus className="w-4 h-4" />
+            Novo Cliente
+          </Button>
           <Button onClick={() => setDispatchDialog(true)} className="gap-2">
             <Play className="w-4 h-4" />
             Rodar Demanda
@@ -227,7 +315,6 @@ export function ManagerClientsView() {
                     )}
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    {/* GT Members */}
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                         <Users className="w-4 h-4" />
@@ -254,7 +341,6 @@ export function ManagerClientsView() {
                       </div>
                     </div>
 
-                    {/* Recent Dispatches */}
                     {clientDispatches.length > 0 && (
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
@@ -359,6 +445,154 @@ export function ManagerClientsView() {
               <Button onClick={handleDispatch} disabled={!selectedClientId || !dispatchTitle.trim() || dispatching}>
                 <Check className="w-4 h-4 mr-2" />
                 {dispatching ? 'Enviando...' : 'Enviar Demanda'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Novo Cliente Dialog */}
+      <Dialog open={newClientDialog} onOpenChange={(open) => {
+        setNewClientDialog(open);
+        if (!open) {
+          setShowSuggestion(false);
+          setNewClientProfileAnswers({});
+        }
+      }}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Plus className="w-5 h-5 text-primary" />
+              Novo Cliente
+            </DialogTitle>
+            <DialogDescription>
+              Cadastre um novo cliente e responda o perfil para gerar sugestões de equipe.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-5 py-2">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Nome do Cliente *</label>
+              <Input
+                placeholder="Nome da empresa..."
+                value={newClientName}
+                onChange={e => setNewClientName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Descrição (opcional)</label>
+              <Textarea
+                placeholder="Breve descrição do cliente..."
+                value={newClientDesc}
+                onChange={e => setNewClientDesc(e.target.value)}
+                rows={2}
+              />
+            </div>
+
+            {/* Client Profile Questions */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-primary" />
+                Perfil do Cliente ({answeredCount}/{GT_PROFILE_QUESTIONS.length})
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                Responda pelo menos 5 perguntas para gerar a sugestão de equipe do GT.
+              </p>
+              {GT_PROFILE_QUESTIONS.map((q) => (
+                <div key={q.key} className="space-y-1.5">
+                  <label className="text-sm font-medium text-foreground">{q.label}</label>
+                  <Select
+                    value={newClientProfileAnswers[q.key] || ''}
+                    onValueChange={(val) =>
+                      setNewClientProfileAnswers(prev => ({ ...prev, [q.key]: val }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {q.options.map((opt) => (
+                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ))}
+            </div>
+
+            {/* Generate Suggestion Button */}
+            {answeredCount >= 5 && !showSuggestion && (
+              <Button
+                variant="outline"
+                className="w-full gap-2"
+                onClick={() => setShowSuggestion(true)}
+              >
+                <Sparkles className="w-4 h-4" />
+                Gerar Sugestão de Equipe
+              </Button>
+            )}
+
+            {/* Suggestion Panel */}
+            {showSuggestion && gtSuggestion && (
+              <Card className="border-primary/30 bg-primary/5">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    Sugestão de Equipe
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    Recomendação: <strong>{gtSuggestion.recommendedSize} consultor{gtSuggestion.recommendedSize > 1 ? 'es' : ''}</strong> para este GT,
+                    além de 1 diretor e 1 gerente.
+                  </p>
+                  {gtSuggestion.suggestedMembers.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium text-foreground">Membros sugeridos (por ranking de desempenho):</p>
+                      {gtSuggestion.suggestedMembers.map((member, idx) => (
+                        <div key={member.user_id} className="flex items-center gap-3 p-2 rounded-lg bg-background/60">
+                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                            {idx + 1}
+                          </div>
+                          <Avatar className="h-7 w-7">
+                            <AvatarImage src={member.avatar_url || undefined} />
+                            <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                              {getInitials(member.display_name, member.email)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{member.display_name || member.email}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {member.demands_count} demanda{member.demands_count !== 1 ? 's' : ''} • Média: {member.average_score.toFixed(1)}
+                            </p>
+                          </div>
+                          <Badge className={
+                            member.average_score >= 7
+                              ? 'bg-success/20 text-success'
+                              : member.average_score >= 4
+                              ? 'bg-warning/20 text-warning'
+                              : 'bg-destructive/20 text-destructive'
+                          }>
+                            <Star className="w-3 h-3 mr-1" />
+                            {member.average_score.toFixed(1)}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {gtSuggestion.suggestedMembers.length === 0 && (
+                    <p className="text-sm text-muted-foreground">Nenhum membro disponível para sugestão.</p>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setNewClientDialog(false)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleCreateClient} disabled={!newClientName.trim() || creatingClient}>
+                <Check className="w-4 h-4 mr-2" />
+                {creatingClient ? 'Criando...' : 'Criar Cliente'}
               </Button>
             </div>
           </div>
