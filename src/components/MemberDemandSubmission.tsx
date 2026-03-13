@@ -103,7 +103,7 @@ export function MemberDemandSubmission() {
     try {
       setLoading(true);
       const [submissionsRes, profilesRes, helpersRes, gtRes, clientsRes] = await Promise.all([
-        supabase.from('demand_submissions').select('*').eq('user_id', user!.id).order('created_at', { ascending: false }),
+        supabase.from('demand_submissions').select('*').order('created_at', { ascending: false }),
         supabase.from('profiles').select('user_id, display_name, email, avatar_url'),
         supabase.from('demand_submission_helpers').select('*'),
         supabase.from('gt_members').select('user_id, client_id, cycle_id'),
@@ -115,8 +115,9 @@ export function MemberDemandSubmission() {
       setClients(clientsRes.data || []);
 
       const allHelpers = helpersRes.data || [];
-      const subs: Submission[] = (submissionsRes.data || []).map((s: any) => ({
+      const allSubmissions = (submissionsRes.data || []).map((s: any) => ({
         id: s.id,
+        user_id: s.user_id,
         title: s.title,
         description: s.description,
         status: s.status,
@@ -126,6 +127,10 @@ export function MemberDemandSubmission() {
         helpers: allHelpers.filter((h: any) => h.submission_id === s.id).map((h: any) => h.helper_user_id),
         evaluation_notes: s.evaluation_notes || null,
       }));
+      // Show demands where user is submitter OR helper
+      const subs: Submission[] = allSubmissions.filter(
+        (s: any) => s.user_id === user!.id || s.helpers.includes(user!.id)
+      );
       setSubmissions(subs);
     } catch (error: any) {
       console.error('Error fetching data:', error);

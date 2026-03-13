@@ -141,7 +141,7 @@ export const useDemandsControl = () => {
 
   const getMemberScores = (
     profiles: { user_id: string; display_name: string | null; email: string; avatar_url: string | null }[],
-    submissions?: { user_id: string }[],
+    submissions?: { user_id: string; helpers?: string[] }[],
   ): MemberWithScore[] => {
     return profiles.map((p) => {
       const memberScores = scores.filter((s) => s.user_id === p.user_id);
@@ -151,7 +151,10 @@ export const useDemandsControl = () => {
       const avgExecution = count > 0 ? totalExecution / count : 0;
       const avgQuality = count > 0 ? totalQuality / count : 0;
       const average = count > 0 ? (totalExecution + totalQuality) / (count * 2) : 0;
-      const demandsCount = submissions ? submissions.filter((s) => s.user_id === p.user_id).length : 0;
+      // Count demands where user is submitter OR helper
+      const demandsAsSubmitter = submissions ? submissions.filter((s) => s.user_id === p.user_id).length : 0;
+      const demandsAsHelper = submissions ? submissions.filter((s) => s.helpers?.includes(p.user_id)).length : 0;
+      const demandsCount = demandsAsSubmitter + demandsAsHelper;
 
       return {
         user_id: p.user_id,
