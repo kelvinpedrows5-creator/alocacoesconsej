@@ -178,6 +178,7 @@ export function MemberDemandSubmission() {
       setSubmissions((prev) => [
         {
           id: data.id,
+          user_id: user.id,
           title: data.title,
           description: data.description,
           status: data.status,
