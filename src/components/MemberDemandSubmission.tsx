@@ -411,7 +411,25 @@ export function MemberDemandSubmission() {
                   className="p-4 rounded-lg border border-border"
                 >
                   <div className="flex items-start justify-between mb-2">
-                    <h3 className="font-semibold text-foreground flex-1">{sub.title}</h3>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-foreground">{sub.title}</h3>
+                      {sub.user_id !== user?.id && (
+                        <div className="flex items-center gap-1.5 mt-1">
+                          <Badge variant="outline" className="text-xs bg-accent/50">
+                            <Users className="w-3 h-3 mr-1" />
+                            Você ajudou
+                          </Badge>
+                          {(() => {
+                            const submitter = getProfile(sub.user_id);
+                            return submitter ? (
+                              <span className="text-xs text-muted-foreground">
+                                — registrada por {submitter.display_name || submitter.email}
+                              </span>
+                            ) : null;
+                          })()}
+                        </div>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2">
                       <Badge
                         className={
@@ -426,14 +444,16 @@ export function MemberDemandSubmission() {
                           <><Clock className="w-3 h-3 mr-1" /> Pendente</>
                         )}
                       </Badge>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => handleDelete(sub.id)}
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </Button>
+                      {sub.user_id === user?.id && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7 text-destructive hover:text-destructive"
+                          onClick={() => handleDelete(sub.id)}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                   {sub.description && (
