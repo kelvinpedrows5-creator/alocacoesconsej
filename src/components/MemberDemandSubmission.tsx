@@ -39,6 +39,7 @@ interface ClientData {
 
 interface Submission {
   id: string;
+  user_id: string;
   title: string;
   description: string | null;
   status: string;
