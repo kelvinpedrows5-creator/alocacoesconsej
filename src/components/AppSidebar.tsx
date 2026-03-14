@@ -320,18 +320,29 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
             <SidebarMenu>
               {menuItems
                 .filter(item => !(item as any).hideForDemandasManager || !isDemandasManager)
-                .map((item) => (
+                .map((item) => {
+                const badgeCount = (item as any).hasDispatchBadge ? pendingDispatchesCount : 0;
+                return (
                 <SidebarMenuItem key={item.value}>
                   <SidebarMenuButton
                     onClick={() => handleClick(item.value)}
                     isActive={activeTab === item.value}
                     tooltip={item.title}
                   >
-                    <item.icon className="h-4 w-4" />
-                    {!collapsed && <span>{item.title}</span>}
+                    <div className="relative">
+                      <item.icon className="h-4 w-4" />
+                      {collapsed && <NotificationBadge count={badgeCount} collapsed={true} />}
+                    </div>
+                    {!collapsed && (
+                      <span className="flex items-center gap-2">
+                        {item.title}
+                        <NotificationBadge count={badgeCount} collapsed={false} />
+                      </span>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
