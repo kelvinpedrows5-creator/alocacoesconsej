@@ -82,6 +82,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
   const [pendingHandoffCount, setPendingHandoffCount] = useState(0);
   const [returnedDemandsCount, setReturnedDemandsCount] = useState(0);
   const [pendingOpportunitiesCount, setPendingOpportunitiesCount] = useState(0);
+  const [pendingDispatchesCount, setPendingDispatchesCount] = useState(0);
 
   // Help reports notifications (leaders)
   useEffect(() => {
