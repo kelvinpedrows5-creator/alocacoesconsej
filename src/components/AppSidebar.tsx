@@ -253,6 +253,32 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
     return () => { supabase.removeChannel(channel); };
   }, [isNegociosLeadership, user?.id]);
 
+  // Pending dispatches notifications for consultants (non-manager, non-director members in GTs)
+  useEffect(() => {
+    if (!user || isDemandasManager || isDirector) return;
+    const fetchPendingDispatches = async () => {
+      // Get user's GT client ids
+      const { data: myGts } = await supabase
+        .from('gt_members')
+        .select('client_id')
+        .eq('user_id', user.id);
+      if (!myGts || myGts.length === 0) { setPendingDispatchesCount(0); return; }
+      const clientIds = myGts.map(g => g.client_id);
+      const { count } = await supabase
+        .from('demand_dispatches')
+        .select('id', { count: 'exact', head: true })
+        .in('client_id', clientIds)
+        .eq('status', 'pending');
+      setPendingDispatchesCount(count || 0);
+    };
+    fetchPendingDispatches();
+    const channel = supabase
+      .channel('dispatches-pending')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'demand_dispatches' }, () => fetchPendingDispatches())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, isDemandasManager, isDirector]);
+
   const handleClick = (value: string) => {
     onTabChange(value);
     setOpenMobile(false);
