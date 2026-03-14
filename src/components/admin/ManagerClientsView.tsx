@@ -11,6 +11,8 @@ import {
   Plus,
   Sparkles,
   Star,
+  Trash2,
+  UserPlus,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -18,7 +20,6 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Select,
   SelectContent,
@@ -35,9 +36,10 @@ import {
 } from '@/components/ui/dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuthContext } from '@/contexts/AuthContext';
-import { useClients, GT_PROFILE_QUESTIONS } from '@/hooks/useClients';
+import { useClients } from '@/hooks/useClients';
 import { useCycles } from '@/hooks/useCycles';
 import { useDemandsControl } from '@/hooks/useDemandsControl';
+import { useLeadership } from '@/hooks/useLeadership';
 import { toast } from 'sonner';
 
 interface Profile {
@@ -49,9 +51,10 @@ interface Profile {
 
 export function ManagerClientsView() {
   const { user } = useAuthContext();
-  const { clients, gtMembers, getGTMembersByClient, getClientsByCycle, addClient } = useClients();
+  const { clients, gtMembers, getGTMembersByClient, getClientsByCycle, addClient, addGTMember, removeGTMember } = useClients();
   const { cycles, currentCycle } = useCycles();
   const { getMemberScores } = useDemandsControl();
+  const { positions } = useLeadership();
   const [selectedCycleId, setSelectedCycleId] = useState('');
   const [sortAsc, setSortAsc] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -60,7 +63,7 @@ export function ManagerClientsView() {
   const [selectedClientId, setSelectedClientId] = useState('');
   const [dispatchTitle, setDispatchTitle] = useState('');
   const [dispatchDescription, setDispatchDescription] = useState('');
-  const [dispatchDeadline, setDispatchDeadline] = useState('24');
+  const [dispatchDeadlineDays, setDispatchDeadlineDays] = useState('1');
   const [dispatching, setDispatching] = useState(false);
   const [dispatches, setDispatches] = useState<any[]>([]);
 
@@ -68,10 +71,17 @@ export function ManagerClientsView() {
   const [newClientDialog, setNewClientDialog] = useState(false);
   const [newClientName, setNewClientName] = useState('');
   const [newClientDesc, setNewClientDesc] = useState('');
-  const [newClientProfileAnswers, setNewClientProfileAnswers] = useState<Record<string, string>>({});
   const [showSuggestion, setShowSuggestion] = useState(false);
   const [creatingClient, setCreatingClient] = useState(false);
   const [submissions, setSubmissions] = useState<{ user_id: string; helpers?: string[] }[]>([]);
+
+  // Consultant allocation state for new client
+  const [selectedConsultants, setSelectedConsultants] = useState<string[]>([]);
+
+  // Add member to existing client
+  const [addMemberDialog, setAddMemberDialog] = useState<{ clientId: string; clientName: string } | null>(null);
+  const [addMemberUserId, setAddMemberUserId] = useState('');
+  const [addMemberRole, setAddMemberRole] = useState('consultant');
 
   useEffect(() => {
     if (currentCycle && !selectedCycleId) setSelectedCycleId(currentCycle.id);
@@ -141,11 +151,12 @@ export function ManagerClientsView() {
     if (!selectedClientId || !dispatchTitle.trim() || !user) return;
     setDispatching(true);
     try {
+      const deadlineDays = parseInt(dispatchDeadlineDays) || 1;
       const { data, error } = await supabase.from('demand_dispatches').insert({
         client_id: selectedClientId,
         title: dispatchTitle.trim(),
         description: dispatchDescription.trim() || null,
-        deadline_hours: parseInt(dispatchDeadline) || 24,
+        deadline_hours: deadlineDays * 24, // Store as hours internally
         created_by: user.id,
       }).select().single();
       if (error) throw error;
@@ -155,7 +166,7 @@ export function ManagerClientsView() {
       setSelectedClientId('');
       setDispatchTitle('');
       setDispatchDescription('');
-      setDispatchDeadline('24');
+      setDispatchDeadlineDays('1');
     } catch (err: any) {
       toast.error('Erro ao enviar demanda: ' + err.message);
     } finally {
@@ -163,60 +174,91 @@ export function ManagerClientsView() {
     }
   };
 
-  // GT suggestion logic based on client profile answers
+  // GT suggestion logic — no questions needed, based on member ranking
   const gtSuggestion = useMemo(() => {
-    if (!showSuggestion || Object.keys(newClientProfileAnswers).length < 5) return null;
+    if (!showSuggestion) return null;
 
-    const answers = newClientProfileAnswers;
-    
-    // Determine recommended team size based on complexity and contact frequency
-    let recommendedSize = 1; // minimum consultants
-    const complexity = answers['question_5'];
-    const contactFreq = answers['question_2'];
-    const demandStyle = answers['question_3'];
-    
-    if (complexity === 'Alta complexidade - exige especialistas') recommendedSize = 3;
-    else if (complexity === 'Média complexidade - exige experiência') recommendedSize = 2;
-    else if (complexity === 'Variável - depende do projeto') recommendedSize = 2;
-    
-    if (contactFreq === 'Alta - contato diário' && recommendedSize < 3) recommendedSize++;
-    if (demandStyle === 'Demandas emergenciais e urgentes' && recommendedSize < 3) recommendedSize++;
-    if (recommendedSize > 3) recommendedSize = 3;
+    // Default recommendation: 2 consultants
+    const recommendedSize = 2;
 
-    // Get ranked members (from useDemandsControl)
+    // Get ranked members
     const memberScores = getMemberScores(profiles, submissions);
     
-    // Filter out those already in too many GTs this cycle
+    // Exclude leaders (directors/managers)
+    const leaderUserIds = new Set(positions.map(p => p.user_id));
+    
+    // Filter out leaders and those already in too many GTs this cycle
     const memberGtCount = new Map<string, number>();
     gtMembers.filter(m => m.cycle_id === activeCycleId).forEach(m => {
       memberGtCount.set(m.user_id, (memberGtCount.get(m.user_id) || 0) + 1);
     });
 
     const suggestedMembers = memberScores
-      .filter(m => (memberGtCount.get(m.user_id) || 0) < 3) // not overloaded
-      .slice(0, recommendedSize);
+      .filter(m => !leaderUserIds.has(m.user_id))
+      .filter(m => (memberGtCount.get(m.user_id) || 0) < 3)
+      .slice(0, Math.max(recommendedSize, 3)); // Show top 3 at minimum
 
     return {
       recommendedSize,
       suggestedMembers,
     };
-  }, [showSuggestion, newClientProfileAnswers, profiles, submissions, getMemberScores, gtMembers, activeCycleId]);
+  }, [showSuggestion, profiles, submissions, getMemberScores, gtMembers, activeCycleId, positions]);
+
+  // Available consultants (non-leaders, not already selected)
+  const availableConsultants = useMemo(() => {
+    const leaderUserIds = new Set(positions.map(p => p.user_id));
+    return profiles.filter(p => !leaderUserIds.has(p.user_id));
+  }, [profiles, positions]);
 
   const handleCreateClient = async () => {
     if (!newClientName.trim()) return;
     setCreatingClient(true);
     try {
-      addClient({
-        name: newClientName.trim(),
-        description: newClientDesc.trim() || undefined,
-        cycleId: activeCycleId || undefined,
-      });
+      // Create client
+      const { data: newClient, error: clientError } = await supabase
+        .from('clients')
+        .insert({ name: newClientName.trim(), description: newClientDesc.trim() || null })
+        .select()
+        .single();
+      if (clientError) throw clientError;
+
+      // Link to cycle
+      if (activeCycleId) {
+        await supabase.from('client_cycles').insert({
+          client_id: newClient.id,
+          cycle_id: activeCycleId,
+        });
+      }
+
+      // Add manager itself to GT
+      if (user && activeCycleId) {
+        await supabase.from('gt_members').insert({
+          client_id: newClient.id,
+          user_id: user.id,
+          role: 'manager',
+          cycle_id: activeCycleId,
+        });
+      }
+
+      // Add selected consultants
+      if (selectedConsultants.length > 0 && activeCycleId) {
+        const consultantInserts = selectedConsultants.map(userId => ({
+          client_id: newClient.id,
+          user_id: userId,
+          role: 'consultant',
+          cycle_id: activeCycleId,
+        }));
+        await supabase.from('gt_members').insert(consultantInserts);
+      }
+
       toast.success('Cliente criado com sucesso!');
       setNewClientDialog(false);
       setNewClientName('');
       setNewClientDesc('');
-      setNewClientProfileAnswers({});
+      setSelectedConsultants([]);
       setShowSuggestion(false);
+      // Reload page data
+      window.location.reload();
     } catch (err: any) {
       toast.error('Erro ao criar cliente: ' + err.message);
     } finally {
@@ -224,7 +266,30 @@ export function ManagerClientsView() {
     }
   };
 
-  const answeredCount = Object.keys(newClientProfileAnswers).length;
+  const handleRemoveGTMember = (memberId: string) => {
+    removeGTMember(memberId);
+  };
+
+  const handleAddMember = () => {
+    if (!addMemberDialog || !addMemberUserId || !activeCycleId) return;
+    addGTMember({
+      client_id: addMemberDialog.clientId,
+      user_id: addMemberUserId,
+      role: addMemberRole,
+      cycle_id: activeCycleId,
+    });
+    setAddMemberDialog(null);
+    setAddMemberUserId('');
+    setAddMemberRole('consultant');
+  };
+
+  const toggleConsultant = (userId: string) => {
+    setSelectedConsultants(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : prev.length < 3 ? [...prev, userId] : prev
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -316,25 +381,46 @@ export function ManagerClientsView() {
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                        <Users className="w-4 h-4" />
-                        Equipe do GT ({members.length})
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                          <Users className="w-4 h-4" />
+                          Equipe do GT ({members.length})
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 text-xs gap-1"
+                          onClick={() => setAddMemberDialog({ clientId: client.id, clientName: client.name })}
+                        >
+                          <UserPlus className="w-3 h-3" />
+                          Adicionar
+                        </Button>
                       </div>
                       <div className="space-y-1 pl-6">
                         {members.map(member => {
                           const p = getProfileByUserId(member.user_id);
                           return (
-                            <div key={member.id} className="flex items-center gap-2">
+                            <div key={member.id} className="flex items-center gap-2 group">
                               <Avatar className="h-6 w-6">
                                 <AvatarImage src={p?.avatar_url || undefined} />
                                 <AvatarFallback className="text-xs bg-primary/10 text-primary">
                                   {getInitials(p?.display_name || null, p?.email || '')}
                                 </AvatarFallback>
                               </Avatar>
-                              <span className="text-sm truncate">{p?.display_name || p?.email || 'Membro'}</span>
+                              <span className="text-sm truncate flex-1">{p?.display_name || p?.email || 'Membro'}</span>
                               <Badge variant="outline" className={`text-[10px] px-1.5 py-0 shrink-0 ${getRoleBadgeClass(member.role)}`}>
                                 {getRoleLabel(member.role)}
                               </Badge>
+                              {member.user_id !== user?.id && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-5 w-5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                                  onClick={() => handleRemoveGTMember(member.id)}
+                                >
+                                  <Trash2 className="w-3 h-3 text-destructive" />
+                                </Button>
+                              )}
                             </div>
                           );
                         })}
@@ -354,7 +440,7 @@ export function ManagerClientsView() {
                                 <p className="text-sm font-medium truncate">{d.title}</p>
                                 <div className="flex items-center gap-2 mt-0.5 text-xs text-muted-foreground">
                                   <Clock className="w-3 h-3" />
-                                  <span>{d.deadline_hours}h para execução</span>
+                                  <span>{Math.round(d.deadline_hours / 24)} dia{Math.round(d.deadline_hours / 24) !== 1 ? 's' : ''} para execução</span>
                                 </div>
                               </div>
                               <Badge
@@ -425,17 +511,17 @@ export function ManagerClientsView() {
             </div>
             <div>
               <label className="text-sm font-medium text-foreground mb-1.5 block">
-                Tempo para execução (horas)
+                Tempo para execução (dias)
               </label>
               <div className="flex items-center gap-2">
                 <Input
                   type="number"
                   min="1"
-                  value={dispatchDeadline}
-                  onChange={e => setDispatchDeadline(e.target.value)}
+                  value={dispatchDeadlineDays}
+                  onChange={e => setDispatchDeadlineDays(e.target.value)}
                   className="w-24"
                 />
-                <span className="text-sm text-muted-foreground">horas</span>
+                <span className="text-sm text-muted-foreground">dia{parseInt(dispatchDeadlineDays) !== 1 ? 's' : ''}</span>
               </div>
             </div>
             <div className="flex justify-end gap-2 pt-2">
@@ -456,7 +542,7 @@ export function ManagerClientsView() {
         setNewClientDialog(open);
         if (!open) {
           setShowSuggestion(false);
-          setNewClientProfileAnswers({});
+          setSelectedConsultants([]);
         }
       }}>
         <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
@@ -466,7 +552,7 @@ export function ManagerClientsView() {
               Novo Cliente
             </DialogTitle>
             <DialogDescription>
-              Cadastre um novo cliente e responda o perfil para gerar sugestões de equipe.
+              Cadastre um novo cliente e, opcionalmente, aloque consultores ao GT.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-5 py-2">
@@ -488,103 +574,151 @@ export function ManagerClientsView() {
               />
             </div>
 
-            {/* Client Profile Questions */}
-            <div className="space-y-4">
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-primary" />
-                Perfil do Cliente ({answeredCount}/{GT_PROFILE_QUESTIONS.length})
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                Responda pelo menos 5 perguntas para gerar a sugestão de equipe do GT.
-              </p>
-              {GT_PROFILE_QUESTIONS.map((q) => (
-                <div key={q.key} className="space-y-1.5">
-                  <label className="text-sm font-medium text-foreground">{q.label}</label>
-                  <Select
-                    value={newClientProfileAnswers[q.key] || ''}
-                    onValueChange={(val) =>
-                      setNewClientProfileAnswers(prev => ({ ...prev, [q.key]: val }))
-                    }
+            {/* Consultant Allocation */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />
+                  Consultores do GT (opcional)
+                </h3>
+                {!showSuggestion && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    onClick={() => setShowSuggestion(true)}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {q.options.map((opt) => (
-                        <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                    <Sparkles className="w-3 h-3" />
+                    Sugestão Automática
+                  </Button>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Selecione até 3 consultores para o grupo de trabalho. Você será adicionado automaticamente como gerente.
+              </p>
+
+              {/* Suggestion Panel */}
+              {showSuggestion && gtSuggestion && (
+                <Card className="border-primary/30 bg-primary/5">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-primary" />
+                      Sugestão de Equipe
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <p className="text-sm text-muted-foreground">
+                      Recomendação: <strong>{gtSuggestion.recommendedSize} consultor{gtSuggestion.recommendedSize > 1 ? 'es' : ''}</strong> para este GT.
+                      Clique nos membros abaixo para selecioná-los.
+                    </p>
+                    {gtSuggestion.suggestedMembers.length > 0 ? (
+                      <div className="space-y-2">
+                        {gtSuggestion.suggestedMembers.map((member, idx) => {
+                          const isSelected = selectedConsultants.includes(member.user_id);
+                          return (
+                            <button
+                              key={member.user_id}
+                              type="button"
+                              onClick={() => toggleConsultant(member.user_id)}
+                              className={`w-full flex items-center gap-3 p-2 rounded-lg transition-colors ${
+                                isSelected
+                                  ? 'bg-primary/10 ring-1 ring-primary/30'
+                                  : 'bg-background/60 hover:bg-background/80'
+                              }`}
+                            >
+                              <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
+                                {idx + 1}
+                              </div>
+                              <Avatar className="h-7 w-7">
+                                <AvatarImage src={member.avatar_url || undefined} />
+                                <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                                  {getInitials(member.display_name, member.email)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0 text-left">
+                                <p className="text-sm font-medium truncate">{member.display_name || member.email}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {member.demands_count} demanda{member.demands_count !== 1 ? 's' : ''} • Média: {member.average_score.toFixed(1)}
+                                </p>
+                              </div>
+                              <Badge className={
+                                member.average_score >= 7
+                                  ? 'bg-success/20 text-success'
+                                  : member.average_score >= 4
+                                  ? 'bg-warning/20 text-warning'
+                                  : 'bg-destructive/20 text-destructive'
+                              }>
+                                <Star className="w-3 h-3 mr-1" />
+                                {member.average_score.toFixed(1)}
+                              </Badge>
+                              {isSelected && (
+                                <Check className="w-4 h-4 text-primary shrink-0" />
+                              )}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Nenhum membro disponível para sugestão.</p>
+                    )}
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Manual selection */}
+              {!showSuggestion && (
+                <Select
+                  value=""
+                  onValueChange={(val) => {
+                    if (val && !selectedConsultants.includes(val) && selectedConsultants.length < 3) {
+                      setSelectedConsultants(prev => [...prev, val]);
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar consultor..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableConsultants
+                      .filter(p => !selectedConsultants.includes(p.user_id) && p.user_id !== user?.id)
+                      .map(p => (
+                        <SelectItem key={p.user_id} value={p.user_id}>
+                          {p.display_name || p.email}
+                        </SelectItem>
                       ))}
-                    </SelectContent>
-                  </Select>
+                  </SelectContent>
+                </Select>
+              )}
+
+              {/* Selected consultants */}
+              {selectedConsultants.length > 0 && (
+                <div className="space-y-1">
+                  <p className="text-xs font-medium text-muted-foreground">Selecionados ({selectedConsultants.length}/3):</p>
+                  {selectedConsultants.map(userId => {
+                    const p = getProfileByUserId(userId);
+                    return (
+                      <div key={userId} className="flex items-center gap-2 p-1.5 rounded-lg bg-muted/30">
+                        <Avatar className="h-6 w-6">
+                          <AvatarImage src={p?.avatar_url || undefined} />
+                          <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                            {getInitials(p?.display_name || null, p?.email || '')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm flex-1 truncate">{p?.display_name || p?.email}</span>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-5 w-5"
+                          onClick={() => setSelectedConsultants(prev => prev.filter(id => id !== userId))}
+                        >
+                          <Trash2 className="w-3 h-3 text-destructive" />
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
-              ))}
+              )}
             </div>
-
-            {/* Generate Suggestion Button */}
-            {answeredCount >= 5 && !showSuggestion && (
-              <Button
-                variant="outline"
-                className="w-full gap-2"
-                onClick={() => setShowSuggestion(true)}
-              >
-                <Sparkles className="w-4 h-4" />
-                Gerar Sugestão de Equipe
-              </Button>
-            )}
-
-            {/* Suggestion Panel */}
-            {showSuggestion && gtSuggestion && (
-              <Card className="border-primary/30 bg-primary/5">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    Sugestão de Equipe
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    Recomendação: <strong>{gtSuggestion.recommendedSize} consultor{gtSuggestion.recommendedSize > 1 ? 'es' : ''}</strong> para este GT,
-                    além de 1 diretor e 1 gerente.
-                  </p>
-                  {gtSuggestion.suggestedMembers.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-sm font-medium text-foreground">Membros sugeridos (por ranking de desempenho):</p>
-                      {gtSuggestion.suggestedMembers.map((member, idx) => (
-                        <div key={member.user_id} className="flex items-center gap-3 p-2 rounded-lg bg-background/60">
-                          <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                            {idx + 1}
-                          </div>
-                          <Avatar className="h-7 w-7">
-                            <AvatarImage src={member.avatar_url || undefined} />
-                            <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                              {getInitials(member.display_name, member.email)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{member.display_name || member.email}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {member.demands_count} demanda{member.demands_count !== 1 ? 's' : ''} • Média: {member.average_score.toFixed(1)}
-                            </p>
-                          </div>
-                          <Badge className={
-                            member.average_score >= 7
-                              ? 'bg-success/20 text-success'
-                              : member.average_score >= 4
-                              ? 'bg-warning/20 text-warning'
-                              : 'bg-destructive/20 text-destructive'
-                          }>
-                            <Star className="w-3 h-3 mr-1" />
-                            {member.average_score.toFixed(1)}
-                          </Badge>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {gtSuggestion.suggestedMembers.length === 0 && (
-                    <p className="text-sm text-muted-foreground">Nenhum membro disponível para sugestão.</p>
-                  )}
-                </CardContent>
-              </Card>
-            )}
 
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setNewClientDialog(false)}>
@@ -593,6 +727,63 @@ export function ManagerClientsView() {
               <Button onClick={handleCreateClient} disabled={!newClientName.trim() || creatingClient}>
                 <Check className="w-4 h-4 mr-2" />
                 {creatingClient ? 'Criando...' : 'Criar Cliente'}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Member to GT Dialog */}
+      <Dialog open={!!addMemberDialog} onOpenChange={(open) => !open && setAddMemberDialog(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserPlus className="w-5 h-5 text-primary" />
+              Adicionar Membro — {addMemberDialog?.clientName}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Membro</label>
+              <Select value={addMemberUserId} onValueChange={setAddMemberUserId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o membro" />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles
+                    .filter(p => {
+                      if (!addMemberDialog) return false;
+                      const existing = getGTMembersByClient(addMemberDialog.clientId, activeCycleId);
+                      return !existing.some(m => m.user_id === p.user_id);
+                    })
+                    .map(p => (
+                      <SelectItem key={p.user_id} value={p.user_id}>
+                        {p.display_name || p.email}
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground mb-1.5 block">Função</label>
+              <Select value={addMemberRole} onValueChange={setAddMemberRole}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="consultant">Consultor</SelectItem>
+                  <SelectItem value="manager">Gerente</SelectItem>
+                  <SelectItem value="director">Diretor</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button variant="outline" onClick={() => setAddMemberDialog(null)}>
+                Cancelar
+              </Button>
+              <Button onClick={handleAddMember} disabled={!addMemberUserId}>
+                <Check className="w-4 h-4 mr-2" />
+                Adicionar
               </Button>
             </div>
           </div>

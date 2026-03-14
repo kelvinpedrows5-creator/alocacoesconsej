@@ -28,7 +28,7 @@ const menuItems = [
   { title: 'Minha Coordenadoria', value: 'my-coordination', icon: ClipboardList },
   { title: 'CONSEJ', value: 'consej', icon: Users },
   { title: 'Portfólio de Clientes', value: 'clients', icon: Briefcase },
-  { title: 'Meus Clientes', value: 'my-clients', icon: UserCheck, hideForDemandasManager: true },
+  { title: 'Meus Clientes', value: 'my-clients', icon: UserCheck, hideForDemandasManager: true, hasDispatchBadge: true },
 ];
 
 function NotificationBadge({ count, collapsed }: { count: number; collapsed: boolean }) {
@@ -82,6 +82,7 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
   const [pendingHandoffCount, setPendingHandoffCount] = useState(0);
   const [returnedDemandsCount, setReturnedDemandsCount] = useState(0);
   const [pendingOpportunitiesCount, setPendingOpportunitiesCount] = useState(0);
+  const [pendingDispatchesCount, setPendingDispatchesCount] = useState(0);
 
   // Help reports notifications (leaders)
   useEffect(() => {
@@ -252,6 +253,32 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
     return () => { supabase.removeChannel(channel); };
   }, [isNegociosLeadership, user?.id]);
 
+  // Pending dispatches notifications for consultants (non-manager, non-director members in GTs)
+  useEffect(() => {
+    if (!user || isDemandasManager || isDirector) return;
+    const fetchPendingDispatches = async () => {
+      // Get user's GT client ids
+      const { data: myGts } = await supabase
+        .from('gt_members')
+        .select('client_id')
+        .eq('user_id', user.id);
+      if (!myGts || myGts.length === 0) { setPendingDispatchesCount(0); return; }
+      const clientIds = myGts.map(g => g.client_id);
+      const { count } = await supabase
+        .from('demand_dispatches')
+        .select('id', { count: 'exact', head: true })
+        .in('client_id', clientIds)
+        .eq('status', 'pending');
+      setPendingDispatchesCount(count || 0);
+    };
+    fetchPendingDispatches();
+    const channel = supabase
+      .channel('dispatches-pending')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'demand_dispatches' }, () => fetchPendingDispatches())
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [user?.id, isDemandasManager, isDirector]);
+
   const handleClick = (value: string) => {
     onTabChange(value);
     setOpenMobile(false);
@@ -293,18 +320,29 @@ export function AppSidebar({ activeTab, onTabChange }: AppSidebarProps) {
             <SidebarMenu>
               {menuItems
                 .filter(item => !(item as any).hideForDemandasManager || !isDemandasManager)
-                .map((item) => (
+                .map((item) => {
+                const badgeCount = (item as any).hasDispatchBadge ? pendingDispatchesCount : 0;
+                return (
                 <SidebarMenuItem key={item.value}>
                   <SidebarMenuButton
                     onClick={() => handleClick(item.value)}
                     isActive={activeTab === item.value}
                     tooltip={item.title}
                   >
-                    <item.icon className="h-4 w-4" />
-                    {!collapsed && <span>{item.title}</span>}
+                    <div className="relative">
+                      <item.icon className="h-4 w-4" />
+                      {collapsed && <NotificationBadge count={badgeCount} collapsed={true} />}
+                    </div>
+                    {!collapsed && (
+                      <span className="flex items-center gap-2">
+                        {item.title}
+                        <NotificationBadge count={badgeCount} collapsed={false} />
+                      </span>
+                    )}
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
