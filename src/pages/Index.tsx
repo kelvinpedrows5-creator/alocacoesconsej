@@ -45,11 +45,11 @@ const Index = () => {
   const { cycles, currentCycle } = useCycles();
   const [activeTab, setActiveTab] = useState('overview');
 
-  const [selectedQuarter, setSelectedQuarter] = useState(currentCycle?.value || '');
+  const [selectedQuarter, setSelectedQuarter] = useState<string>('');
 
   useEffect(() => {
-    if (currentCycle?.value && !selectedQuarter) {
-      setSelectedQuarter(currentCycle.value);
+    if (currentCycle?.value) {
+      setSelectedQuarter(prev => prev || currentCycle.value);
     }
   }, [currentCycle?.value]);
 
@@ -148,20 +148,22 @@ const Index = () => {
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
-                    <SelectTrigger className="w-32 sm:w-52 shrink-0">
-                      <SelectValue>
-                        <span className="truncate">{currentCycleLabel}</span>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cycleOptions.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
-                          {c.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  {selectedQuarter && cycleOptions.length > 0 && (
+                    <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
+                      <SelectTrigger className="w-32 sm:w-52 shrink-0">
+                        <SelectValue>
+                          <span className="truncate">{currentCycleLabel}</span>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {cycleOptions.map((c) => (
+                          <SelectItem key={c.value} value={c.value}>
+                            {c.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
 
                   {isAdmin && (
                     <>
