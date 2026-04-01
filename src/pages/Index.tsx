@@ -45,7 +45,13 @@ const Index = () => {
   const { cycles, currentCycle } = useCycles();
   const [activeTab, setActiveTab] = useState('overview');
 
-  const [selectedQuarter, setSelectedQuarter] = useState(currentCycle?.value || '2026-C1');
+  const [selectedQuarter, setSelectedQuarter] = useState(currentCycle?.value || '');
+
+  useEffect(() => {
+    if (currentCycle?.value && !selectedQuarter) {
+      setSelectedQuarter(currentCycle.value);
+    }
+  }, [currentCycle?.value]);
 
   const needsOnboarding = profile && !profile.display_name;
 
