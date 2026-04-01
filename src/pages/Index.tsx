@@ -45,11 +45,11 @@ const Index = () => {
   const { cycles, currentCycle } = useCycles();
   const [activeTab, setActiveTab] = useState('overview');
 
-  const [selectedQuarter, setSelectedQuarter] = useState(currentCycle?.value || '');
+  const [selectedQuarter, setSelectedQuarter] = useState<string>('');
 
   useEffect(() => {
-    if (currentCycle?.value && !selectedQuarter) {
-      setSelectedQuarter(currentCycle.value);
+    if (currentCycle?.value) {
+      setSelectedQuarter(prev => prev || currentCycle.value);
     }
   }, [currentCycle?.value]);
 
