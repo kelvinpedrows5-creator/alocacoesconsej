@@ -155,6 +155,21 @@ export const WelcomeOnboarding = ({ onComplete }: WelcomeOnboardingProps) => {
         }
       }
 
+      // Save GT selections
+      if (gtSelections.length > 0 && currentCycle) {
+        const { supabase } = await import('@/integrations/supabase/client');
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const gtInserts = gtSelections.map(gt => ({
+            user_id: user.id,
+            client_id: gt.clientId,
+            cycle_id: currentCycle.id,
+            role: gt.role,
+          }));
+          await supabase.from('gt_members').insert(gtInserts);
+        }
+      }
+
       toast({
         title: 'Bem-vindo(a)!',
         description: 'Seu perfil foi configurado com sucesso.',
