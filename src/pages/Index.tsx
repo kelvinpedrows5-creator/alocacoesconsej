@@ -138,13 +138,13 @@ const Index = () => {
               <div className="flex items-center justify-between h-16 gap-2">
                 <div className="flex items-center gap-2">
                   <SidebarTrigger />
-                  <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0">
+                  <button onClick={() => setActiveTab('overview')} className="flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0">
                     <img src={logo} alt="CONSEJ Logo" className="w-9 h-9 sm:w-10 sm:h-10 object-contain" />
-                    <div className="hidden sm:block">
+                    <div className="hidden sm:block text-left">
                       <h1 className="font-bold text-lg text-foreground">Alocações CONSEJ</h1>
                       <p className="text-xs text-muted-foreground">Sistema de Gestão de Membros</p>
                     </div>
-                  </Link>
+                  </button>
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3">
