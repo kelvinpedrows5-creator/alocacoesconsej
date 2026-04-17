@@ -142,7 +142,7 @@ const Auth = () => {
             <img src={logo} alt="CONSEJ Logo" className="w-16 h-16 object-contain relative z-10 drop-shadow-lg" />
           </div>
           <div className="text-center">
-            <h1 className="font-bold text-3xl gradient-text tracking-tight">Alocações CONSEJ</h1>
+            <h1 className="font-bold text-3xl gradient-text tracking-tight">Gestão CONSEJ</h1>
             <p className="text-sm text-muted-foreground mt-1">Sistema de Gestão de Membros</p>
           </div>
         </motion.div>

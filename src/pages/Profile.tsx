@@ -445,7 +445,7 @@ const Profile = () => {
               <img src={logo} alt="CONSEJ Logo" className="w-9 h-9 object-contain" />
               <div>
                 <h1 className="font-bold text-lg text-foreground">Meu Perfil</h1>
-                <p className="text-xs text-muted-foreground">Alocações CONSEJ</p>
+                <p className="text-xs text-muted-foreground">Gestão CONSEJ</p>
               </div>
             </div>
 
