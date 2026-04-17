@@ -122,7 +122,7 @@ const ResetPassword = () => {
             <div className="text-center space-y-4">
               <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
               <p className="text-muted-foreground">
-                Link de recuperação inválido ou expirado. Solicite um novo link na tela de login.
+                {error || 'Link de recuperação inválido ou expirado. Solicite um novo link na tela de login.'}
               </p>
               <Button onClick={() => navigate('/auth')} className="w-full bg-gradient-to-r from-primary to-accent">
                 Voltar para Login
