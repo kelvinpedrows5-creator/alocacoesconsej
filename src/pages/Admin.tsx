@@ -360,7 +360,7 @@ const Admin = () => {
                     </div>
                     <div className="hidden sm:block">
                       <h1 className="font-bold text-lg text-foreground">Painel Administrativo</h1>
-                      <p className="text-xs text-muted-foreground">Alocações CONSEJ</p>
+                      <p className="text-xs text-muted-foreground">Gestão CONSEJ</p>
                     </div>
                   </Link>
                 </div>

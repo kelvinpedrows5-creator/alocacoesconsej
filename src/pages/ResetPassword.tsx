@@ -99,7 +99,7 @@ const ResetPassword = () => {
           <img src={logo} alt="CONSEJ Logo" className="w-14 h-14 object-contain drop-shadow-lg" />
           <div className="text-center">
             <h1 className="font-bold text-2xl text-foreground">Redefinir Senha</h1>
-            <p className="text-sm text-muted-foreground">Alocações CONSEJ</p>
+            <p className="text-sm text-muted-foreground">Gestão CONSEJ</p>
           </div>
         </div>
 
