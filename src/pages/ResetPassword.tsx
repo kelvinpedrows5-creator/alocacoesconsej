@@ -21,23 +21,37 @@ const ResetPassword = () => {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const checkSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setIsValidSession(true);
-      }
+    // Check URL hash for explicit error from Supabase (expired/invalid link)
+    const hash = window.location.hash;
+    if (hash.includes('error=') || hash.includes('error_code=')) {
+      const params = new URLSearchParams(hash.substring(1));
+      const errDesc = params.get('error_description') || params.get('error') || 'Link inválido ou expirado';
+      setError(decodeURIComponent(errDesc.replace(/\+/g, ' ')));
       setChecking(false);
-    };
+      return;
+    }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'PASSWORD_RECOVERY') {
+    // Listen for PASSWORD_RECOVERY event (fired when Supabase processes the recovery hash)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
         setIsValidSession(true);
         setChecking(false);
       }
     });
 
-    checkSession();
-    return () => subscription.unsubscribe();
+    // Fallback: give Supabase time to process the URL hash, then check session
+    const timeout = setTimeout(async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setIsValidSession(true);
+      }
+      setChecking(false);
+    }, 1500);
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(timeout);
+    };
   }, []);
 
   const isPasswordValid = () => {
