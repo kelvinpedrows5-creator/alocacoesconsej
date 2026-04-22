@@ -14,6 +14,9 @@ import {
   ClipboardCheck,
   Users,
   Briefcase,
+  Calendar,
+  X,
+  Plus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
