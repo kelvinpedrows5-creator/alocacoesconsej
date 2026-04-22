@@ -14,6 +14,9 @@ import {
   ClipboardCheck,
   Users,
   Briefcase,
+  Calendar,
+  X,
+  Plus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthContext } from '@/contexts/AuthContext';
@@ -28,6 +31,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageCropper } from '@/components/ImageCropper';
+import { CelebrationBanner } from '@/components/CelebrationBanner';
 import { useToast } from '@/hooks/use-toast';
 import { profileQuestions, coordinationMatchingProfile, coordinations, directorates, type ProfileQuestion } from '@/data/mockData';
 import { useCycles } from '@/hooks/useCycles';
@@ -165,7 +169,8 @@ export function CoordinationSelector() {
 }
 
 function MyHistorySection() {
-  const { profile } = useAuthContext();
+  const { profile, updateProfile } = useAuthContext();
+  const { toast } = useToast();
   const [stats, setStats] = useState({
     totalDemands: 0,
     totalClients: 0,
@@ -174,18 +179,29 @@ function MyHistorySection() {
   });
   const [loading, setLoading] = useState(true);
 
+  // Editable trajectory state
+  const [joinedAtInput, setJoinedAtInput] = useState('');
+  const [pastCoords, setPastCoords] = useState<string[]>([]);
+  const [newCoordToAdd, setNewCoordToAdd] = useState('');
+  const [savingTrajectory, setSavingTrajectory] = useState(false);
+
+  useEffect(() => {
+    if (profile) {
+      setJoinedAtInput((profile as any).joined_at || '');
+      setPastCoords(((profile as any).past_coordinations as string[] | null) || []);
+    }
+  }, [profile]);
+
   useEffect(() => {
     const loadHistory = async () => {
       if (!profile?.user_id) return;
       setLoading(true);
 
-      // Fetch demand count (own submissions)
       const { count: demandCount } = await supabase
         .from('demand_submissions')
         .select('id', { count: 'exact', head: true })
         .eq('user_id', profile.user_id);
 
-      // Fetch GT memberships (unique clients)
       const { data: gtData } = await supabase
         .from('gt_members')
         .select('client_id, cycle_id')
@@ -193,13 +209,11 @@ function MyHistorySection() {
 
       const uniqueClientIds = [...new Set((gtData || []).map(g => g.client_id))];
 
-      // Fetch allocations for coordination/directorate history
       const { data: allocData } = await supabase
         .from('member_allocations')
         .select('coordination_id, cycle_id')
         .eq('user_id', profile.user_id);
 
-      // Fetch cycles for labels
       const { data: cyclesData } = await supabase
         .from('allocation_cycles')
         .select('id, label');
@@ -207,7 +221,6 @@ function MyHistorySection() {
       const cycleMap: Record<string, string> = {};
       (cyclesData || []).forEach(c => { cycleMap[c.id] = c.label; });
 
-      // Map coordination_ids to names/directorates
       const coordHistory: { id: string; name: string; color: string; cycle: string }[] = [];
       const dirSet = new Set<string>();
 
@@ -242,6 +255,63 @@ function MyHistorySection() {
     loadHistory();
   }, [profile?.user_id]);
 
+  const handleAddPastCoord = () => {
+    if (!newCoordToAdd) return;
+    if (pastCoords.includes(newCoordToAdd)) {
+      toast({ title: 'Já adicionada', description: 'Essa coordenadoria já está na sua lista.' });
+      return;
+    }
+    setPastCoords(prev => [...prev, newCoordToAdd]);
+    setNewCoordToAdd('');
+  };
+
+  const handleRemovePastCoord = (id: string) => {
+    setPastCoords(prev => prev.filter(c => c !== id));
+  };
+
+  const handleSaveTrajectory = async () => {
+    setSavingTrajectory(true);
+    try {
+      const { error } = await updateProfile({
+        joined_at: joinedAtInput || null,
+        past_coordinations: pastCoords,
+      } as any);
+      if (error) throw error;
+      toast({ title: 'Trajetória salva!', description: 'Suas informações foram atualizadas.' });
+    } catch (err: any) {
+      toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' });
+    } finally {
+      setSavingTrajectory(false);
+    }
+  };
+
+  const groupedCoordinations = directorates.map((dir) => ({
+    ...dir,
+    coordinations: coordinations.filter((c) => c.directorateId === dir.id),
+  }));
+
+  // Format joined_at nicely
+  const joinedFormatted = profile && (profile as any).joined_at
+    ? new Date((profile as any).joined_at + 'T00:00:00').toLocaleDateString('pt-BR', {
+        day: '2-digit', month: 'long', year: 'numeric',
+      })
+    : null;
+
+  // Compute time at CONSEJ
+  const timeAtConsej = (() => {
+    const j = (profile as any)?.joined_at;
+    if (!j) return null;
+    const joined = new Date(j + 'T00:00:00');
+    const now = new Date();
+    const months = (now.getFullYear() - joined.getFullYear()) * 12 + (now.getMonth() - joined.getMonth());
+    if (months < 1) return 'Menos de 1 mês';
+    if (months < 12) return `${months} ${months === 1 ? 'mês' : 'meses'}`;
+    const years = Math.floor(months / 12);
+    const remainingMonths = months % 12;
+    if (remainingMonths === 0) return `${years} ${years === 1 ? 'ano' : 'anos'}`;
+    return `${years} ${years === 1 ? 'ano' : 'anos'} e ${remainingMonths} ${remainingMonths === 1 ? 'mês' : 'meses'}`;
+  })();
+
   if (loading) {
     return (
       <Card>
@@ -253,74 +323,188 @@ function MyHistorySection() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <History className="w-5 h-5 text-primary" />
-          Meu Histórico na CONSEJ
-        </CardTitle>
-        <CardDescription>Resumo da sua trajetória na empresa</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="p-4 rounded-lg border bg-muted/30 space-y-1">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <ClipboardCheck className="w-4 h-4" />
-              Demandas Realizadas
-            </div>
-            <p className="text-3xl font-bold text-foreground">{stats.totalDemands}</p>
+    <div className="space-y-6">
+      {/* Trajectory editor */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-primary" />
+            Minha Trajetória na CONSEJ
+          </CardTitle>
+          <CardDescription>
+            Informe quando você entrou na CONSEJ e por quais coordenadorias já passou.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <div className="space-y-2">
+            <Label htmlFor="joined-at">Desde quando está na CONSEJ?</Label>
+            <Input
+              id="joined-at"
+              type="date"
+              value={joinedAtInput}
+              max={new Date().toISOString().split('T')[0]}
+              onChange={(e) => setJoinedAtInput(e.target.value)}
+              className="max-w-xs"
+            />
+            {timeAtConsej && (
+              <p className="text-xs text-muted-foreground">
+                {joinedFormatted} · <span className="font-medium text-foreground">{timeAtConsej}</span> de casa
+              </p>
+            )}
           </div>
-          <div className="p-4 rounded-lg border bg-muted/30 space-y-1">
-            <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-              <Briefcase className="w-4 h-4" />
-              Clientes Atendidos
+
+          <div className="space-y-2">
+            <Label>Coordenadorias anteriores</Label>
+            <p className="text-xs text-muted-foreground">
+              Adicione manualmente as coordenadorias por onde você já passou em ciclos anteriores.
+            </p>
+
+            {pastCoords.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {pastCoords.map((coordId) => {
+                  const coord = coordinations.find(c => c.id === coordId);
+                  if (!coord) return null;
+                  return (
+                    <Badge
+                      key={coordId}
+                      variant="secondary"
+                      className="gap-2 py-1.5 pl-2 pr-1"
+                    >
+                      <span
+                        className="w-2 h-2 rounded-full"
+                        style={{ backgroundColor: coord.color }}
+                      />
+                      <span>{coord.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePastCoord(coordId)}
+                        className="ml-1 rounded hover:bg-background/50 p-0.5 transition-colors"
+                        aria-label={`Remover ${coord.name}`}
+                      >
+                        <X className="w-3 h-3" />
+                      </button>
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+
+            <div className="flex gap-2 pt-2">
+              <Select value={newCoordToAdd} onValueChange={setNewCoordToAdd}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Selecione uma coordenadoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {groupedCoordinations.map((dir) => (
+                    <div key={dir.id}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                        {dir.name}
+                      </div>
+                      {dir.coordinations.map((coord) => (
+                        <SelectItem key={coord.id} value={coord.id}>
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-2 h-2 rounded-full shrink-0"
+                              style={{ backgroundColor: coord.color }}
+                            />
+                            <span>{coord.name}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAddPastCoord}
+                disabled={!newCoordToAdd}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Adicionar
+              </Button>
             </div>
-            <p className="text-3xl font-bold text-foreground">{stats.totalClients}</p>
           </div>
-        </div>
 
-        {/* Directorates */}
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Building2 className="w-4 h-4" />
-            Diretorias por onde passei ({stats.directorates.length})
-          </h4>
-          {stats.directorates.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic pl-6">Nenhuma diretoria registrada.</p>
-          ) : (
-            <div className="flex flex-wrap gap-2 pl-6">
-              {stats.directorates.map(dir => (
-                <Badge key={dir.id} variant="secondary" className="text-sm">{dir.name}</Badge>
-              ))}
+          <Button
+            onClick={handleSaveTrajectory}
+            disabled={savingTrajectory}
+            className="w-full sm:w-auto"
+          >
+            <Save className="w-4 h-4 mr-2" />
+            Salvar trajetória
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Existing summary */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <History className="w-5 h-5 text-primary" />
+            Meu Histórico na CONSEJ
+          </CardTitle>
+          <CardDescription>Resumo da sua trajetória na empresa</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="p-4 rounded-lg border bg-muted/30 space-y-1">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <ClipboardCheck className="w-4 h-4" />
+                Demandas Realizadas
+              </div>
+              <p className="text-3xl font-bold text-foreground">{stats.totalDemands}</p>
             </div>
-          )}
-        </div>
+            <div className="p-4 rounded-lg border bg-muted/30 space-y-1">
+              <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                <Briefcase className="w-4 h-4" />
+                Clientes Atendidos
+              </div>
+              <p className="text-3xl font-bold text-foreground">{stats.totalClients}</p>
+            </div>
+          </div>
 
-        {/* Coordinations Timeline */}
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            Coordenadorias por onde passei ({stats.coordinations.length})
-          </h4>
-          {stats.coordinations.length === 0 ? (
-            <p className="text-xs text-muted-foreground italic pl-6">Nenhuma coordenadoria registrada.</p>
-          ) : (
-            <div className="space-y-2 pl-6">
-              {stats.coordinations.map((coord, idx) => (
-                <div key={`${coord.id}-${idx}`} className="flex items-center gap-3 p-2.5 rounded-lg border bg-card">
-                  <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: coord.color }} />
-                  <div className="flex-1">
-                    <p className="text-sm font-medium">{coord.name}</p>
-                    <p className="text-xs text-muted-foreground">{coord.cycle}</p>
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Building2 className="w-4 h-4" />
+              Diretorias por onde passei ({stats.directorates.length})
+            </h4>
+            {stats.directorates.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic pl-6">Nenhuma diretoria registrada.</p>
+            ) : (
+              <div className="flex flex-wrap gap-2 pl-6">
+                {stats.directorates.map(dir => (
+                  <Badge key={dir.id} variant="secondary" className="text-sm">{dir.name}</Badge>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              <Users className="w-4 h-4" />
+              Coordenadorias por onde passei ({stats.coordinations.length})
+            </h4>
+            {stats.coordinations.length === 0 ? (
+              <p className="text-xs text-muted-foreground italic pl-6">Nenhuma coordenadoria registrada.</p>
+            ) : (
+              <div className="space-y-2 pl-6">
+                {stats.coordinations.map((coord, idx) => (
+                  <div key={`${coord.id}-${idx}`} className="flex items-center gap-3 p-2.5 rounded-lg border bg-card">
+                    <div className="w-3 h-3 rounded-full shrink-0" style={{ backgroundColor: coord.color }} />
+                    <div className="flex-1">
+                      <p className="text-sm font-medium">{coord.name}</p>
+                      <p className="text-xs text-muted-foreground">{coord.cycle}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
@@ -550,6 +734,11 @@ export function MyProfileSection() {
           Sair
         </Button>
       </div>
+
+      <CelebrationBanner
+        joinedAt={(profile as any)?.joined_at}
+        displayName={profile?.display_name}
+      />
 
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="bg-secondary/50">
