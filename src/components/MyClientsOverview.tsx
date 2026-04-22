@@ -243,8 +243,8 @@ export function MyClientsOverview() {
       const filePath = `${clientId}/${Date.now()}_${sanitizedName}`;
       const { error: uploadError } = await supabase.storage.from('contracts').upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
-      const { data: publicUrlData } = supabase.storage.from('contracts').getPublicUrl(filePath);
-      updateClient({ id: clientId, updates: { contract_scope_url: publicUrlData.publicUrl, contract_scope_type: 'pdf' } });
+      // Store storage path (not public URL) — bucket is private and requires signed URLs
+      updateClient({ id: clientId, updates: { contract_scope_url: filePath, contract_scope_type: 'pdf' } });
       setContractDialog(null);
       toast.success('PDF do contrato enviado com sucesso!');
     } catch (err: any) {
@@ -254,9 +254,18 @@ export function MyClientsOverview() {
     }
   };
 
-  const handleDownloadContract = async (url: string, clientName: string) => {
+  const handleDownloadContract = async (urlOrPath: string, clientName: string) => {
     try {
-      const response = await fetch(url);
+      let downloadUrl = urlOrPath;
+      // If it looks like a storage path (no protocol), generate a signed URL
+      if (!/^https?:\/\//i.test(urlOrPath)) {
+        const { data, error } = await supabase.storage
+          .from('contracts')
+          .createSignedUrl(urlOrPath, 60);
+        if (error || !data?.signedUrl) throw error || new Error('Signed URL error');
+        downloadUrl = data.signedUrl;
+      }
+      const response = await fetch(downloadUrl);
       const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');

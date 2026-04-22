@@ -816,6 +816,11 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_gt_member_of_client: {
+        Args: { _client_id: string; _user_id: string }
+        Returns: boolean
+      }
+      is_leader: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "member"
