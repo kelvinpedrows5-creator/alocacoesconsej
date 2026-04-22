@@ -735,6 +735,11 @@ export function MyProfileSection() {
         </Button>
       </div>
 
+      <CelebrationBanner
+        joinedAt={(profile as any)?.joined_at}
+        displayName={profile?.display_name}
+      />
+
       <Tabs defaultValue="profile" className="space-y-6">
         <TabsList className="bg-secondary/50">
           <TabsTrigger value="profile" className="gap-2">
