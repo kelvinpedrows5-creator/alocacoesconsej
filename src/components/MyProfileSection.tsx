@@ -28,6 +28,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ImageCropper } from '@/components/ImageCropper';
+import { CelebrationBanner } from '@/components/CelebrationBanner';
 import { useToast } from '@/hooks/use-toast';
 import { profileQuestions, coordinationMatchingProfile, coordinations, directorates, type ProfileQuestion } from '@/data/mockData';
 import { useCycles } from '@/hooks/useCycles';
