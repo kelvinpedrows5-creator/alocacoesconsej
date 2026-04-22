@@ -690,6 +690,8 @@ export type Database = {
           display_name: string | null
           email: string
           id: string
+          joined_at: string | null
+          past_coordinations: string[]
           profile_activities: string | null
           profile_availability_shift: string | null
           profile_availability_times: string | null
@@ -721,6 +723,8 @@ export type Database = {
           display_name?: string | null
           email: string
           id?: string
+          joined_at?: string | null
+          past_coordinations?: string[]
           profile_activities?: string | null
           profile_availability_shift?: string | null
           profile_availability_times?: string | null
@@ -752,6 +756,8 @@ export type Database = {
           display_name?: string | null
           email?: string
           id?: string
+          joined_at?: string | null
+          past_coordinations?: string[]
           profile_activities?: string | null
           profile_availability_shift?: string | null
           profile_availability_times?: string | null
