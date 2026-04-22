@@ -243,8 +243,8 @@ export function MyClientsOverview() {
       const filePath = `${clientId}/${Date.now()}_${sanitizedName}`;
       const { error: uploadError } = await supabase.storage.from('contracts').upload(filePath, file, { upsert: true });
       if (uploadError) throw uploadError;
-      const { data: publicUrlData } = supabase.storage.from('contracts').getPublicUrl(filePath);
-      updateClient({ id: clientId, updates: { contract_scope_url: publicUrlData.publicUrl, contract_scope_type: 'pdf' } });
+      // Store storage path (not public URL) — bucket is private and requires signed URLs
+      updateClient({ id: clientId, updates: { contract_scope_url: filePath, contract_scope_type: 'pdf' } });
       setContractDialog(null);
       toast.success('PDF do contrato enviado com sucesso!');
     } catch (err: any) {
