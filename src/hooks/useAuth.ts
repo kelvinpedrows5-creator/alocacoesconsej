@@ -23,6 +23,8 @@ export interface UserProfile {
   profile_feedback_preference: string | null;
   profile_project_type: string | null;
   profile_collaboration_tools: string | null;
+  joined_at: string | null;
+  past_coordinations: string[] | null;
   created_at: string;
   updated_at: string;
 }
