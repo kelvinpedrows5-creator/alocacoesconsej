@@ -189,7 +189,7 @@ export function ClientStatusLight({ clientId, cycleId, cycleLabel }: ClientStatu
           <span className="text-xs text-muted-foreground italic">Nenhum farol definido neste ciclo</span>
         )}
 
-        {hasMetrics && (
+        {hasMetrics && canViewMetrics && (
           <div className="flex items-center gap-1.5 flex-wrap">
             {light?.nps_score != null && (
               <Badge variant="secondary" className="text-xs">NPS {light.nps_score}/10</Badge>
