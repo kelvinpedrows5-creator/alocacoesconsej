@@ -423,13 +423,6 @@ export function MyClientsOverview() {
                     </AccordionItem>
                   </Accordion>
 
-                  {/* Client Status Light (Farol) */}
-                  <ClientStatusLight
-                    clientId={client.id}
-                    cycleId={activeCycleId}
-                    cycleLabel={cycles.find(c => c.id === activeCycleId)?.label}
-                  />
-
                   {/* Contract Scope */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
