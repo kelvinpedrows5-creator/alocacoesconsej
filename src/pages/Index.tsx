@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Menu } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { StatsOverview } from '@/components/StatsOverview';
 import { MyProfileSection, CoordinationSelector } from '@/components/MyProfileSection';
@@ -12,6 +11,7 @@ import { LeadershipDialog } from '@/components/LeadershipDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { WelcomeOnboarding } from '@/components/WelcomeOnboarding';
 import { AppSidebar } from '@/components/AppSidebar';
+import { QuickActionsFab } from '@/components/QuickActionsFab';
 import { DemandsControl } from '@/components/admin/DemandsControl';
 import { MemberDemandSubmission } from '@/components/MemberDemandSubmission';
 import { MemberBusinessOpportunity } from '@/components/MemberBusinessOpportunity';
@@ -33,6 +33,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+const SECTION_META: Record<string, { eyebrow: string; title: string }> = {
+  overview: { eyebrow: 'Vista Geral', title: 'Panorama' },
+  'my-profile': { eyebrow: 'Pessoal', title: 'Meu Perfil' },
+  'my-coordination': { eyebrow: 'Pessoal', title: 'Minha Coordenadoria' },
+  consej: { eyebrow: 'Comunidade', title: 'Membros CONSEJ' },
+  clients: { eyebrow: 'Operação', title: 'Portfólio de Clientes' },
+  'my-clients': { eyebrow: 'Operação', title: 'Meus Clientes' },
+  demands: { eyebrow: 'Gestão', title: 'Controle de Demandas' },
+  'my-demands': { eyebrow: 'Atividades', title: 'Minhas Demandas' },
+  'my-opportunities': { eyebrow: 'Atividades', title: 'Oportunidades de Negócio' },
+  'opportunities-management': { eyebrow: 'Negócios', title: 'Gestão de Oportunidades' },
+  'help-center': { eyebrow: 'Suporte', title: 'Central de Ajuda' },
+  'handoff-survey': { eyebrow: 'Atividades', title: 'Passagem de Bastão' },
+};
 
 const Index = () => {
   const navigate = useNavigate();
@@ -126,23 +141,34 @@ const Index = () => {
     }
   };
 
+  const sectionMeta = SECTION_META[activeTab] ?? SECTION_META.overview;
+
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full bg-background relative overflow-hidden">
+        {/* Mesh gradient ambient — fixo no fundo */}
+        <div className="pointer-events-none fixed inset-0 bg-mesh -z-10" />
+        <div className="pointer-events-none fixed inset-0 bg-noise -z-10" />
+
         <AppSidebar activeTab={activeTab} onTabChange={handleTabChange} />
 
-        <div className="flex-1 flex flex-col min-h-screen">
-          {/* Header */}
-          <header className="sticky top-0 z-40 bg-card/80 backdrop-blur-lg border-b border-border">
-            <div className="px-4 sm:px-6 lg:px-8">
+        <div className="flex-1 flex flex-col min-h-screen min-w-0">
+          {/* Header editorial */}
+          <header className="sticky top-0 z-40 glass-card-strong border-b border-border/60">
+            <div className="px-4 sm:px-6 lg:px-10">
               <div className="flex items-center justify-between h-16 gap-2">
-                <div className="flex items-center gap-2">
-                  <SidebarTrigger />
-                  <button onClick={() => setActiveTab('overview')} className="flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0">
-                    <img src={logo} alt="CONSEJ Logo" className="w-9 h-9 sm:w-10 sm:h-10 object-contain" />
-                    <div className="hidden sm:block text-left">
-                      <h1 className="font-bold text-lg text-foreground">Gestão CONSEJ</h1>
-                      <p className="text-xs text-muted-foreground">Sistema de Gestão de Membros</p>
+                <div className="flex items-center gap-3 min-w-0">
+                  <SidebarTrigger className="shrink-0" />
+                  <button
+                    onClick={() => setActiveTab('overview')}
+                    className="flex items-center gap-3 hover:opacity-80 transition-opacity shrink-0"
+                  >
+                    <img src={logo} alt="CONSEJ" className="w-9 h-9 object-contain" />
+                    <div className="hidden md:flex flex-col text-left leading-tight">
+                      <span className="eyebrow text-[0.6rem]">CONSEJ · Gestão</span>
+                      <span className="font-display font-bold text-base text-foreground tracking-tight">
+                        Alocações 360°
+                      </span>
                     </div>
                   </button>
                 </div>
@@ -150,7 +176,7 @@ const Index = () => {
                 <div className="flex items-center gap-2 sm:gap-3">
                   {selectedQuarter && cycleOptions.length > 0 && (
                     <Select value={selectedQuarter} onValueChange={setSelectedQuarter}>
-                      <SelectTrigger className="w-32 sm:w-52 shrink-0">
+                      <SelectTrigger className="w-32 sm:w-52 shrink-0 font-mono text-xs uppercase tracking-wider">
                         <SelectValue>
                           <span className="truncate">{currentCycleLabel}</span>
                         </SelectValue>
@@ -166,10 +192,10 @@ const Index = () => {
                   )}
 
                   {isAdmin && (
-                    <>
+                    <div className="hidden sm:flex items-center gap-2">
                       <ReallocationDialog />
                       <LeadershipDialog />
-                    </>
+                    </div>
                   )}
 
                   <Button
@@ -178,9 +204,9 @@ const Index = () => {
                     className="rounded-full"
                     onClick={() => setActiveTab('my-profile')}
                   >
-                    <Avatar className="h-9 w-9">
+                    <Avatar className="h-9 w-9 ring-1 ring-border">
                       <AvatarImage src={profile?.avatar_url || undefined} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm">
+                      <AvatarFallback className="bg-primary/15 text-primary text-sm font-display font-semibold">
                         {getInitials()}
                       </AvatarFallback>
                     </Avatar>
@@ -191,12 +217,36 @@ const Index = () => {
           </header>
 
           {/* Main Content */}
-          <main className="flex-1 px-4 sm:px-6 lg:px-8 py-8">
+          <main className="flex-1 px-4 sm:px-6 lg:px-10 py-6 sm:py-10 pb-28 md:pb-10">
+            {/* Hero editorial da seção */}
+            <motion.div
+              key={`hero-${activeTab}`}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
+              className="mb-6 sm:mb-10"
+            >
+              <div className="editorial-divider mb-4" />
+              <div className="flex items-end justify-between flex-wrap gap-3">
+                <div>
+                  <p className="eyebrow mb-2">{sectionMeta.eyebrow}</p>
+                  <h1 className="display text-3xl sm:text-5xl text-foreground">
+                    {sectionMeta.title}
+                  </h1>
+                </div>
+                {currentCycleLabel && (
+                  <p className="font-mono text-xs uppercase tracking-[0.2em] text-muted-foreground">
+                    {currentCycleLabel}
+                  </p>
+                )}
+              </div>
+            </motion.div>
+
             <motion.div
               key={activeTab}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.25 }}
               className="space-y-8"
             >
               {activeTab === 'overview' && <StatsOverview />}
@@ -206,14 +256,20 @@ const Index = () => {
           </main>
 
           {/* Footer */}
-          <footer className="border-t border-border py-4 px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-center">
+          <footer className="border-t border-border/60 py-5 px-4 sm:px-6 lg:px-10">
+            <div className="flex justify-between items-center flex-wrap gap-2">
+              <span className="font-mono text-[0.65rem] uppercase tracking-[0.25em] text-muted-foreground">
+                CONSEJ · MMXXVI
+              </span>
               <span className="text-xs text-muted-foreground tracking-wide">
                 Developed by Kelvin Watson — 2026
               </span>
             </div>
           </footer>
         </div>
+
+        {/* FAB — apenas mobile */}
+        <QuickActionsFab onAction={handleTabChange} activeTab={activeTab} />
       </div>
     </SidebarProvider>
   );
