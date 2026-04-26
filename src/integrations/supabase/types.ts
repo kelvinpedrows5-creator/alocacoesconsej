@@ -248,6 +248,54 @@ export type Database = {
           },
         ]
       }
+      client_status_lights: {
+        Row: {
+          client_id: string
+          created_at: string
+          cycle_id: string
+          id: string
+          notes: string | null
+          status: string
+          updated_at: string
+          updated_by: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          cycle_id: string
+          id?: string
+          notes?: string | null
+          status: string
+          updated_at?: string
+          updated_by: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          cycle_id?: string
+          id?: string
+          notes?: string | null
+          status?: string
+          updated_at?: string
+          updated_by?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "client_status_lights_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "client_status_lights_cycle_id_fkey"
+            columns: ["cycle_id"]
+            isOneToOne: false
+            referencedRelation: "allocation_cycles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       clients: {
         Row: {
           contract_scope_type: string | null
