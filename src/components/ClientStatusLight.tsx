@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Lightbulb, Pencil } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,9 @@ interface StatusLightRow {
   notes: string | null;
   updated_by: string;
   updated_at: string;
+  nps_score: number | null;
+  csat_score: number | null;
+  csi_score: number | null;
 }
 
 const STATUS_META: Record<ClientLightStatus, { label: string; dot: string; bg: string; text: string; border: string; description: string }> = {
@@ -57,6 +61,22 @@ const STATUS_META: Record<ClientLightStatus, { label: string; dot: string; bg: s
   },
 };
 
+type ScoreKey = 'nps' | 'csat' | 'csi';
+const SCORE_META: Record<ScoreKey, { label: string; min: number; max: number; hint: string }> = {
+  nps: { label: 'NPS', min: 0, max: 10, hint: '0–10' },
+  csat: { label: 'CSAT', min: 1, max: 5, hint: '1–5' },
+  csi: { label: 'CSI', min: 0, max: 10, hint: '0–10' },
+};
+
+function parseScore(raw: string, min: number, max: number): number | null {
+  const trimmed = raw.trim();
+  if (trimmed === '') return null;
+  const n = Number(trimmed);
+  if (!Number.isFinite(n)) return NaN;
+  if (n < min || n > max) return NaN;
+  return Math.round(n);
+}
+
 export function ClientStatusLight({ clientId, cycleId, cycleLabel }: ClientStatusLightProps) {
   const queryClient = useQueryClient();
   const { user, isAdmin } = useAuthContext();
@@ -64,6 +84,9 @@ export function ClientStatusLight({ clientId, cycleId, cycleLabel }: ClientStatu
   const [open, setOpen] = useState(false);
   const [draftStatus, setDraftStatus] = useState<ClientLightStatus>('blue');
   const [draftNotes, setDraftNotes] = useState('');
+  const [draftNps, setDraftNps] = useState('');
+  const [draftCsat, setDraftCsat] = useState('');
+  const [draftCsi, setDraftCsi] = useState('');
 
   const isDemandsManager = !!user && positions.some(
     p => p.user_id === user.id && p.directorate_id === 'dir-1' && p.position_type === 'manager'
@@ -86,18 +109,27 @@ export function ClientStatusLight({ clientId, cycleId, cycleLabel }: ClientStatu
   });
 
   const saveMutation = useMutation({
-    mutationFn: async ({ status, notes }: { status: ClientLightStatus; notes: string }) => {
+    mutationFn: async (payload: {
+      status: ClientLightStatus;
+      notes: string;
+      nps: number | null;
+      csat: number | null;
+      csi: number | null;
+    }) => {
       if (!user) throw new Error('Usuário não autenticado');
-      const payload = {
+      const row = {
         client_id: clientId,
         cycle_id: cycleId,
-        status,
-        notes: notes.trim() || null,
+        status: payload.status,
+        notes: payload.notes.trim() || null,
+        nps_score: payload.nps,
+        csat_score: payload.csat,
+        csi_score: payload.csi,
         updated_by: user.id,
       };
       const { error } = await (supabase as any)
         .from('client_status_lights')
-        .upsert(payload, { onConflict: 'client_id,cycle_id' });
+        .upsert(row, { onConflict: 'client_id,cycle_id' });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -111,10 +143,33 @@ export function ClientStatusLight({ clientId, cycleId, cycleLabel }: ClientStatu
   const openEditor = () => {
     setDraftStatus((light?.status as ClientLightStatus) || 'blue');
     setDraftNotes(light?.notes || '');
+    setDraftNps(light?.nps_score != null ? String(light.nps_score) : '');
+    setDraftCsat(light?.csat_score != null ? String(light.csat_score) : '');
+    setDraftCsi(light?.csi_score != null ? String(light.csi_score) : '');
     setOpen(true);
   };
 
+  const handleSave = () => {
+    const nps = parseScore(draftNps, SCORE_META.nps.min, SCORE_META.nps.max);
+    const csat = parseScore(draftCsat, SCORE_META.csat.min, SCORE_META.csat.max);
+    const csi = parseScore(draftCsi, SCORE_META.csi.min, SCORE_META.csi.max);
+
+    if (Number.isNaN(nps)) return toast.error('NPS deve ser entre 0 e 10');
+    if (Number.isNaN(csat)) return toast.error('CSAT deve ser entre 1 e 5');
+    if (Number.isNaN(csi)) return toast.error('CSI deve ser entre 0 e 10');
+
+    saveMutation.mutate({
+      status: draftStatus,
+      notes: draftNotes,
+      nps: nps as number | null,
+      csat: csat as number | null,
+      csi: csi as number | null,
+    });
+  };
+
   const currentMeta = light ? STATUS_META[light.status] : null;
+  const hasMetrics =
+    light && (light.nps_score != null || light.csat_score != null || light.csi_score != null);
 
   return (
     <div className="space-y-2">
@@ -130,6 +185,20 @@ export function ClientStatusLight({ clientId, cycleId, cycleLabel }: ClientStatu
           </Badge>
         ) : (
           <span className="text-xs text-muted-foreground italic">Nenhum farol definido neste ciclo</span>
+        )}
+
+        {hasMetrics && (
+          <div className="flex items-center gap-1.5 flex-wrap">
+            {light?.nps_score != null && (
+              <Badge variant="secondary" className="text-xs">NPS {light.nps_score}/10</Badge>
+            )}
+            {light?.csat_score != null && (
+              <Badge variant="secondary" className="text-xs">CSAT {light.csat_score}/5</Badge>
+            )}
+            {light?.csi_score != null && (
+              <Badge variant="secondary" className="text-xs">CSI {light.csi_score}/10</Badge>
+            )}
+          </div>
         )}
 
         {light?.notes && (
@@ -179,6 +248,52 @@ export function ClientStatusLight({ clientId, cycleId, cycleLabel }: ClientStatu
                 <p className="text-[11px] text-muted-foreground italic">
                   {STATUS_META[draftStatus].description}
                 </p>
+
+                <div className="space-y-2 pt-1 border-t">
+                  <Label className="text-xs font-semibold">Métricas de satisfação (opcional)</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">NPS <span className="opacity-60">({SCORE_META.nps.hint})</span></Label>
+                      <Input
+                        type="number"
+                        min={SCORE_META.nps.min}
+                        max={SCORE_META.nps.max}
+                        step={1}
+                        value={draftNps}
+                        onChange={e => setDraftNps(e.target.value)}
+                        placeholder="—"
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">CSAT <span className="opacity-60">({SCORE_META.csat.hint})</span></Label>
+                      <Input
+                        type="number"
+                        min={SCORE_META.csat.min}
+                        max={SCORE_META.csat.max}
+                        step={1}
+                        value={draftCsat}
+                        onChange={e => setDraftCsat(e.target.value)}
+                        placeholder="—"
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground">CSI <span className="opacity-60">({SCORE_META.csi.hint})</span></Label>
+                      <Input
+                        type="number"
+                        min={SCORE_META.csi.min}
+                        max={SCORE_META.csi.max}
+                        step={1}
+                        value={draftCsi}
+                        onChange={e => setDraftCsi(e.target.value)}
+                        placeholder="—"
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-1.5">
                   <Label className="text-xs">Observações (opcional)</Label>
                   <Textarea
@@ -195,7 +310,7 @@ export function ClientStatusLight({ clientId, cycleId, cycleLabel }: ClientStatu
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() => saveMutation.mutate({ status: draftStatus, notes: draftNotes })}
+                    onClick={handleSave}
                     disabled={saveMutation.isPending}
                   >
                     {saveMutation.isPending ? 'Salvando...' : 'Salvar farol'}
