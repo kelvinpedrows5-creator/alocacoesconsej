@@ -342,6 +342,9 @@ export function MyClientsOverview() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Client Status Light (Farol) */}
+                  <ClientStatusLight clientId={client.id} cycleId={activeCycleId} />
+
                   {/* GT Members */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
