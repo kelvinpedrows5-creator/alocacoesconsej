@@ -8,6 +8,7 @@ import { useClients } from '@/hooks/useClients';
 import { useCycles } from '@/hooks/useCycles';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { ClientStatusLight } from '@/components/ClientStatusLight';
 
 interface Profile {
   user_id: string;
