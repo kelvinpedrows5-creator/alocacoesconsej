@@ -92,6 +92,8 @@ export function ClientStatusLight({ clientId, cycleId, cycleLabel }: ClientStatu
     p => p.user_id === user.id && p.directorate_id === 'dir-1' && p.position_type === 'manager'
   );
   const canEdit = isAdmin || isDemandsManager;
+  // Métricas (NPS/CSAT/CSI) só são visíveis para admins e gerentes de Demandas
+  const canViewMetrics = canEdit;
 
   const { data: light } = useQuery({
     queryKey: ['client_status_light', clientId, cycleId],
@@ -187,7 +189,7 @@ export function ClientStatusLight({ clientId, cycleId, cycleLabel }: ClientStatu
           <span className="text-xs text-muted-foreground italic">Nenhum farol definido neste ciclo</span>
         )}
 
-        {hasMetrics && (
+        {hasMetrics && canViewMetrics && (
           <div className="flex items-center gap-1.5 flex-wrap">
             {light?.nps_score != null && (
               <Badge variant="secondary" className="text-xs">NPS {light.nps_score}/10</Badge>

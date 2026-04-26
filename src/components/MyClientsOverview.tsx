@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { GTHandoffSurvey, GTHandoffSurveyResults } from '@/components/GTHandoffSurvey';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { ClientStatusLight } from '@/components/ClientStatusLight';
 
 interface Profile {
   user_id: string;
@@ -341,6 +342,9 @@ export function MyClientsOverview() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Client Status Light (Farol) */}
+                  <ClientStatusLight clientId={client.id} cycleId={activeCycleId} />
+
                   {/* GT Members */}
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
