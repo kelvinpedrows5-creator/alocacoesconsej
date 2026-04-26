@@ -8,6 +8,7 @@ import { useClients } from '@/hooks/useClients';
 import { useCycles } from '@/hooks/useCycles';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { ClientStatusLight } from '@/components/ClientStatusLight';
 
 interface Profile {
   user_id: string;
@@ -193,6 +194,12 @@ export function ClientsOverview() {
                     <span className="text-muted-foreground">Demandas executadas:</span>
                     <Badge variant="secondary" className="font-semibold">{executedDemands}</Badge>
                   </div>
+
+                  {/* Client Status Light (Farol) — read-only for members, editable by admins/demand managers */}
+                  <ClientStatusLight
+                    clientId={client.id}
+                    cycleId={activeCycleId}
+                  />
                 </CardContent>
               </Card>
             );
