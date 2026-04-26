@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Menu } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { StatsOverview } from '@/components/StatsOverview';
 import { MyProfileSection, CoordinationSelector } from '@/components/MyProfileSection';
@@ -12,6 +11,7 @@ import { LeadershipDialog } from '@/components/LeadershipDialog';
 import { ReallocationDialog } from '@/components/ReallocationDialog';
 import { WelcomeOnboarding } from '@/components/WelcomeOnboarding';
 import { AppSidebar } from '@/components/AppSidebar';
+import { QuickActionsFab } from '@/components/QuickActionsFab';
 import { DemandsControl } from '@/components/admin/DemandsControl';
 import { MemberDemandSubmission } from '@/components/MemberDemandSubmission';
 import { MemberBusinessOpportunity } from '@/components/MemberBusinessOpportunity';
@@ -33,6 +33,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
+const SECTION_META: Record<string, { eyebrow: string; title: string }> = {
+  overview: { eyebrow: 'Vista Geral', title: 'Panorama' },
+  'my-profile': { eyebrow: 'Pessoal', title: 'Meu Perfil' },
+  'my-coordination': { eyebrow: 'Pessoal', title: 'Minha Coordenadoria' },
+  consej: { eyebrow: 'Comunidade', title: 'Membros CONSEJ' },
+  clients: { eyebrow: 'Operação', title: 'Portfólio de Clientes' },
+  'my-clients': { eyebrow: 'Operação', title: 'Meus Clientes' },
+  demands: { eyebrow: 'Gestão', title: 'Controle de Demandas' },
+  'my-demands': { eyebrow: 'Atividades', title: 'Minhas Demandas' },
+  'my-opportunities': { eyebrow: 'Atividades', title: 'Oportunidades de Negócio' },
+  'opportunities-management': { eyebrow: 'Negócios', title: 'Gestão de Oportunidades' },
+  'help-center': { eyebrow: 'Suporte', title: 'Central de Ajuda' },
+  'handoff-survey': { eyebrow: 'Atividades', title: 'Passagem de Bastão' },
+};
 
 const Index = () => {
   const navigate = useNavigate();
