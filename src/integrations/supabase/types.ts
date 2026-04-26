@@ -252,9 +252,12 @@ export type Database = {
         Row: {
           client_id: string
           created_at: string
+          csat_score: number | null
+          csi_score: number | null
           cycle_id: string
           id: string
           notes: string | null
+          nps_score: number | null
           status: string
           updated_at: string
           updated_by: string
@@ -262,9 +265,12 @@ export type Database = {
         Insert: {
           client_id: string
           created_at?: string
+          csat_score?: number | null
+          csi_score?: number | null
           cycle_id: string
           id?: string
           notes?: string | null
+          nps_score?: number | null
           status: string
           updated_at?: string
           updated_by: string
@@ -272,9 +278,12 @@ export type Database = {
         Update: {
           client_id?: string
           created_at?: string
+          csat_score?: number | null
+          csi_score?: number | null
           cycle_id?: string
           id?: string
           notes?: string | null
+          nps_score?: number | null
           status?: string
           updated_at?: string
           updated_by?: string
