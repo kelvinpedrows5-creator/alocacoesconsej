@@ -17,7 +17,6 @@ import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { GTHandoffSurvey, GTHandoffSurveyResults } from '@/components/GTHandoffSurvey';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ClientStatusLight } from '@/components/ClientStatusLight';
 
 interface Profile {
   user_id: string;
