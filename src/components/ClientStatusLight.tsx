@@ -92,6 +92,8 @@ export function ClientStatusLight({ clientId, cycleId, cycleLabel }: ClientStatu
     p => p.user_id === user.id && p.directorate_id === 'dir-1' && p.position_type === 'manager'
   );
   const canEdit = isAdmin || isDemandsManager;
+  // Métricas (NPS/CSAT/CSI) só são visíveis para admins e gerentes de Demandas
+  const canViewMetrics = canEdit;
 
   const { data: light } = useQuery({
     queryKey: ['client_status_light', clientId, cycleId],
