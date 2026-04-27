@@ -165,9 +165,8 @@ const Index = () => {
                   >
                     <img src={logo} alt="CONSEJ" className="w-9 h-9 object-contain" />
                     <div className="hidden md:flex flex-col text-left leading-tight">
-                      <span className="eyebrow text-[0.6rem]">CONSEJ · Gestão</span>
-                      <span className="font-display font-bold text-base text-foreground tracking-tight">
-                        Alocações 360°
+                      <span className="font-display font-bold text-xl text-foreground tracking-tight">
+                        Gestão CONSEJ
                       </span>
                     </div>
                   </button>
@@ -259,7 +258,7 @@ const Index = () => {
           <footer className="border-t border-border/60 py-5 px-4 sm:px-6 lg:px-10">
             <div className="flex justify-between items-center flex-wrap gap-2">
               <span className="font-mono text-[0.65rem] uppercase tracking-[0.25em] text-muted-foreground">
-                CONSEJ · MMXXVI
+                CONSEJ · Consultoria Jurídica Júnior
               </span>
               <span className="text-xs text-muted-foreground tracking-wide">
                 Developed by Kelvin Watson — 2026
