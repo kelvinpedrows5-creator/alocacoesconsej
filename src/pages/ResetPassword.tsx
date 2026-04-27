@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Lock, ArrowRight, AlertCircle, CheckCircle } from 'lucide-react';
+import { Lock, ArrowRight, AlertCircle, CheckCircle, ShieldCheck } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
@@ -24,7 +24,7 @@ const ResetPassword = () => {
     const hash = window.location.hash;
     const search = window.location.search;
 
-    // 1. Check explicit error from Supabase (expired/invalid link)
+    // 1. Erro explícito do Supabase (link expirado/inválido)
     if (hash.includes('error=') || hash.includes('error_code=') || search.includes('error=')) {
       const source = hash.includes('error') ? hash.substring(1) : search.substring(1);
       const params = new URLSearchParams(source);
@@ -42,8 +42,8 @@ const ResetPassword = () => {
       return;
     }
 
-    // 2. Listen for PASSWORD_RECOVERY event — this is the authoritative signal
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    // 2. Listener autoritativo do evento PASSWORD_RECOVERY
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         setIsValidSession(true);
         setError('');
@@ -51,8 +51,7 @@ const ResetPassword = () => {
       }
     });
 
-    // 3. Fallback: if hash contains a recovery token, give Supabase time to process it.
-    //    If no recovery hash AND no active session → invalid access.
+    // 3. Fallback após 2s para tokens já processados
     const hasRecoveryHash = hash.includes('type=recovery') || hash.includes('access_token');
     const timeout = setTimeout(async () => {
       const { data: { session } } = await supabase.auth.getSession();
@@ -61,7 +60,6 @@ const ResetPassword = () => {
       } else if (!hasRecoveryHash && !session) {
         setError('Link de recuperação inválido ou expirado. Solicite um novo link na tela de login.');
       } else if (session) {
-        // Edge case: user opened reset-password while already logged in via recovery
         setIsValidSession(true);
       }
       setChecking(false);
@@ -110,54 +108,95 @@ const ResetPassword = () => {
 
   if (checking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background bg-dots-pattern">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+      <div className="min-h-screen flex items-center justify-center bg-background bg-mesh">
+        <div className="absolute inset-0 bg-noise pointer-events-none" />
+        <div className="relative flex flex-col items-center gap-4">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          <span className="eyebrow">Validando link</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background bg-dots-pattern relative overflow-hidden flex items-center justify-center p-4">
-      {/* Background blobs */}
-      <div className="absolute top-1/4 -left-32 w-72 h-72 bg-primary/10 rounded-full blur-[100px] animate-blob" />
-      <div className="absolute bottom-1/4 -right-32 w-72 h-72 bg-accent/10 rounded-full blur-[100px] animate-blob-delay" />
+    <div className="min-h-screen bg-background bg-mesh relative overflow-hidden flex flex-col items-center justify-center p-4">
+      {/* Noise + blobs editoriais */}
+      <div className="absolute inset-0 bg-noise pointer-events-none" />
+      <div className="absolute top-1/3 -left-40 w-80 h-80 bg-primary/10 rounded-full blur-[120px] animate-blob" />
+      <div className="absolute bottom-1/3 -right-40 w-80 h-80 bg-accent/10 rounded-full blur-[120px] animate-blob-delay" />
 
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: 0.6, ease: 'easeOut' }}
         className="w-full max-w-md relative z-10"
       >
-        <div className="flex items-center justify-center gap-3 mb-8">
-          <img src={logo} alt="CONSEJ Logo" className="w-14 h-14 object-contain drop-shadow-lg" />
-          <div className="text-center">
-            <h1 className="font-bold text-2xl text-foreground">Redefinir Senha</h1>
-            <p className="text-sm text-muted-foreground">Gestão CONSEJ</p>
+        {/* Header editorial */}
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="flex flex-col items-center gap-4 mb-10"
+        >
+          <div className="relative">
+            <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl scale-150" />
+            <img src={logo} alt="CONSEJ Logo" className="w-14 h-14 object-contain relative z-10 drop-shadow-lg" />
           </div>
-        </div>
+          <div className="text-center space-y-2">
+            <span className="eyebrow block">Gestão CONSEJ · Segurança</span>
+            <h1 className="display text-4xl text-foreground">Redefinir Senha</h1>
+            <div className="editorial-divider w-24 mx-auto mt-3" />
+          </div>
+        </motion.div>
 
-        <div className="glass-card-strong gradient-border rounded-xl p-6">
+        {/* Card editorial */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="editorial-card card-shadow-elevated p-7"
+        >
           {!isValidSession ? (
-            <div className="text-center space-y-4">
-              <AlertCircle className="h-12 w-12 text-destructive mx-auto" />
-              <p className="text-muted-foreground">
-                {error || 'Link de recuperação inválido ou expirado. Solicite um novo link na tela de login.'}
-              </p>
-              <Button onClick={() => navigate('/auth')} className="w-full bg-gradient-to-r from-primary to-accent">
+            <div className="text-center space-y-5 py-2">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-destructive/10 border border-destructive/30">
+                <AlertCircle className="h-6 w-6 text-destructive" />
+              </div>
+              <div className="space-y-2">
+                <span className="eyebrow block">Acesso negado</span>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {error || 'Link de recuperação inválido ou expirado. Solicite um novo link na tela de login.'}
+                </p>
+              </div>
+              <Button
+                onClick={() => navigate('/auth')}
+                className="w-full bg-gradient-to-r from-primary to-accent hover:opacity-90 transition-opacity"
+              >
                 Voltar para Login
+                <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </div>
           ) : success ? (
-            <div className="text-center space-y-4">
-              <CheckCircle className="h-12 w-12 text-success mx-auto" />
-              <p className="text-foreground font-medium">Senha redefinida com sucesso!</p>
-              <p className="text-sm text-muted-foreground">Redirecionando para o login...</p>
+            <div className="text-center space-y-5 py-2">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-success/10 border border-success/30">
+                <CheckCircle className="h-6 w-6 text-success" />
+              </div>
+              <div className="space-y-2">
+                <span className="eyebrow block">Sucesso</span>
+                <p className="text-foreground font-medium">Senha redefinida</p>
+                <p className="text-sm text-muted-foreground">Redirecionando para o login…</p>
+              </div>
             </div>
           ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <p className="text-sm text-muted-foreground mb-4">
-                Digite sua nova senha abaixo.
-              </p>
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="flex items-start gap-3 mb-1">
+                <ShieldCheck className="h-5 w-5 text-primary mt-0.5 shrink-0" />
+                <div>
+                  <h2 className="text-base font-semibold text-foreground">Defina sua nova senha</h2>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Mínimo 8 caracteres com maiúsculas, minúsculas, números e símbolos.
+                  </p>
+                </div>
+              </div>
 
               {error && (
                 <Alert variant="destructive">
@@ -167,7 +206,7 @@ const ResetPassword = () => {
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="new-password">Nova Senha</Label>
+                <Label htmlFor="new-password" className="eyebrow text-[0.65rem]">Nova Senha</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -176,7 +215,7 @@ const ResetPassword = () => {
                     placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 bg-background/50 border-border/50"
+                    className="pl-10 bg-background/50 border-border/60 focus:border-primary/50 mono"
                     required
                   />
                 </div>
@@ -184,7 +223,7 @@ const ResetPassword = () => {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirm-new-password">Confirmar Nova Senha</Label>
+                <Label htmlFor="confirm-new-password" className="eyebrow text-[0.65rem]">Confirmar Senha</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -193,7 +232,7 @@ const ResetPassword = () => {
                     placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10 bg-background/50 border-border/50"
+                    className="pl-10 bg-background/50 border-border/60 focus:border-primary/50 mono"
                     required
                   />
                 </div>
@@ -212,7 +251,12 @@ const ResetPassword = () => {
               </Button>
             </form>
           )}
-        </div>
+        </motion.div>
+
+        {/* Footer editorial */}
+        <p className="text-center text-[0.7rem] text-muted-foreground/60 mt-8 mono tracking-wider uppercase">
+          Consultoria Jurídica Júnior · Segurança
+        </p>
       </motion.div>
     </div>
   );
