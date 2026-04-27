@@ -21,32 +21,51 @@ const ResetPassword = () => {
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    // Check URL hash for explicit error from Supabase (expired/invalid link)
     const hash = window.location.hash;
-    if (hash.includes('error=') || hash.includes('error_code=')) {
-      const params = new URLSearchParams(hash.substring(1));
-      const errDesc = params.get('error_description') || params.get('error') || 'Link inválido ou expirado';
-      setError(decodeURIComponent(errDesc.replace(/\+/g, ' ')));
+    const search = window.location.search;
+
+    // 1. Check explicit error from Supabase (expired/invalid link)
+    if (hash.includes('error=') || hash.includes('error_code=') || search.includes('error=')) {
+      const source = hash.includes('error') ? hash.substring(1) : search.substring(1);
+      const params = new URLSearchParams(source);
+      const errCode = params.get('error_code');
+      const errDesc = params.get('error_description') || params.get('error') || '';
+
+      let friendly = 'Link de recuperação inválido ou expirado. Solicite um novo link na tela de login.';
+      if (errCode === 'otp_expired') {
+        friendly = 'O link de recuperação expirou. Solicite um novo na tela de login.';
+      } else if (errDesc) {
+        friendly = decodeURIComponent(errDesc.replace(/\+/g, ' '));
+      }
+      setError(friendly);
       setChecking(false);
       return;
     }
 
-    // Listen for PASSWORD_RECOVERY event (fired when Supabase processes the recovery hash)
+    // 2. Listen for PASSWORD_RECOVERY event — this is the authoritative signal
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || (event === 'SIGNED_IN' && session)) {
+      if (event === 'PASSWORD_RECOVERY') {
         setIsValidSession(true);
+        setError('');
         setChecking(false);
       }
     });
 
-    // Fallback: give Supabase time to process the URL hash, then check session
+    // 3. Fallback: if hash contains a recovery token, give Supabase time to process it.
+    //    If no recovery hash AND no active session → invalid access.
+    const hasRecoveryHash = hash.includes('type=recovery') || hash.includes('access_token');
     const timeout = setTimeout(async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
+      if (session && hasRecoveryHash) {
+        setIsValidSession(true);
+      } else if (!hasRecoveryHash && !session) {
+        setError('Link de recuperação inválido ou expirado. Solicite um novo link na tela de login.');
+      } else if (session) {
+        // Edge case: user opened reset-password while already logged in via recovery
         setIsValidSession(true);
       }
       setChecking(false);
-    }, 1500);
+    }, 2000);
 
     return () => {
       subscription.unsubscribe();
